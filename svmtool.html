@@ -12,7 +12,6 @@
   --bg-card-hover: #1e2230;
   --bg-input: #10121a;
   --border: #262a3a;
-  --border-accent: #d97706;
   --text: #e8eaf0;
   --text-muted: #8b90a0;
   --text-dim: #505670;
@@ -28,583 +27,125 @@
   --font-mono: 'JetBrains Mono', monospace;
   --font-sans: 'Outfit', sans-serif;
   --radius: 10px;
-  --shadow: 0 4px 24px rgba(0,0,0,0.4);
 }
-* { margin:0; padding:0; box-sizing:border-box; }
-html { font-size: 14px; }
-body {
-  font-family: var(--font-sans);
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  overflow-x: hidden;
-}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{font-size:14px;}
+body{font-family:var(--font-sans);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
 
-/* ═══ HEADER ═══ */
-.header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 18px 28px;
-  border-bottom: 1px solid var(--border);
-  background: linear-gradient(135deg, var(--bg) 0%, #121520 100%);
-  position: relative;
-  overflow: hidden;
-}
-.header::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
-}
-.header-icon {
-  width: 44px; height: 44px;
-  background: var(--accent-glow);
-  border: 2px solid var(--accent);
-  border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 20px;
-}
-.header h1 {
-  font-family: var(--font-mono);
-  font-size: 1.35rem;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-}
-.header h1 span { color: var(--accent); }
-.header-sub {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  margin-left: auto;
-  font-family: var(--font-mono);
-}
+.header{display:flex;align-items:center;gap:16px;padding:18px 28px;border-bottom:1px solid var(--border);background:linear-gradient(135deg,var(--bg),#121520);position:relative;}
+.header::after{content:'';position:absolute;bottom:0;left:0;width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);}
+.header-icon{width:44px;height:44px;background:var(--accent-glow);border:2px solid var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.header h1{font-family:var(--font-mono);font-size:1.35rem;font-weight:700;letter-spacing:-0.5px;}
+.header h1 span{color:var(--accent);}
+.header-sub{font-size:.78rem;color:var(--text-muted);margin-left:auto;font-family:var(--font-mono);}
 
-/* ═══ LAYOUT ═══ */
-.app-layout {
-  display: grid;
-  grid-template-columns: 330px 1fr;
-  min-height: calc(100vh - 82px);
-}
+.app-layout{display:grid;grid-template-columns:330px 1fr;min-height:calc(100vh - 82px);}
 
-/* ═══ SIDEBAR ═══ */
-.sidebar {
-  border-right: 1px solid var(--border);
-  padding: 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  overflow-y: auto;
-  max-height: calc(100vh - 82px);
-  background: var(--bg);
-}
-.sidebar::-webkit-scrollbar { width: 4px; }
-.sidebar::-webkit-scrollbar-track { background: transparent; }
-.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.sidebar{border-right:1px solid var(--border);padding:22px;display:flex;flex-direction:column;gap:18px;overflow-y:auto;max-height:calc(100vh - 82px);background:var(--bg);}
+.sidebar::-webkit-scrollbar{width:4px;}.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 
-.section-title {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--accent);
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.section-title::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--border);
-}
+.section-title{font-family:var(--font-mono);font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;}
 
-.card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px;
-}
+label{display:block;font-size:.75rem;font-weight:600;color:var(--text-muted);margin-bottom:5px;font-family:var(--font-mono);}
+select,input[type="number"]{width:100%;padding:8px 11px;background:var(--bg-input);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:var(--font-mono);font-size:.8rem;outline:none;transition:border-color .2s;}
+select:focus,input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
+select{cursor:pointer;appearance:none;}option{background:var(--bg-card);}
+.param-group{margin-bottom:11px;}.param-group:last-child{margin-bottom:0;}
 
-/* ═══ FORM ═══ */
-label {
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  margin-bottom: 5px;
-  font-family: var(--font-mono);
-}
-select, input[type="number"] {
-  width: 100%;
-  padding: 8px 11px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  color: var(--text);
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  outline: none;
-  transition: border-color 0.2s;
-}
-select:focus, input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-glow);
-}
-select { cursor: pointer; appearance: none; }
-option { background: var(--bg-card); }
+.slider-group{margin-bottom:12px;}
+.slider-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.slider-value{font-family:var(--font-mono);font-size:.8rem;color:var(--accent);font-weight:700;background:var(--accent-glow);padding:2px 8px;border-radius:4px;}
+input[type="range"]{-webkit-appearance:none;width:100%;height:5px;background:var(--border);border-radius:3px;outline:none;}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:var(--accent);border-radius:50%;cursor:pointer;box-shadow:0 0 8px var(--accent-glow2);}
 
-.param-group { margin-bottom: 11px; }
-.param-group:last-child { margin-bottom: 0; }
-.param-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
+.btn{width:100%;padding:11px;border:none;border-radius:8px;font-family:var(--font-mono);font-size:.85rem;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.5px;}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent-light));color:#fff;box-shadow:0 4px 16px rgba(217,119,6,.25);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(217,119,6,.35);}
+.btn-secondary{background:var(--bg-card);color:var(--text-muted);border:1px solid var(--border);}
+.btn-secondary:hover{background:var(--bg-card-hover);color:var(--text);}
 
-.slider-group { margin-bottom: 12px; }
-.slider-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 5px;
-}
-.slider-value {
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  color: var(--accent);
-  font-weight: 700;
-  background: var(--accent-glow);
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-input[type="range"] {
-  -webkit-appearance: none;
-  width: 100%;
-  height: 5px;
-  background: var(--border);
-  border-radius: 3px;
-  outline: none;
-}
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 16px; height: 16px;
-  background: var(--accent);
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: 0 0 8px var(--accent-glow2);
-}
+.file-upload{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border:2px dashed var(--border);border-radius:8px;cursor:pointer;transition:all .2s;font-family:var(--font-mono);font-size:.75rem;color:var(--text-muted);}
+.file-upload:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-glow);}
+.file-upload input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;}
 
-.btn {
-  width: 100%;
-  padding: 11px;
-  border: none;
-  border-radius: 8px;
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
-  letter-spacing: 0.5px;
-}
-.btn-primary {
-  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
-  color: #fff;
-  box-shadow: 0 4px 16px rgba(217,119,6,0.25);
-}
-.btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(217,119,6,0.35);
-}
-.btn-primary:active { transform: translateY(0); }
-.btn-secondary {
-  background: var(--bg-card);
-  color: var(--text-muted);
-  border: 1px solid var(--border);
-}
-.btn-secondary:hover {
-  background: var(--bg-card-hover);
-  color: var(--text);
-}
+.dataset-info{font-family:var(--font-mono);font-size:.7rem;color:var(--text-dim);margin-top:8px;line-height:1.5;padding:7px;background:var(--bg-input);border-radius:6px;}
+.dataset-info strong{color:var(--text-muted);}
+.kernel-info{font-family:var(--font-mono);font-size:.68rem;color:var(--text-dim);margin-top:6px;padding:6px 8px;background:var(--bg-input);border-radius:5px;border-left:3px solid var(--accent);line-height:1.5;}
 
-.file-upload {
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 13px;
-  border: 2px dashed var(--border);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-.file-upload:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: var(--accent-glow);
-}
-.file-upload input[type="file"] {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  opacity: 0; cursor: pointer;
-}
+.main{padding:22px;overflow-y:auto;max-height:calc(100vh - 82px);background:linear-gradient(180deg,#10121a,var(--bg));}
+.main::-webkit-scrollbar{width:4px;}.main::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 
-.dataset-info {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  color: var(--text-dim);
-  margin-top: 8px;
-  line-height: 1.5;
-  padding: 7px;
-  background: var(--bg-input);
-  border-radius: 6px;
-}
-.dataset-info strong { color: var(--text-muted); }
+.results-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
+.result-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden;}
+.result-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:3px;background:linear-gradient(90deg,var(--accent),transparent);}
+.result-card h3{font-family:var(--font-mono);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--accent);margin-bottom:14px;}
+.result-card.full-width{grid-column:1/-1;}
 
-.kernel-info {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  color: var(--text-dim);
-  margin-top: 6px;
-  padding: 6px 8px;
-  background: var(--bg-input);
-  border-radius: 5px;
-  border-left: 3px solid var(--accent);
-  line-height: 1.5;
-}
+.metrics-row{display:flex;gap:10px;flex-wrap:wrap;}
+.metric-box{flex:1;min-width:75px;text-align:center;padding:11px 6px;background:var(--bg-input);border-radius:8px;border:1px solid var(--border);}
+.metric-value{font-family:var(--font-mono);font-size:1.4rem;font-weight:700;color:var(--accent-light);}
+.metric-label{font-size:.65rem;color:var(--text-muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.5px;margin-top:3px;}
 
-/* ═══ MAIN ═══ */
-.main {
-  padding: 22px;
-  overflow-y: auto;
-  max-height: calc(100vh - 82px);
-  background: linear-gradient(180deg, #10121a 0%, var(--bg) 100%);
-}
-.main::-webkit-scrollbar { width: 4px; }
-.main::-webkit-scrollbar-track { background: transparent; }
-.main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.cm-table{border-collapse:collapse;font-family:var(--font-mono);}
+.cm-table th,.cm-table td{padding:0;text-align:center;}
+.cm-cell{width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.95rem;border-radius:6px;margin:2px;transition:transform .2s;}
+.cm-cell:hover{transform:scale(1.08);}
+.cm-label{font-size:.65rem;color:var(--text-muted);padding:5px;max-width:65px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
-.results-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
-  margin-bottom: 18px;
-}
-.result-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 18px;
-  position: relative;
-  overflow: hidden;
-}
-.result-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 3px;
-  background: linear-gradient(90deg, var(--accent) 0%, transparent 100%);
-}
-.result-card h3 {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-  color: var(--accent);
-  margin-bottom: 14px;
-}
-.result-card.full-width { grid-column: 1 / -1; }
+.report-table{width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:.76rem;}
+.report-table th{text-align:left;padding:7px 10px;font-weight:700;color:var(--text-muted);border-bottom:2px solid var(--border);text-transform:uppercase;font-size:.65rem;letter-spacing:.5px;}
+.report-table td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text);}
+.report-table tr:last-child td{border-bottom:none;}
+.class-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;}
 
-/* ═══ METRICS ═══ */
-.metrics-row {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.metric-box {
-  flex: 1;
-  min-width: 75px;
-  text-align: center;
-  padding: 11px 6px;
-  background: var(--bg-input);
-  border-radius: 8px;
-  border: 1px solid var(--border);
-}
-.metric-value {
-  font-family: var(--font-mono);
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--accent-light);
-}
-.metric-label {
-  font-size: 0.65rem;
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-top: 3px;
-}
+.canvas-wrapper{position:relative;display:flex;justify-content:center;align-items:center;background:var(--bg-input);border-radius:8px;border:1px solid var(--border);padding:8px;}
+canvas{border-radius:6px;display:block;}
+.canvas-legend{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap;justify-content:center;}
+.legend-item{display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:.7rem;color:var(--text-muted);}
+.legend-dot{width:10px;height:10px;border-radius:50%;}
+.legend-sv{width:10px;height:10px;border-radius:50%;border:2px solid #fff;background:transparent;}
+.feature-select-row{display:flex;gap:10px;margin-bottom:12px;}
+.feature-select-row>div{flex:1;}
 
-/* ═══ CONFUSION MATRIX ═══ */
-.cm-table {
-  border-collapse: collapse;
-  font-family: var(--font-mono);
-}
-.cm-table th, .cm-table td { padding: 0; text-align: center; }
-.cm-cell {
-  width: 52px; height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.95rem;
-  border-radius: 6px;
-  margin: 2px;
-  transition: transform 0.2s;
-}
-.cm-cell:hover { transform: scale(1.08); }
-.cm-label {
-  font-size: 0.65rem;
-  color: var(--text-muted);
-  padding: 5px;
-  max-width: 65px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+.placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:500px;color:var(--text-dim);text-align:center;gap:14px;}
+.placeholder-icon{font-size:60px;opacity:.3;}
+.placeholder-text{font-family:var(--font-mono);font-size:.88rem;max-width:360px;line-height:1.6;}
+.placeholder-hint{font-size:.73rem;color:var(--text-dim);font-family:var(--font-mono);}
 
-/* ═══ REPORT TABLE ═══ */
-.report-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-family: var(--font-mono);
-  font-size: 0.76rem;
-}
-.report-table th {
-  text-align: left;
-  padding: 7px 10px;
-  font-weight: 700;
-  color: var(--text-muted);
-  border-bottom: 2px solid var(--border);
-  text-transform: uppercase;
-  font-size: 0.65rem;
-  letter-spacing: 0.5px;
-}
-.report-table td {
-  padding: 7px 10px;
-  border-bottom: 1px solid var(--border);
-  color: var(--text);
-}
-.report-table tr:last-child td { border-bottom: none; }
-.class-dot {
-  display: inline-block;
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  margin-right: 7px;
-}
+.status-bar{padding:8px 14px;font-family:var(--font-mono);font-size:.68rem;display:flex;align-items:center;gap:8px;}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
 
-/* ═══ CANVAS VISUALIZATION ═══ */
-.canvas-wrapper {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: var(--bg-input);
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  padding: 8px;
-}
-#boundaryCanvas {
-  border-radius: 6px;
-  display: block;
-  max-width: 100%;
-}
-.canvas-legend {
-  display: flex;
-  gap: 14px;
-  margin-top: 10px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  color: var(--text-muted);
-}
-.legend-dot {
-  width: 10px; height: 10px;
-  border-radius: 50%;
-}
-.legend-sv {
-  width: 10px; height: 10px;
-  border-radius: 50%;
-  border: 2px solid #fff;
-  background: transparent;
-}
-.feature-select-row {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-.feature-select-row select {
-  flex: 1;
-}
+.tabs{display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid var(--border);flex-wrap:wrap;}
+.tab{padding:9px 16px;font-family:var(--font-mono);font-size:.74rem;font-weight:600;cursor:pointer;color:var(--text-muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s;user-select:none;white-space:nowrap;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-content{display:none;}.tab-content.active{display:block;}
 
-/* ═══ PLACEHOLDER ═══ */
-.placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 500px;
-  color: var(--text-dim);
-  text-align: center;
-  gap: 14px;
-}
-.placeholder-icon { font-size: 60px; opacity: 0.3; }
-.placeholder-text {
-  font-family: var(--font-mono);
-  font-size: 0.88rem;
-  max-width: 360px;
-  line-height: 1.6;
-}
-.placeholder-hint {
-  font-size: 0.73rem;
-  color: var(--text-dim);
-  font-family: var(--font-mono);
-}
+.toast{position:fixed;bottom:24px;right:24px;padding:11px 18px;background:var(--bg-card);border:1px solid var(--accent);border-radius:8px;font-family:var(--font-mono);font-size:.76rem;color:var(--accent);box-shadow:0 4px 24px rgba(0,0,0,.4);transform:translateY(80px);opacity:0;transition:all .3s;z-index:100;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.error{border-color:var(--red);color:var(--red);}
 
-/* ═══ STATUS ═══ */
-.status-bar {
-  padding: 8px 14px;
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.status-dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  animation: pulse 2s infinite;
-}
-@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+.sv-badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.sv-badge{font-family:var(--font-mono);font-size:.68rem;padding:4px 10px;border-radius:20px;border:1px solid;display:flex;align-items:center;gap:5px;}
 
-/* ═══ TABS ═══ */
-.tabs {
-  display: flex;
-  gap: 0;
-  margin-bottom: 16px;
-  border-bottom: 2px solid var(--border);
-}
-.tab {
-  padding: 9px 18px;
-  font-family: var(--font-mono);
-  font-size: 0.76rem;
-  font-weight: 600;
-  cursor: pointer;
-  color: var(--text-muted);
-  border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
-  transition: all 0.2s;
-  user-select: none;
-}
-.tab:hover { color: var(--text); }
-.tab.active {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-}
-.tab-content { display: none; }
-.tab-content.active { display: block; }
+/* OVR grid */
+.ovr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;}
+.ovr-cell{background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;}
+.ovr-cell h4{font-family:var(--font-mono);font-size:.72rem;font-weight:700;margin-bottom:10px;letter-spacing:.5px;}
+.ovr-cell canvas{border-radius:6px;max-width:100%;}
 
-/* ═══ TOAST ═══ */
-.toast {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  padding: 11px 18px;
-  background: var(--bg-card);
-  border: 1px solid var(--accent);
-  border-radius: 8px;
-  font-family: var(--font-mono);
-  font-size: 0.76rem;
-  color: var(--accent);
-  box-shadow: var(--shadow);
-  transform: translateY(80px);
-  opacity: 0;
-  transition: all 0.3s;
-  z-index: 100;
-}
-.toast.show { transform: translateY(0); opacity: 1; }
-.toast.error { border-color: var(--red); color: var(--red); }
+/* 3D canvas */
+.canvas3d-hint{font-family:var(--font-mono);font-size:.68rem;color:var(--text-dim);text-align:center;margin-top:8px;}
 
-/* ═══ LOADING ═══ */
-.loading-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(12,14,20,0.85);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  z-index: 10;
-  border-radius: var(--radius);
-}
-.spinner {
-  width: 32px; height: 32px;
-  border: 3px solid var(--border);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-.loading-text {
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  color: var(--accent);
-}
+/* Kernel explanation */
+.kernel-explain{font-family:var(--font-mono);font-size:.72rem;color:var(--text-muted);line-height:1.7;padding:12px;background:var(--bg-input);border-radius:8px;border:1px solid var(--border);margin-bottom:14px;}
+.kernel-explain strong{color:var(--accent);}
+.kernel-explain .formula{color:var(--accent-light);font-weight:700;}
 
-/* ═══ SV INFO ═══ */
-.sv-badges {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 8px;
-}
-.sv-badge {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  padding: 4px 10px;
-  border-radius: 20px;
-  border: 1px solid;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-/* ═══ RESPONSIVE ═══ */
-@media (max-width: 900px) {
-  .app-layout { grid-template-columns: 1fr; }
-  .sidebar { max-height: none; border-right: none; border-bottom: 1px solid var(--border); }
-  .main { max-height: none; }
-  .results-grid { grid-template-columns: 1fr; }
-}
+@media(max-width:900px){.app-layout{grid-template-columns:1fr;}.sidebar{max-height:none;border-right:none;border-bottom:1px solid var(--border);}.main{max-height:none;}.results-grid{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -616,10 +157,7 @@ input[type="range"]::-webkit-slider-thumb {
 </div>
 
 <div class="app-layout">
-
-  <!-- ═══ SIDEBAR ═══ -->
   <div class="sidebar">
-
     <div>
       <div class="section-title">📊 Dataset</div>
       <div class="card">
@@ -631,13 +169,8 @@ input[type="range"]::-webkit-slider-thumb {
           </select>
         </div>
         <div id="csvUploadArea" style="display:none;">
-          <div class="file-upload">
-            📁 Arraste ou clique para carregar CSV
-            <input type="file" id="csvFile" accept=".csv" onchange="loadCSV(event)">
-          </div>
-          <div class="dataset-info" style="margin-top:5px;">
-            Formato: features numéricas + última coluna como <strong>target</strong>
-          </div>
+          <div class="file-upload">📁 Arraste ou clique para carregar CSV<input type="file" id="csvFile" accept=".csv" onchange="loadCSV(event)"></div>
+          <div class="dataset-info" style="margin-top:5px;">Formato: features numéricas + última coluna como <strong>target</strong></div>
         </div>
         <div id="datasetInfo" class="dataset-info">
           <strong>Iris:</strong> 150 amostras, 4 features<br>
@@ -659,50 +192,25 @@ input[type="range"]::-webkit-slider-thumb {
           </select>
           <div class="kernel-info" id="kernelInfo">K(x,x') = exp(−γ‖x−x'‖²)</div>
         </div>
-
         <div class="slider-group">
-          <div class="slider-header">
-            <label style="margin:0;">C (Regularização)</label>
-            <span class="slider-value" id="cVal">1.0</span>
-          </div>
-          <input type="range" id="paramC" min="-2" max="3" step="0.25" value="0"
-                 oninput="let v=Math.pow(10,this.value).toFixed(2); document.getElementById('cVal').textContent=v;">
+          <div class="slider-header"><label style="margin:0;">C (Regularização)</label><span class="slider-value" id="cVal">1.00</span></div>
+          <input type="range" id="paramC" min="-2" max="3" step="0.25" value="0" oninput="document.getElementById('cVal').textContent=Math.pow(10,this.value).toFixed(2);">
         </div>
-
         <div class="slider-group" id="gammaGroup">
-          <div class="slider-header">
-            <label style="margin:0;">γ (Gamma)</label>
-            <span class="slider-value" id="gammaVal">0.50</span>
-          </div>
-          <input type="range" id="paramGamma" min="-2" max="2" step="0.25" value="-0.301"
-                 oninput="let v=Math.pow(10,this.value).toFixed(2); document.getElementById('gammaVal').textContent=v;">
+          <div class="slider-header"><label style="margin:0;">γ (Gamma)</label><span class="slider-value" id="gammaVal">0.50</span></div>
+          <input type="range" id="paramGamma" min="-2" max="2" step="0.25" value="-0.301" oninput="document.getElementById('gammaVal').textContent=Math.pow(10,this.value).toFixed(2);">
         </div>
-
         <div class="slider-group" id="degreeGroup" style="display:none;">
-          <div class="slider-header">
-            <label style="margin:0;">Grau (Polinomial)</label>
-            <span class="slider-value" id="degreeVal">3</span>
-          </div>
-          <input type="range" id="paramDegree" min="2" max="6" value="3"
-                 oninput="document.getElementById('degreeVal').textContent=this.value;">
+          <div class="slider-header"><label style="margin:0;">Grau (Polinomial)</label><span class="slider-value" id="degreeVal">3</span></div>
+          <input type="range" id="paramDegree" min="2" max="6" value="3" oninput="document.getElementById('degreeVal').textContent=this.value;">
         </div>
-
         <div class="slider-group">
-          <div class="slider-header">
-            <label style="margin:0;">Proporção treino (%)</label>
-            <span class="slider-value" id="trainSplitVal">70</span>
-          </div>
-          <input type="range" id="trainSplit" min="50" max="90" step="5" value="70"
-                 oninput="document.getElementById('trainSplitVal').textContent=this.value;">
+          <div class="slider-header"><label style="margin:0;">Proporção treino (%)</label><span class="slider-value" id="trainSplitVal">70</span></div>
+          <input type="range" id="trainSplit" min="50" max="90" step="5" value="70" oninput="document.getElementById('trainSplitVal').textContent=this.value;">
         </div>
-
         <div class="slider-group">
-          <div class="slider-header">
-            <label style="margin:0;">Max. iterações SMO</label>
-            <span class="slider-value" id="maxIterVal">100</span>
-          </div>
-          <input type="range" id="maxIter" min="50" max="500" step="50" value="100"
-                 oninput="document.getElementById('maxIterVal').textContent=this.value;">
+          <div class="slider-header"><label style="margin:0;">Max. iterações SMO</label><span class="slider-value" id="maxIterVal">100</span></div>
+          <input type="range" id="maxIter" min="50" max="500" step="50" value="100" oninput="document.getElementById('maxIterVal').textContent=this.value;">
         </div>
       </div>
     </div>
@@ -713,77 +221,82 @@ input[type="range"]::-webkit-slider-thumb {
       <div style="height:7px;"></div>
       <button class="btn btn-secondary" onclick="resetAll()">↺ Resetar</button>
     </div>
-
     <div style="flex:1;"></div>
-    <div class="status-bar">
-      <div class="status-dot"></div>
-      <span id="statusText" style="color:var(--text-dim);">Pronto para treinar</span>
-    </div>
+    <div class="status-bar"><div class="status-dot"></div><span id="statusText" style="color:var(--text-dim);">Pronto para treinar</span></div>
   </div>
 
-  <!-- ═══ MAIN ═══ -->
   <div class="main" id="mainContent">
     <div class="placeholder" id="placeholder">
       <div class="placeholder-icon">⚡</div>
-      <div class="placeholder-text">
-        Configure o kernel e os hiperparâmetros, depois clique em <strong style="color:var(--accent);">Treinar SVM</strong> para visualizar os resultados.
-      </div>
+      <div class="placeholder-text">Configure o kernel e os hiperparâmetros, depois clique em <strong style="color:var(--accent);">Treinar SVM</strong> para visualizar.</div>
       <div class="placeholder-hint">Dataset Iris carregado • 150 amostras</div>
     </div>
 
     <div id="resultsArea" style="display:none;">
       <div class="tabs">
         <div class="tab active" onclick="switchTab(this,'boundary')">📐 Fronteira</div>
+        <div class="tab" onclick="switchTab(this,'kernel3d')">🔮 Espaço Kernel</div>
+        <div class="tab" onclick="switchTab(this,'ovr')">🆚 One-vs-Rest</div>
         <div class="tab" onclick="switchTab(this,'metrics')">📈 Métricas</div>
         <div class="tab" onclick="switchTab(this,'data')">📋 Dados</div>
       </div>
 
       <!-- Tab: Decision Boundary -->
       <div class="tab-content active" id="tab-boundary">
-        <div class="result-card full-width" style="position:relative;" id="boundaryCard">
+        <div class="result-card full-width">
           <h3>📐 Fronteira de Decisão (projeção 2D)</h3>
           <div class="feature-select-row">
-            <div style="flex:1;">
-              <label>Feature eixo X</label>
-              <select id="featX" onchange="redrawBoundary()"></select>
-            </div>
-            <div style="flex:1;">
-              <label>Feature eixo Y</label>
-              <select id="featY" onchange="redrawBoundary()"></select>
-            </div>
+            <div><label>Feature eixo X</label><select id="featX" onchange="redrawBoundary()"></select></div>
+            <div><label>Feature eixo Y</label><select id="featY" onchange="redrawBoundary()"></select></div>
           </div>
-          <div class="canvas-wrapper">
-            <canvas id="boundaryCanvas" width="560" height="420"></canvas>
-          </div>
+          <div class="canvas-wrapper"><canvas id="boundaryCanvas" width="560" height="420"></canvas></div>
           <div class="canvas-legend" id="canvasLegend"></div>
           <div id="svInfo" style="margin-top:10px;"></div>
+        </div>
+      </div>
+
+      <!-- Tab: Kernel Space 3D -->
+      <div class="tab-content" id="tab-kernel3d">
+        <div class="result-card full-width">
+          <h3>🔮 Visualização do Espaço do Kernel (Kernel PCA → 3D)</h3>
+          <div class="kernel-explain" id="kernelExplain"></div>
+          <div class="canvas-wrapper">
+            <canvas id="kernel3dCanvas" width="600" height="460"></canvas>
+          </div>
+          <div class="canvas3d-hint">🖱️ Arraste para rotacionar o espaço 3D</div>
+          <div class="canvas-legend" id="kernel3dLegend"></div>
+        </div>
+      </div>
+
+      <!-- Tab: One-vs-Rest -->
+      <div class="tab-content" id="tab-ovr">
+        <div class="result-card full-width">
+          <h3>🆚 Estratégia One-vs-Rest (OvR)</h3>
+          <div class="kernel-explain">
+            O SVM é nativamente um classificador <strong>binário</strong>. Para problemas com <strong>K classes</strong>,
+            treinamos <strong>K classificadores</strong> independentes. Cada um separa <span class="formula">classe k</span>
+            contra <span class="formula">todas as outras</span>. A classe final é a que obtém o maior score de decisão.
+          </div>
+          <div class="feature-select-row">
+            <div><label>Feature eixo X</label><select id="ovrFeatX" onchange="drawOVR()"></select></div>
+            <div><label>Feature eixo Y</label><select id="ovrFeatY" onchange="drawOVR()"></select></div>
+          </div>
+          <div class="ovr-grid" id="ovrGrid"></div>
         </div>
       </div>
 
       <!-- Tab: Metrics -->
       <div class="tab-content" id="tab-metrics">
         <div class="results-grid">
-          <div class="result-card">
-            <h3>📊 Métricas Gerais</h3>
-            <div class="metrics-row" id="metricsRow"></div>
-          </div>
-          <div class="result-card">
-            <h3>🎯 Matriz de Confusão</h3>
-            <div style="display:flex;justify-content:center;" id="confusionMatrix"></div>
-          </div>
-          <div class="result-card full-width">
-            <h3>📋 Relatório de Classificação</h3>
-            <div id="classReport"></div>
-          </div>
+          <div class="result-card"><h3>📊 Métricas Gerais</h3><div class="metrics-row" id="metricsRow"></div></div>
+          <div class="result-card"><h3>🎯 Matriz de Confusão</h3><div style="display:flex;justify-content:center;" id="confusionMatrix"></div></div>
+          <div class="result-card full-width"><h3>📋 Relatório de Classificação</h3><div id="classReport"></div></div>
         </div>
       </div>
 
       <!-- Tab: Data -->
       <div class="tab-content" id="tab-data">
-        <div class="result-card full-width">
-          <h3>📋 Amostra dos Dados de Teste</h3>
-          <div style="overflow-x:auto;" id="dataPreview"></div>
-        </div>
+        <div class="result-card full-width"><h3>📋 Amostra dos Dados de Teste</h3><div style="overflow-x:auto;" id="dataPreview"></div></div>
       </div>
     </div>
   </div>
@@ -793,287 +306,154 @@ input[type="range"]::-webkit-slider-thumb {
 
 <script>
 // ============================================================
-//  IRIS DATASET
+//  IRIS
 // ============================================================
-const IRIS = {
-  featureNames: ['sepal_length','sepal_width','petal_length','petal_width'],
-  classNames: ['setosa','versicolor','virginica'],
-  samples: [
-    [5.1,3.5,1.4,0.2,0],[4.9,3.0,1.4,0.2,0],[4.7,3.2,1.3,0.2,0],[4.6,3.1,1.5,0.2,0],
-    [5.0,3.6,1.4,0.2,0],[5.4,3.9,1.7,0.4,0],[4.6,3.4,1.4,0.3,0],[5.0,3.4,1.5,0.2,0],
-    [4.4,2.9,1.4,0.2,0],[4.9,3.1,1.5,0.1,0],[5.4,3.7,1.5,0.2,0],[4.8,3.4,1.6,0.2,0],
-    [4.8,3.0,1.4,0.1,0],[4.3,3.0,1.1,0.1,0],[5.8,4.0,1.2,0.2,0],[5.7,4.4,1.5,0.4,0],
-    [5.4,3.9,1.3,0.4,0],[5.1,3.5,1.4,0.3,0],[5.7,3.8,1.7,0.3,0],[5.1,3.8,1.5,0.3,0],
-    [5.4,3.4,1.7,0.2,0],[5.1,3.7,1.5,0.4,0],[4.6,3.6,1.0,0.2,0],[5.1,3.3,1.7,0.5,0],
-    [4.8,3.4,1.9,0.2,0],[5.0,3.0,1.6,0.2,0],[5.0,3.4,1.6,0.4,0],[5.2,3.5,1.5,0.2,0],
-    [5.2,3.4,1.4,0.2,0],[4.7,3.2,1.6,0.2,0],[4.8,3.1,1.6,0.2,0],[5.4,3.4,1.5,0.4,0],
-    [5.2,4.1,1.5,0.1,0],[5.5,4.2,1.4,0.2,0],[4.9,3.1,1.5,0.2,0],[5.0,3.2,1.2,0.2,0],
-    [5.5,3.5,1.3,0.2,0],[4.9,3.6,1.4,0.1,0],[4.4,3.0,1.3,0.2,0],[5.1,3.4,1.5,0.2,0],
-    [5.0,3.5,1.3,0.3,0],[4.5,2.3,1.3,0.3,0],[4.4,3.2,1.3,0.2,0],[5.0,3.5,1.6,0.6,0],
-    [5.1,3.8,1.9,0.4,0],[4.8,3.0,1.4,0.3,0],[5.1,3.8,1.6,0.2,0],[4.6,3.2,1.4,0.2,0],
-    [5.3,3.7,1.5,0.2,0],[5.0,3.3,1.4,0.2,0],
-    [7.0,3.2,4.7,1.4,1],[6.4,3.2,4.5,1.5,1],[6.9,3.1,4.9,1.5,1],[5.5,2.3,4.0,1.3,1],
-    [6.5,2.8,4.6,1.5,1],[5.7,2.8,4.5,1.3,1],[6.3,3.3,4.7,1.6,1],[4.9,2.4,3.3,1.0,1],
-    [6.6,2.9,4.6,1.3,1],[5.2,2.7,3.9,1.4,1],[5.0,2.0,3.5,1.0,1],[5.9,3.0,4.2,1.5,1],
-    [6.0,2.2,4.0,1.0,1],[6.1,2.9,4.7,1.4,1],[5.6,2.9,3.6,1.3,1],[6.7,3.1,4.4,1.4,1],
-    [5.6,3.0,4.5,1.5,1],[5.8,2.7,4.1,1.0,1],[6.2,2.2,4.5,1.5,1],[5.6,2.5,3.9,1.1,1],
-    [5.9,3.2,4.8,1.8,1],[6.1,2.8,4.0,1.3,1],[6.3,2.5,4.9,1.5,1],[6.1,2.8,4.7,1.2,1],
-    [6.4,2.9,4.3,1.3,1],[6.6,3.0,4.4,1.4,1],[6.8,2.8,4.8,1.4,1],[6.7,3.0,5.0,1.7,1],
-    [6.0,2.9,4.5,1.5,1],[5.7,2.6,3.5,1.0,1],[5.5,2.4,3.8,1.1,1],[5.5,2.4,3.7,1.0,1],
-    [5.8,2.7,3.9,1.2,1],[6.0,2.7,5.1,1.6,1],[5.4,3.0,4.5,1.5,1],[6.0,3.4,4.5,1.6,1],
-    [6.7,3.1,4.7,1.5,1],[6.3,2.3,4.4,1.3,1],[5.6,3.0,4.1,1.3,1],[5.5,2.5,4.0,1.3,1],
-    [5.5,2.6,4.4,1.2,1],[6.1,3.0,4.6,1.4,1],[5.8,2.6,4.0,1.2,1],[5.0,2.3,3.3,1.0,1],
-    [5.6,2.7,4.2,1.3,1],[5.7,3.0,4.2,1.2,1],[5.7,2.9,4.2,1.3,1],[6.2,2.9,4.3,1.3,1],
-    [5.1,2.5,3.0,1.1,1],[5.7,2.8,4.1,1.3,1],
-    [6.3,3.3,6.0,2.5,2],[5.8,2.7,5.1,1.9,2],[7.1,3.0,5.9,2.1,2],[6.3,2.9,5.6,1.8,2],
-    [6.5,3.0,5.8,2.2,2],[7.6,3.0,6.6,2.1,2],[4.9,2.5,4.5,1.7,2],[7.3,2.9,6.3,1.8,2],
-    [6.7,2.5,5.8,1.8,2],[7.2,3.6,6.1,2.5,2],[6.5,3.2,5.1,2.0,2],[6.4,2.7,5.3,1.9,2],
-    [6.8,3.0,5.5,2.1,2],[5.7,2.5,5.0,2.0,2],[5.8,2.8,5.1,2.4,2],[6.4,3.2,5.3,2.3,2],
-    [6.5,3.0,5.5,1.8,2],[7.7,3.8,6.7,2.2,2],[7.7,2.6,6.9,2.3,2],[6.0,2.2,5.0,1.5,2],
-    [6.9,3.2,5.7,2.3,2],[5.6,2.8,4.9,2.0,2],[7.7,2.8,6.7,2.0,2],[6.3,2.7,4.9,1.8,2],
-    [6.7,3.3,5.7,2.1,2],[7.2,3.2,6.0,1.8,2],[6.2,2.8,4.8,1.8,2],[6.1,3.0,4.9,1.8,2],
-    [6.4,2.8,5.6,2.1,2],[7.2,3.0,5.8,1.6,2],[7.4,2.8,6.1,1.9,2],[7.9,3.8,6.4,2.0,2],
-    [6.4,2.8,5.6,2.2,2],[6.3,2.8,5.1,1.5,2],[6.1,2.6,5.6,1.4,2],[7.7,3.0,6.1,2.3,2],
-    [6.3,3.4,5.6,2.4,2],[6.4,3.1,5.5,1.8,2],[6.0,3.0,4.8,1.8,2],[6.9,3.1,5.4,2.1,2],
-    [6.7,3.1,5.6,2.4,2],[6.9,3.1,5.1,2.3,2],[5.8,2.7,5.1,1.9,2],[6.8,3.2,5.9,2.3,2],
-    [6.7,3.3,5.7,2.5,2],[6.7,3.0,5.2,2.3,2],[6.3,2.5,5.0,1.9,2],[6.5,3.0,5.2,2.0,2],
-    [6.2,3.4,5.4,2.3,2],[5.9,3.0,5.1,1.8,2]
-  ]
-};
+const IRIS={featureNames:['sepal_length','sepal_width','petal_length','petal_width'],classNames:['setosa','versicolor','virginica'],samples:[
+[5.1,3.5,1.4,0.2,0],[4.9,3.0,1.4,0.2,0],[4.7,3.2,1.3,0.2,0],[4.6,3.1,1.5,0.2,0],[5.0,3.6,1.4,0.2,0],[5.4,3.9,1.7,0.4,0],[4.6,3.4,1.4,0.3,0],[5.0,3.4,1.5,0.2,0],[4.4,2.9,1.4,0.2,0],[4.9,3.1,1.5,0.1,0],[5.4,3.7,1.5,0.2,0],[4.8,3.4,1.6,0.2,0],[4.8,3.0,1.4,0.1,0],[4.3,3.0,1.1,0.1,0],[5.8,4.0,1.2,0.2,0],[5.7,4.4,1.5,0.4,0],[5.4,3.9,1.3,0.4,0],[5.1,3.5,1.4,0.3,0],[5.7,3.8,1.7,0.3,0],[5.1,3.8,1.5,0.3,0],[5.4,3.4,1.7,0.2,0],[5.1,3.7,1.5,0.4,0],[4.6,3.6,1.0,0.2,0],[5.1,3.3,1.7,0.5,0],[4.8,3.4,1.9,0.2,0],[5.0,3.0,1.6,0.2,0],[5.0,3.4,1.6,0.4,0],[5.2,3.5,1.5,0.2,0],[5.2,3.4,1.4,0.2,0],[4.7,3.2,1.6,0.2,0],[4.8,3.1,1.6,0.2,0],[5.4,3.4,1.5,0.4,0],[5.2,4.1,1.5,0.1,0],[5.5,4.2,1.4,0.2,0],[4.9,3.1,1.5,0.2,0],[5.0,3.2,1.2,0.2,0],[5.5,3.5,1.3,0.2,0],[4.9,3.6,1.4,0.1,0],[4.4,3.0,1.3,0.2,0],[5.1,3.4,1.5,0.2,0],[5.0,3.5,1.3,0.3,0],[4.5,2.3,1.3,0.3,0],[4.4,3.2,1.3,0.2,0],[5.0,3.5,1.6,0.6,0],[5.1,3.8,1.9,0.4,0],[4.8,3.0,1.4,0.3,0],[5.1,3.8,1.6,0.2,0],[4.6,3.2,1.4,0.2,0],[5.3,3.7,1.5,0.2,0],[5.0,3.3,1.4,0.2,0],
+[7.0,3.2,4.7,1.4,1],[6.4,3.2,4.5,1.5,1],[6.9,3.1,4.9,1.5,1],[5.5,2.3,4.0,1.3,1],[6.5,2.8,4.6,1.5,1],[5.7,2.8,4.5,1.3,1],[6.3,3.3,4.7,1.6,1],[4.9,2.4,3.3,1.0,1],[6.6,2.9,4.6,1.3,1],[5.2,2.7,3.9,1.4,1],[5.0,2.0,3.5,1.0,1],[5.9,3.0,4.2,1.5,1],[6.0,2.2,4.0,1.0,1],[6.1,2.9,4.7,1.4,1],[5.6,2.9,3.6,1.3,1],[6.7,3.1,4.4,1.4,1],[5.6,3.0,4.5,1.5,1],[5.8,2.7,4.1,1.0,1],[6.2,2.2,4.5,1.5,1],[5.6,2.5,3.9,1.1,1],[5.9,3.2,4.8,1.8,1],[6.1,2.8,4.0,1.3,1],[6.3,2.5,4.9,1.5,1],[6.1,2.8,4.7,1.2,1],[6.4,2.9,4.3,1.3,1],[6.6,3.0,4.4,1.4,1],[6.8,2.8,4.8,1.4,1],[6.7,3.0,5.0,1.7,1],[6.0,2.9,4.5,1.5,1],[5.7,2.6,3.5,1.0,1],[5.5,2.4,3.8,1.1,1],[5.5,2.4,3.7,1.0,1],[5.8,2.7,3.9,1.2,1],[6.0,2.7,5.1,1.6,1],[5.4,3.0,4.5,1.5,1],[6.0,3.4,4.5,1.6,1],[6.7,3.1,4.7,1.5,1],[6.3,2.3,4.4,1.3,1],[5.6,3.0,4.1,1.3,1],[5.5,2.5,4.0,1.3,1],[5.5,2.6,4.4,1.2,1],[6.1,3.0,4.6,1.4,1],[5.8,2.6,4.0,1.2,1],[5.0,2.3,3.3,1.0,1],[5.6,2.7,4.2,1.3,1],[5.7,3.0,4.2,1.2,1],[5.7,2.9,4.2,1.3,1],[6.2,2.9,4.3,1.3,1],[5.1,2.5,3.0,1.1,1],[5.7,2.8,4.1,1.3,1],
+[6.3,3.3,6.0,2.5,2],[5.8,2.7,5.1,1.9,2],[7.1,3.0,5.9,2.1,2],[6.3,2.9,5.6,1.8,2],[6.5,3.0,5.8,2.2,2],[7.6,3.0,6.6,2.1,2],[4.9,2.5,4.5,1.7,2],[7.3,2.9,6.3,1.8,2],[6.7,2.5,5.8,1.8,2],[7.2,3.6,6.1,2.5,2],[6.5,3.2,5.1,2.0,2],[6.4,2.7,5.3,1.9,2],[6.8,3.0,5.5,2.1,2],[5.7,2.5,5.0,2.0,2],[5.8,2.8,5.1,2.4,2],[6.4,3.2,5.3,2.3,2],[6.5,3.0,5.5,1.8,2],[7.7,3.8,6.7,2.2,2],[7.7,2.6,6.9,2.3,2],[6.0,2.2,5.0,1.5,2],[6.9,3.2,5.7,2.3,2],[5.6,2.8,4.9,2.0,2],[7.7,2.8,6.7,2.0,2],[6.3,2.7,4.9,1.8,2],[6.7,3.3,5.7,2.1,2],[7.2,3.2,6.0,1.8,2],[6.2,2.8,4.8,1.8,2],[6.1,3.0,4.9,1.8,2],[6.4,2.8,5.6,2.1,2],[7.2,3.0,5.8,1.6,2],[7.4,2.8,6.1,1.9,2],[7.9,3.8,6.4,2.0,2],[6.4,2.8,5.6,2.2,2],[6.3,2.8,5.1,1.5,2],[6.1,2.6,5.6,1.4,2],[7.7,3.0,6.1,2.3,2],[6.3,3.4,5.6,2.4,2],[6.4,3.1,5.5,1.8,2],[6.0,3.0,4.8,1.8,2],[6.9,3.1,5.4,2.1,2],[6.7,3.1,5.6,2.4,2],[6.9,3.1,5.1,2.3,2],[5.8,2.7,5.1,1.9,2],[6.8,3.2,5.9,2.3,2],[6.7,3.3,5.7,2.5,2],[6.7,3.0,5.2,2.3,2],[6.3,2.5,5.0,1.9,2],[6.5,3.0,5.2,2.0,2],[6.2,3.4,5.4,2.3,2],[5.9,3.0,5.1,1.8,2]
+]};
 
-const CLASS_COLORS = ['#22c55e','#3b82f6','#ef4444','#f59e0b','#a855f7','#06b6d4'];
-const CLASS_COLORS_DIM = ['rgba(34,197,94,0.2)','rgba(59,130,246,0.2)','rgba(239,68,68,0.2)','rgba(245,158,11,0.2)','rgba(168,85,247,0.2)','rgba(6,182,212,0.2)'];
+const CC=['#22c55e','#3b82f6','#ef4444','#f59e0b','#a855f7','#06b6d4'];
+const CC_DIM=['rgba(34,197,94,0.18)','rgba(59,130,246,0.18)','rgba(239,68,68,0.18)','rgba(245,158,11,0.18)','rgba(168,85,247,0.18)','rgba(6,182,212,0.18)'];
+const CC_MID=['rgba(34,197,94,0.55)','rgba(59,130,246,0.55)','rgba(239,68,68,0.55)','rgba(245,158,11,0.55)','rgba(168,85,247,0.55)','rgba(6,182,212,0.55)'];
 
-let currentData = null;
-let trainResult = null;
+let currentData=null, trainResult=null;
+let rot3dX=0.5, rot3dY=0.7, dragging=false, lastMX=0, lastMY=0;
 
 // ============================================================
 //  DATA
 // ============================================================
-function loadIris() {
-  currentData = {
-    X: IRIS.samples.map(r => r.slice(0,4)),
-    y: IRIS.samples.map(r => r[4]),
-    featureNames: IRIS.featureNames,
-    classNames: IRIS.classNames,
-    name: 'Iris'
-  };
-  updateDatasetInfo();
-  populateFeatureSelects();
-}
-function onDatasetChange() {
-  document.getElementById('csvUploadArea').style.display =
-    document.getElementById('datasetSelect').value==='custom'?'block':'none';
-  if (document.getElementById('datasetSelect').value==='iris') loadIris();
-}
-function loadCSV(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const lines = e.target.result.trim().split('\n').map(l=>l.split(',').map(s=>s.trim()));
-      if (lines.length<3) throw new Error('CSV muito pequeno');
-      const header = lines[0];
-      const data = lines.slice(1).filter(r=>r.length===header.length);
-      const X = data.map(r=>r.slice(0,-1).map(Number));
-      if (X.some(r=>r.some(isNaN))) throw new Error('Features devem ser numéricas');
-      const raw = data.map(r=>r[r.length-1]);
-      const classNames = [...new Set(raw)];
-      currentData = { X, y:raw.map(l=>classNames.indexOf(l)), featureNames:header.slice(0,-1), classNames, name:file.name };
-      updateDatasetInfo();
-      populateFeatureSelects();
-      showToast(`✅ CSV: ${X.length} amostras, ${header.length-1} features`);
-    } catch(err) { showToast('❌ '+err.message,true); }
-  };
-  reader.readAsText(file);
-}
-function updateDatasetInfo() {
-  const d = currentData;
-  document.getElementById('datasetInfo').innerHTML =
-    `<strong>${d.name}:</strong> ${d.X.length} amostras, ${d.featureNames.length} features<br>`+
-    `<strong>Classes:</strong> ${d.classNames.join(', ')}<br>`+
-    `<strong>Features:</strong> ${d.featureNames.join(', ')}`;
-  document.querySelector('.placeholder-hint').textContent =
-    `Dataset ${d.name} carregado • ${d.X.length} amostras`;
-}
-function populateFeatureSelects() {
-  ['featX','featY'].forEach((id,idx)=>{
-    const sel = document.getElementById(id);
-    sel.innerHTML = currentData.featureNames.map((n,i)=>`<option value="${i}" ${i===(idx===0?0:1)?'selected':''}>${n}</option>`).join('');
-  });
-}
+function loadIris(){currentData={X:IRIS.samples.map(r=>r.slice(0,4)),y:IRIS.samples.map(r=>r[4]),featureNames:IRIS.featureNames,classNames:IRIS.classNames,name:'Iris'};updateDatasetInfo();populateFeatureSelects();}
+function onDatasetChange(){document.getElementById('csvUploadArea').style.display=document.getElementById('datasetSelect').value==='custom'?'block':'none';if(document.getElementById('datasetSelect').value==='iris')loadIris();}
+function loadCSV(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=function(ev){try{const ls=ev.target.result.trim().split('\n').map(l=>l.split(',').map(s=>s.trim()));if(ls.length<3)throw new Error('CSV muito pequeno');const h=ls[0],d=ls.slice(1).filter(r=>r.length===h.length),X=d.map(r=>r.slice(0,-1).map(Number));if(X.some(r=>r.some(isNaN)))throw new Error('Features devem ser numéricas');const raw=d.map(r=>r[r.length-1]),cn=[...new Set(raw)];currentData={X,y:raw.map(l=>cn.indexOf(l)),featureNames:h.slice(0,-1),classNames:cn,name:f.name};updateDatasetInfo();populateFeatureSelects();showToast('✅ CSV: '+X.length+' amostras');}catch(err){showToast('❌ '+err.message,true);}};r.readAsText(f);}
+function updateDatasetInfo(){const d=currentData;document.getElementById('datasetInfo').innerHTML=`<strong>${d.name}:</strong> ${d.X.length} amostras, ${d.featureNames.length} features<br><strong>Classes:</strong> ${d.classNames.join(', ')}<br><strong>Features:</strong> ${d.featureNames.join(', ')}`;document.querySelector('.placeholder-hint').textContent=`Dataset ${d.name} carregado • ${d.X.length} amostras`;}
+function populateFeatureSelects(){['featX','featY','ovrFeatX','ovrFeatY'].forEach((id,idx)=>{const s=document.getElementById(id);if(!s)return;s.innerHTML=currentData.featureNames.map((n,i)=>`<option value="${i}" ${i===(idx%2===0?0:1)?'selected':''}>${n}</option>`).join('');});}
 
 // ============================================================
-//  SVM — SIMPLIFIED SMO (Binary)
+//  SVM CORE — SMO
 // ============================================================
-function kernelFn(type, gamma, degree) {
-  if (type==='linear') return (a,b)=>dot(a,b);
-  if (type==='rbf') return (a,b)=>Math.exp(-gamma*sqDist(a,b));
-  if (type==='poly') return (a,b)=>Math.pow(dot(a,b)+1, degree);
+function dot(a,b){let s=0;for(let i=0;i<a.length;i++)s+=a[i]*b[i];return s;}
+function sqDist(a,b){let s=0;for(let i=0;i<a.length;i++)s+=(a[i]-b[i])**2;return s;}
+function kernelFn(type,gamma,degree){
+  if(type==='linear')return(a,b)=>dot(a,b);
+  if(type==='rbf')return(a,b)=>Math.exp(-gamma*sqDist(a,b));
+  return(a,b)=>Math.pow(dot(a,b)+1,degree);
 }
-function dot(a,b) { let s=0; for(let i=0;i<a.length;i++) s+=a[i]*b[i]; return s; }
-function sqDist(a,b) { let s=0; for(let i=0;i<a.length;i++) s+=(a[i]-b[i])**2; return s; }
 
-function trainBinarySVM(X, y, C, kernel, maxIter, tol=1e-3) {
-  // y must be +1/-1
-  const n = X.length;
-  const alpha = new Float64Array(n);
-  let b = 0;
-
-  // Precompute kernel matrix
-  const K = [];
-  for (let i=0;i<n;i++) K[i] = new Float64Array(n);
-  for (let i=0;i<n;i++) {
-    for (let j=i;j<n;j++) {
-      const v = kernel(X[i], X[j]);
-      K[i][j] = v;
-      K[j][i] = v;
-    }
-  }
-
-  function fxi(i) {
-    let s = 0;
-    for (let j=0;j<n;j++) s += alpha[j]*y[j]*K[j][i];
-    return s + b;
-  }
-
-  let passes = 0;
-  while (passes < maxIter) {
-    let numChanged = 0;
-    for (let i=0;i<n;i++) {
-      const Ei = fxi(i) - y[i];
-      if ((y[i]*Ei < -tol && alpha[i] < C) || (y[i]*Ei > tol && alpha[i] > 0)) {
-        let j = Math.floor(Math.random()*n);
-        while (j===i) j = Math.floor(Math.random()*n);
-        const Ej = fxi(j) - y[j];
-
-        const ai_old = alpha[i], aj_old = alpha[j];
-        let L, H;
-        if (y[i]!==y[j]) { L=Math.max(0,alpha[j]-alpha[i]); H=Math.min(C,C+alpha[j]-alpha[i]); }
-        else { L=Math.max(0,alpha[i]+alpha[j]-C); H=Math.min(C,alpha[i]+alpha[j]); }
-        if (Math.abs(L-H)<1e-10) continue;
-
-        const eta = 2*K[i][j]-K[i][i]-K[j][j];
-        if (eta>=0) continue;
-
-        alpha[j] -= y[j]*(Ei-Ej)/eta;
-        if (alpha[j]>H) alpha[j]=H;
-        else if (alpha[j]<L) alpha[j]=L;
-        if (Math.abs(alpha[j]-aj_old)<1e-5) continue;
-
-        alpha[i] += y[i]*y[j]*(aj_old-alpha[j]);
-
-        const b1 = b-Ei-y[i]*(alpha[i]-ai_old)*K[i][i]-y[j]*(alpha[j]-aj_old)*K[i][j];
-        const b2 = b-Ej-y[i]*(alpha[i]-ai_old)*K[i][j]-y[j]*(alpha[j]-aj_old)*K[j][j];
-        if (alpha[i]>0&&alpha[i]<C) b=b1;
-        else if (alpha[j]>0&&alpha[j]<C) b=b2;
-        else b=(b1+b2)/2;
+function trainBinarySVM(X,y,C,kernel,maxIter,tol=1e-3){
+  const n=X.length, alpha=new Float64Array(n);let b=0;
+  const K=[];
+  for(let i=0;i<n;i++)K[i]=new Float64Array(n);
+  for(let i=0;i<n;i++)for(let j=i;j<n;j++){const v=kernel(X[i],X[j]);K[i][j]=v;K[j][i]=v;}
+  function fxi(i){let s=0;for(let j=0;j<n;j++)s+=alpha[j]*y[j]*K[j][i];return s+b;}
+  let passes=0;
+  while(passes<maxIter){
+    let numChanged=0;
+    for(let i=0;i<n;i++){
+      const Ei=fxi(i)-y[i];
+      if((y[i]*Ei<-tol&&alpha[i]<C)||(y[i]*Ei>tol&&alpha[i]>0)){
+        let j=Math.floor(Math.random()*n);while(j===i)j=Math.floor(Math.random()*n);
+        const Ej=fxi(j)-y[j],ai_old=alpha[i],aj_old=alpha[j];
+        let L,H;
+        if(y[i]!==y[j]){L=Math.max(0,alpha[j]-alpha[i]);H=Math.min(C,C+alpha[j]-alpha[i]);}
+        else{L=Math.max(0,alpha[i]+alpha[j]-C);H=Math.min(C,alpha[i]+alpha[j]);}
+        if(Math.abs(L-H)<1e-10)continue;
+        const eta=2*K[i][j]-K[i][i]-K[j][j];if(eta>=0)continue;
+        alpha[j]-=y[j]*(Ei-Ej)/eta;
+        if(alpha[j]>H)alpha[j]=H;else if(alpha[j]<L)alpha[j]=L;
+        if(Math.abs(alpha[j]-aj_old)<1e-5)continue;
+        alpha[i]+=y[i]*y[j]*(aj_old-alpha[j]);
+        const b1=b-Ei-y[i]*(alpha[i]-ai_old)*K[i][i]-y[j]*(alpha[j]-aj_old)*K[i][j];
+        const b2=b-Ej-y[i]*(alpha[i]-ai_old)*K[i][j]-y[j]*(alpha[j]-aj_old)*K[j][j];
+        if(alpha[i]>0&&alpha[i]<C)b=b1;else if(alpha[j]>0&&alpha[j]<C)b=b2;else b=(b1+b2)/2;
         numChanged++;
       }
     }
-    passes = numChanged===0 ? passes+1 : 0;
+    passes=numChanged===0?passes+1:0;
   }
+  const svIdx=[];for(let i=0;i<n;i++)if(alpha[i]>1e-6)svIdx.push(i);
+  return{alpha,b,svIdx,X_train:X,y_train:y,
+    predict(x){let s=0;for(const i of svIdx)s+=alpha[i]*y[i]*kernel(X[i],x);return s+b;},
+    kernel,K};
+}
 
-  // Collect support vectors
-  const svIdx = [];
-  for (let i=0;i<n;i++) if (alpha[i]>1e-6) svIdx.push(i);
-
-  return {
-    alpha, b, svIdx,
-    X_train: X, y_train: y,
-    predict(x) {
-      let s=0;
-      for (const i of svIdx) s += alpha[i]*y[i]*kernel(X[i], x);
-      return s + b;
-    }
+function trainMultiClassSVM(X,y,nc,params){
+  const{C,kernelType,gamma,degree,maxIter}=params;
+  const kern=kernelFn(kernelType,gamma,degree);
+  const models=[],allSVIdx=new Set();
+  for(let c=0;c<nc;c++){
+    const binY=y.map(v=>v===c?1:-1);
+    const model=trainBinarySVM(X,binY,C,kern,maxIter);
+    models.push(model);
+    model.svIdx.forEach(i=>allSVIdx.add(i));
+  }
+  return{models,numSV:allSVIdx.size,svIndices:allSVIdx,
+    predict(x){let best=-Infinity,cls=0;for(let c=0;c<models.length;c++){const s=models[c].predict(x);if(s>best){best=s;cls=c;}}return cls;},
   };
 }
 
 // ============================================================
-//  ONE-VS-REST MULTICLASS
+//  KERNEL PCA
 // ============================================================
-function trainMultiClassSVM(X, y, numClasses, params) {
-  const { C, kernelType, gamma, degree, maxIter } = params;
-  const kern = kernelFn(kernelType, gamma, degree);
-  const models = [];
-  const allSVIdx = new Set();
+function kernelPCA(X,kernel,nComp){
+  const n=X.length;
+  const K=[];
+  for(let i=0;i<n;i++)K[i]=new Float64Array(n);
+  for(let i=0;i<n;i++)for(let j=i;j<n;j++){const v=kernel(X[i],X[j]);K[i][j]=v;K[j][i]=v;}
 
-  for (let c=0;c<numClasses;c++) {
-    const binY = y.map(v => v===c ? 1 : -1);
-    const model = trainBinarySVM(X, binY, C, kern, maxIter);
-    models.push(model);
-    model.svIdx.forEach(i => allSVIdx.add(i));
+  // Center kernel matrix
+  const colMean=new Float64Array(n),totalMean=[0];
+  for(let i=0;i<n;i++)for(let j=0;j<n;j++)colMean[j]+=K[i][j]/n;
+  for(let j=0;j<n;j++)totalMean[0]+=colMean[j]/n;
+  const Kc=[];
+  for(let i=0;i<n;i++){
+    Kc[i]=new Float64Array(n);
+    for(let j=0;j<n;j++) Kc[i][j]=K[i][j]-colMean[i]-colMean[j]+totalMean[0];
   }
 
-  return {
-    models,
-    numSV: allSVIdx.size,
-    svIndices: allSVIdx,
-    predict(x) {
-      let bestScore = -Infinity, bestClass = 0;
-      for (let c=0;c<models.length;c++) {
-        const score = models[c].predict(x);
-        if (score > bestScore) { bestScore=score; bestClass=c; }
-      }
-      return bestClass;
-    },
-    decisionScores(x) {
-      return models.map(m => m.predict(x));
+  // Power iteration for top eigenvectors
+  const eigenvectors=[];
+  const Km=Kc.map(r=>[...r]);
+  for(let comp=0;comp<nComp;comp++){
+    let v=new Array(n);for(let i=0;i<n;i++)v[i]=Math.random()-0.5;
+    for(let iter=0;iter<200;iter++){
+      const nv=new Array(n).fill(0);
+      for(let i=0;i<n;i++)for(let j=0;j<n;j++)nv[i]+=Km[i][j]*v[j];
+      let norm=Math.sqrt(nv.reduce((s,x)=>s+x*x,0))||1;
+      for(let i=0;i<n;i++)v[i]=nv[i]/norm;
     }
-  };
+    // Compute eigenvalue
+    const Kv=new Array(n).fill(0);
+    for(let i=0;i<n;i++)for(let j=0;j<n;j++)Kv[i]+=Km[i][j]*v[j];
+    const lam=v.reduce((s,x,i)=>s+x*Kv[i],0);
+    eigenvectors.push({v:[...v],lam});
+    // Deflate
+    for(let i=0;i<n;i++)for(let j=0;j<n;j++)Km[i][j]-=lam*v[i]*v[j];
+  }
+
+  // Project
+  const proj=[];
+  for(let i=0;i<n;i++){
+    const p=[];
+    for(let c=0;c<nComp;c++) p.push(eigenvectors[c].v[i]*Math.sqrt(Math.abs(eigenvectors[c].lam)));
+    proj.push(p);
+  }
+  return proj;
 }
 
 // ============================================================
 //  UTILS
 // ============================================================
-function shuffle(arr) {
-  const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a;
-}
-function trainTestSplit(X,y,ratio) {
-  const idx=shuffle(Array.from({length:X.length},(_,i)=>i));
-  const s=Math.floor(X.length*ratio);
-  return {
-    trainX:idx.slice(0,s).map(i=>X[i]), trainY:idx.slice(0,s).map(i=>y[i]),
-    testX:idx.slice(s).map(i=>X[i]), testY:idx.slice(s).map(i=>y[i])
-  };
-}
-function standardize(X) {
-  const n=X.length, d=X[0].length;
-  const mean=new Array(d).fill(0), std=new Array(d).fill(0);
-  X.forEach(r=>r.forEach((v,j)=>mean[j]+=v));
-  mean.forEach((_,j)=>mean[j]/=n);
-  X.forEach(r=>r.forEach((v,j)=>std[j]+=(v-mean[j])**2));
-  std.forEach((_,j)=>std[j]=Math.sqrt(std[j]/n)||1);
-  const Xs = X.map(r=>r.map((v,j)=>(v-mean[j])/std[j]));
-  return { Xs, mean, std };
-}
-function unstandardizePoint(p, mean, std) {
-  return p.map((v,j)=>v*std[j]+mean[j]);
-}
-
-function computeMetrics(yTrue,yPred,nc) {
-  const cm=Array.from({length:nc},()=>new Array(nc).fill(0));
-  let correct=0;
-  for(let i=0;i<yTrue.length;i++){cm[yTrue[i]][yPred[i]]++;if(yTrue[i]===yPred[i])correct++;}
-  const accuracy=correct/yTrue.length;
-  const perClass=[];
-  for(let c=0;c<nc;c++){
-    const tp=cm[c][c];
-    const fp=cm.reduce((s,row,i)=>i!==c?s+row[c]:s,0);
-    const fn=cm[c].reduce((s,v,j)=>j!==c?s+v:s,0);
-    const pr=tp+fp>0?tp/(tp+fp):0;
-    const re=tp+fn>0?tp/(tp+fn):0;
-    const f1=pr+re>0?2*pr*re/(pr+re):0;
-    perClass.push({precision:pr,recall:re,f1,support:cm[c].reduce((a,b)=>a+b,0)});
-  }
-  return {cm,accuracy,perClass};
-}
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+function trainTestSplit(X,y,r){const idx=shuffle(Array.from({length:X.length},(_,i)=>i)),s=Math.floor(X.length*r);return{trainX:idx.slice(0,s).map(i=>X[i]),trainY:idx.slice(0,s).map(i=>y[i]),testX:idx.slice(s).map(i=>X[i]),testY:idx.slice(s).map(i=>y[i])};}
+function standardize(X){const n=X.length,d=X[0].length,mean=new Array(d).fill(0),std=new Array(d).fill(0);X.forEach(r=>r.forEach((v,j)=>mean[j]+=v));mean.forEach((_,j)=>mean[j]/=n);X.forEach(r=>r.forEach((v,j)=>std[j]+=(v-mean[j])**2));std.forEach((_,j)=>std[j]=Math.sqrt(std[j]/n)||1);return{Xs:X.map(r=>r.map((v,j)=>(v-mean[j])/std[j])),mean,std};}
+function computeMetrics(yT,yP,nc){const cm=Array.from({length:nc},()=>new Array(nc).fill(0));let c=0;for(let i=0;i<yT.length;i++){cm[yT[i]][yP[i]]++;if(yT[i]===yP[i])c++;}const acc=c/yT.length,pc=[];for(let k=0;k<nc;k++){const tp=cm[k][k],fp=cm.reduce((s,r,i)=>i!==k?s+r[k]:s,0),fn=cm[k].reduce((s,v,j)=>j!==k?s+v:s,0),pr=tp+fp>0?tp/(tp+fp):0,re=tp+fn>0?tp/(tp+fn):0,f1=pr+re>0?2*pr*re/(pr+re):0;pc.push({precision:pr,recall:re,f1,support:cm[k].reduce((a,b)=>a+b,0)});}return{cm,accuracy:acc,perClass:pc};}
 
 // ============================================================
-//  MAIN TRAIN
+//  TRAIN
 // ============================================================
-function trainSVM() {
+function trainSVM(){
   if(!currentData){showToast('❌ Nenhum dataset',true);return;}
   const kernelType=document.getElementById('kernel').value;
   const C=Math.pow(10,+document.getElementById('paramC').value);
@@ -1082,270 +462,258 @@ function trainSVM() {
   const ratio=+document.getElementById('trainSplit').value/100;
   const maxIter=+document.getElementById('maxIter').value;
   const nc=currentData.classNames.length;
-
   setStatus('Treinando SVM...');
-
   setTimeout(()=>{
-    try {
-      const {trainX,trainY,testX,testY}=trainTestSplit(currentData.X,currentData.y,ratio);
-      const {Xs:trainXs,mean,std}=standardize(trainX);
+    try{
+      const{trainX,trainY,testX,testY}=trainTestSplit(currentData.X,currentData.y,ratio);
+      const{Xs:trainXs,mean,std}=standardize(trainX);
       const testXs=testX.map(r=>r.map((v,j)=>(v-mean[j])/std[j]));
-
       const model=trainMultiClassSVM(trainXs,trainY,nc,{C,kernelType,gamma,degree,maxIter});
       const yPred=testXs.map(x=>model.predict(x));
       const metrics=computeMetrics(testY,yPred,nc);
-
-      trainResult={model,trainX,trainY,trainXs,testX,testY,testXs,yPred,metrics,mean,std,params:{kernelType,C,gamma,degree}};
-
+      // Kernel PCA on training data
+      const kern=kernelFn(kernelType,gamma,degree);
+      const kpcaProj=kernelPCA(trainXs,kern,3);
+      trainResult={model,trainX,trainY,trainXs,testX,testY,testXs,yPred,metrics,mean,std,params:{kernelType,C,gamma,degree},kpcaProj};
       renderAll();
       setStatus(`Treinado! Acurácia: ${(metrics.accuracy*100).toFixed(1)}% | SVs: ${model.numSV}`);
       showToast(`⚡ SVM treinado — Acurácia: ${(metrics.accuracy*100).toFixed(1)}%`);
-    } catch(err) {
-      setStatus('Erro ao treinar');
-      showToast('❌ '+err.message,true);
-      console.error(err);
-    }
+    }catch(err){setStatus('Erro');showToast('❌ '+err.message,true);console.error(err);}
   },50);
 }
 
-function renderAll() {
+function renderAll(){
   document.getElementById('placeholder').style.display='none';
   document.getElementById('resultsArea').style.display='block';
-  drawBoundary();
-  renderMetrics();
-  renderConfusionMatrix();
-  renderClassReport();
-  renderDataPreview();
+  drawBoundary();drawKernel3D();drawOVR();renderMetrics();renderCM();renderReport();renderDataPreview();
 }
 
 // ============================================================
-//  DECISION BOUNDARY CANVAS
+//  DECISION BOUNDARY 2D
 // ============================================================
-function redrawBoundary() { if(trainResult) drawBoundary(); }
-
-function drawBoundary() {
-  const canvas=document.getElementById('boundaryCanvas');
-  const ctx=canvas.getContext('2d');
-  const W=canvas.width, H=canvas.height;
-  const fi=+document.getElementById('featX').value;
-  const fj=+document.getElementById('featY').value;
-  const {model,trainXs,trainY,mean,std}=trainResult;
-  const nc=currentData.classNames.length;
-
-  ctx.clearRect(0,0,W,H);
-
-  // Compute data range in standardized space
-  const allXi=trainXs.map(r=>r[fi]), allXj=trainXs.map(r=>r[fj]);
-  const xMin=Math.min(...allXi)-0.5, xMax=Math.max(...allXi)+0.5;
-  const yMin=Math.min(...allXj)-0.5, yMax=Math.max(...allXj)+0.5;
-
-  const toCanvasX=v=>(v-xMin)/(xMax-xMin)*W;
-  const toCanvasY=v=>H-(v-yMin)/(yMax-yMin)*H;
-
-  // Draw decision regions
-  const res=3;
-  const numFeat=trainXs[0].length;
-  // For prediction, build a full-dimensional vector using mean (0 in std space) for non-selected features
-  for(let px=0;px<W;px+=res) {
-    for(let py=0;py<H;py+=res) {
-      const xi=xMin+(px/W)*(xMax-xMin);
-      const xj=yMin+((H-py)/H)*(yMax-yMin);
-      const vec=new Array(numFeat).fill(0);
-      vec[fi]=xi; vec[fj]=xj;
-      const cls=model.predict(vec);
-      ctx.fillStyle=CLASS_COLORS_DIM[cls%CLASS_COLORS_DIM.length];
-      ctx.fillRect(px,py,res,res);
-    }
+function redrawBoundary(){if(trainResult)drawBoundary();}
+function drawBoundary(){
+  const c=document.getElementById('boundaryCanvas'),ctx=c.getContext('2d'),W=c.width,H=c.height;
+  const fi=+document.getElementById('featX').value,fj=+document.getElementById('featY').value;
+  const{model,trainXs,trainY}=trainResult;ctx.clearRect(0,0,W,H);
+  const aX=trainXs.map(r=>r[fi]),aY=trainXs.map(r=>r[fj]);
+  const xMin=Math.min(...aX)-.5,xMax=Math.max(...aX)+.5,yMin=Math.min(...aY)-.5,yMax=Math.max(...aY)+.5;
+  const tX=v=>(v-xMin)/(xMax-xMin)*W,tY=v=>H-(v-yMin)/(yMax-yMin)*H;
+  const nf=trainXs[0].length,res=3;
+  for(let px=0;px<W;px+=res)for(let py=0;py<H;py+=res){
+    const xi=xMin+(px/W)*(xMax-xMin),xj=yMin+((H-py)/H)*(yMax-yMin);
+    const vec=new Array(nf).fill(0);vec[fi]=xi;vec[fj]=xj;
+    ctx.fillStyle=CC_DIM[model.predict(vec)%CC_DIM.length];ctx.fillRect(px,py,res,res);
   }
-
-  // Grid lines
-  ctx.strokeStyle='rgba(255,255,255,0.04)';
-  ctx.lineWidth=1;
-  for(let i=0;i<=10;i++) {
-    const x=W*i/10, y=H*i/10;
-    ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();
-  }
-
-  // Axis labels
-  ctx.fillStyle='#505670';
-  ctx.font='10px JetBrains Mono';
-  ctx.textAlign='center';
-  for(let i=0;i<=4;i++) {
-    const val=xMin+(xMax-xMin)*i/4;
-    const orig=val*std[fi]+mean[fi];
-    ctx.fillText(orig.toFixed(1),W*i/4,H-4);
-  }
-  ctx.textAlign='right';
-  for(let i=0;i<=4;i++) {
-    const val=yMin+(yMax-yMin)*i/4;
-    const orig=val*std[fj]+mean[fj];
-    ctx.fillText(orig.toFixed(1),W-4,H-H*i/4-4);
-  }
-
-  // Draw data points
+  ctx.strokeStyle='rgba(255,255,255,.04)';ctx.lineWidth=1;
+  for(let i=0;i<=10;i++){const x=W*i/10,y=H*i/10;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  ctx.fillStyle='#505670';ctx.font='10px JetBrains Mono';ctx.textAlign='center';
+  for(let i=0;i<=4;i++){ctx.fillText((xMin+(xMax-xMin)*i/4).toFixed(1),W*i/4,H-4);}
+  ctx.textAlign='right';for(let i=0;i<=4;i++){ctx.fillText((yMin+(yMax-yMin)*i/4).toFixed(1),W-4,H-H*i/4-4);}
   const svSet=trainResult.model.svIndices;
-  for(let k=0;k<trainXs.length;k++) {
-    const cx=toCanvasX(trainXs[k][fi]);
-    const cy=toCanvasY(trainXs[k][fj]);
-    const cls=trainY[k];
-    const isSV=svSet.has(k);
-
-    ctx.beginPath();
-    ctx.arc(cx,cy,isSV?6:4,0,Math.PI*2);
-    ctx.fillStyle=CLASS_COLORS[cls%CLASS_COLORS.length];
-    ctx.fill();
-    if(isSV) {
-      ctx.strokeStyle='#fff';
-      ctx.lineWidth=2;
-      ctx.stroke();
-    }
+  for(let k=0;k<trainXs.length;k++){
+    const cx=tX(trainXs[k][fi]),cy=tY(trainXs[k][fj]),cls=trainY[k],isSV=svSet.has(k);
+    ctx.beginPath();ctx.arc(cx,cy,isSV?6:4,0,Math.PI*2);ctx.fillStyle=CC[cls%CC.length];ctx.fill();
+    if(isSV){ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();}
   }
+  const nc=currentData.classNames.length,svC=new Array(nc).fill(0);for(const i of svSet)svC[trainY[i]]++;
+  document.getElementById('canvasLegend').innerHTML=currentData.classNames.map((n,i)=>`<div class="legend-item"><div class="legend-dot" style="background:${CC[i]}"></div>${n}</div>`).join('')+`<div class="legend-item"><div class="legend-sv"></div>Support Vector</div>`;
+  document.getElementById('svInfo').innerHTML=`<div style="font-family:var(--font-mono);font-size:.72rem;color:var(--text-muted);"><strong style="color:var(--accent);">${svSet.size}</strong> vetores de suporte: <span class="sv-badges">${currentData.classNames.map((n,i)=>`<span class="sv-badge" style="border-color:${CC[i]};color:${CC[i]};">● ${n}: ${svC[i]}</span>`).join('')}</span></div>`;
+}
+
+// ============================================================
+//  KERNEL SPACE 3D (Kernel PCA)
+// ============================================================
+function drawKernel3D(){
+  const canvas=document.getElementById('kernel3dCanvas'),ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height;ctx.clearRect(0,0,W,H);
+  if(!trainResult||!trainResult.kpcaProj)return;
+  const proj=trainResult.kpcaProj,labels=trainResult.trainY;
+  const svSet=trainResult.model.svIndices;
+
+  // Rotation
+  const cosA=Math.cos(rot3dY),sinA=Math.sin(rot3dY),cosB=Math.cos(rot3dX),sinB=Math.sin(rot3dX);
+  function project3D(p){
+    const x=p[0],y=p[1],z=p[2]||0;
+    const x1=x*cosA-z*sinA,z1=x*sinA+z*cosA;
+    const y1=y*cosB-z1*sinB;
+    return[W/2+x1*140,H/2-y1*140];
+  }
+
+  // Normalize proj to [-1,1]
+  let maxAbs=0;proj.forEach(p=>p.forEach(v=>{if(Math.abs(v)>maxAbs)maxAbs=Math.abs(v);}));
+  if(maxAbs===0)maxAbs=1;
+  const normP=proj.map(p=>p.map(v=>v/maxAbs));
+
+  // Draw axes
+  ctx.lineWidth=1;ctx.globalAlpha=0.25;
+  const axes=[[1,0,0,'PC1','#ef4444'],[0,1,0,'PC2','#22c55e'],[0,0,1,'PC3','#3b82f6']];
+  axes.forEach(([ax,ay,az,lbl,col])=>{
+    const[sx,sy]=project3D([0,0,0]),[ex,ey]=project3D([ax*1.2,ay*1.2,az*1.2]);
+    ctx.strokeStyle=col;ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();
+    ctx.fillStyle=col;ctx.font='bold 11px JetBrains Mono';ctx.textAlign='center';ctx.fillText(lbl,ex,ey-6);
+  });
+  ctx.globalAlpha=1;
+
+  // Depth sort
+  const pts=normP.map((p,i)=>{
+    const x=p[0],y=p[1],z=p[2]||0;
+    const x1=x*cosA-z*sinA,z1=x*sinA+z*cosA;
+    return{i,x:p[0],y:p[1],z:p[2]||0,depth:z1,cls:labels[i],isSV:svSet.has(i)};
+  }).sort((a,b)=>a.depth-b.depth);
+
+  pts.forEach(pt=>{
+    const[sx,sy]=project3D([pt.x,pt.y,pt.z]);
+    const sz=3.5+((pt.depth+1)/2)*3;
+    ctx.beginPath();ctx.arc(sx,sy,pt.isSV?sz+2:sz,0,Math.PI*2);
+    ctx.fillStyle=CC[pt.cls%CC.length];ctx.globalAlpha=0.4+((pt.depth+1)/2)*0.5;
+    ctx.fill();
+    if(pt.isSV){ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.globalAlpha=0.8;ctx.stroke();}
+  });
+  ctx.globalAlpha=1;
 
   // Legend
-  const legend=document.getElementById('canvasLegend');
-  let lhtml=currentData.classNames.map((n,i)=>
-    `<div class="legend-item"><div class="legend-dot" style="background:${CLASS_COLORS[i]}"></div>${n}</div>`
-  ).join('');
-  lhtml+=`<div class="legend-item"><div class="legend-sv"></div>Support Vector</div>`;
-  legend.innerHTML=lhtml;
+  document.getElementById('kernel3dLegend').innerHTML=currentData.classNames.map((n,i)=>`<div class="legend-item"><div class="legend-dot" style="background:${CC[i]}"></div>${n}</div>`).join('')+`<div class="legend-item"><div class="legend-sv"></div>Support Vector</div>`;
 
-  // SV info
-  const svCounts=new Array(nc).fill(0);
-  for(const i of svSet) svCounts[trainY[i]]++;
-  document.getElementById('svInfo').innerHTML=
-    `<div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted);">
-      <strong style="color:var(--accent);">${svSet.size}</strong> vetores de suporte:
-      <span class="sv-badges">${currentData.classNames.map((n,i)=>
-        `<span class="sv-badge" style="border-color:${CLASS_COLORS[i]};color:${CLASS_COLORS[i]};">●&nbsp;${n}: ${svCounts[i]}</span>`
-      ).join('')}</span>
-    </div>`;
+  // Kernel explanation
+  const k=trainResult.params.kernelType;
+  const explanations={
+    linear:`<strong>Kernel Linear</strong> — sem transformação de espaço. Os dados são mantidos no espaço original. A separação é feita por um hiperplano linear.<br><span class="formula">K(x,x') = x · x'</span><br>A projeção 3D via Kernel PCA aqui é essencialmente um PCA padrão.`,
+    rbf:`<strong>Kernel RBF (Gaussiano)</strong> — projeta os dados em um espaço de <strong>dimensão infinita</strong>. Cada ponto é mapeado por φ(x) para um espaço onde classes não-linearmente separáveis se tornam separáveis.<br><span class="formula">K(x,x') = exp(−γ‖x−x'‖²)</span><br>Observe como as classes ficam mais separadas nesta visualização 3D via Kernel PCA.`,
+    poly:`<strong>Kernel Polinomial (grau ${trainResult.params.degree})</strong> — projeta para um espaço de dimensão <strong>(d+grau)! / (d! × grau!)</strong>. As combinações polinomiais das features criam novas dimensões.<br><span class="formula">K(x,x') = (x · x' + 1)^${trainResult.params.degree}</span><br>Com grau maior, o espaço de projeção tem mais dimensões.`
+  };
+  document.getElementById('kernelExplain').innerHTML=explanations[k];
+}
+
+// Mouse drag for 3D rotation
+const c3d=document.getElementById('kernel3dCanvas');
+c3d.addEventListener('mousedown',e=>{dragging=true;lastMX=e.clientX;lastMY=e.clientY;});
+c3d.addEventListener('touchstart',e=>{dragging=true;lastMX=e.touches[0].clientX;lastMY=e.touches[0].clientY;},{passive:true});
+window.addEventListener('mousemove',e=>{if(!dragging)return;rot3dY+=(e.clientX-lastMX)*0.01;rot3dX+=(e.clientY-lastMY)*0.01;lastMX=e.clientX;lastMY=e.clientY;if(trainResult)drawKernel3D();});
+window.addEventListener('touchmove',e=>{if(!dragging)return;rot3dY+=(e.touches[0].clientX-lastMX)*0.01;rot3dX+=(e.touches[0].clientY-lastMY)*0.01;lastMX=e.touches[0].clientX;lastMY=e.touches[0].clientY;if(trainResult)drawKernel3D();},{passive:true});
+window.addEventListener('mouseup',()=>dragging=false);
+window.addEventListener('touchend',()=>dragging=false);
+
+// ============================================================
+//  ONE-VS-REST VISUALIZATION
+// ============================================================
+function drawOVR(){
+  if(!trainResult)return;
+  const nc=currentData.classNames.length;
+  const grid=document.getElementById('ovrGrid');
+  grid.innerHTML='';
+  const fi=+document.getElementById('ovrFeatX').value,fj=+document.getElementById('ovrFeatY').value;
+  const{trainXs,trainY}=trainResult;
+  const aX=trainXs.map(r=>r[fi]),aY=trainXs.map(r=>r[fj]);
+  const xMin=Math.min(...aX)-.5,xMax=Math.max(...aX)+.5,yMin=Math.min(...aY)-.5,yMax=Math.max(...aY)+.5;
+  const nf=trainXs[0].length;
+
+  for(let c=0;c<nc;c++){
+    const cell=document.createElement('div');cell.className='ovr-cell';
+    const color=CC[c%CC.length];
+    cell.innerHTML=`<h4 style="color:${color};">📌 "${currentData.classNames[c]}" vs Rest</h4>`;
+    const cvs=document.createElement('canvas');cvs.width=280;cvs.height=220;
+    cell.appendChild(cvs);
+
+    // Model info
+    const m=trainResult.model.models[c];
+    const svCount=m.svIdx.length;
+    const infoDiv=document.createElement('div');
+    infoDiv.style.cssText='font-family:var(--font-mono);font-size:.65rem;color:var(--text-dim);margin-top:8px;';
+    infoDiv.innerHTML=`SVs: <strong style="color:${color};">${svCount}</strong> | b = ${m.b.toFixed(3)}`;
+    cell.appendChild(infoDiv);
+    grid.appendChild(cell);
+
+    // Draw
+    const ctx=cvs.getContext('2d'),W=cvs.width,H=cvs.height,res=3;
+    const posColor=CC_DIM[c%CC_DIM.length];
+    const negColor='rgba(100,100,120,0.1)';
+
+    for(let px=0;px<W;px+=res)for(let py=0;py<H;py+=res){
+      const xi=xMin+(px/W)*(xMax-xMin),xj=yMin+((H-py)/H)*(yMax-yMin);
+      const vec=new Array(nf).fill(0);vec[fi]=xi;vec[fj]=xj;
+      const score=m.predict(vec);
+      ctx.fillStyle=score>0?posColor:negColor;
+      ctx.fillRect(px,py,res,res);
+    }
+
+    // Draw decision boundary line (score ≈ 0) by checking sign changes
+    ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.globalAlpha=0.7;
+    const step=2;
+    for(let px=0;px<W;px+=step)for(let py=0;py<H;py+=step){
+      const xi=xMin+(px/W)*(xMax-xMin),xj=yMin+((H-py)/H)*(yMax-yMin);
+      const vec=new Array(nf).fill(0);vec[fi]=xi;vec[fj]=xj;
+      const s0=m.predict(vec);
+      // Check neighbors
+      const xi2=xMin+((px+step)/W)*(xMax-xMin);
+      const xj2=yMin+((H-py-step)/H)*(yMax-yMin);
+      const vec1=new Array(nf).fill(0);vec1[fi]=xi2;vec1[fj]=xj;
+      const vec2=new Array(nf).fill(0);vec2[fi]=xi;vec2[fj]=xj2;
+      if(s0*m.predict(vec1)<0||s0*m.predict(vec2)<0){
+        ctx.fillStyle=color;ctx.fillRect(px,py,step,step);
+      }
+    }
+    ctx.globalAlpha=1;
+
+    // Data points
+    for(let k=0;k<trainXs.length;k++){
+      const cx=(trainXs[k][fi]-xMin)/(xMax-xMin)*W;
+      const cy=H-(trainXs[k][fj]-yMin)/(yMax-yMin)*H;
+      const isPos=trainY[k]===c;
+      const isSV=m.svIdx.includes(k);
+      ctx.beginPath();ctx.arc(cx,cy,isSV?5:3,0,Math.PI*2);
+      ctx.fillStyle=isPos?color:'#666';ctx.fill();
+      if(isSV){ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();}
+    }
+  }
 }
 
 // ============================================================
-//  RENDER METRICS
+//  METRICS / CM / REPORT / DATA
 // ============================================================
-function renderMetrics() {
-  const m=trainResult.metrics;
-  let wF1=0,total=0;
-  m.perClass.forEach(c=>{wF1+=c.f1*c.support;total+=c.support;});
-  wF1/=total;
-  const kLabel={linear:'Linear',rbf:'RBF',poly:'Polinomial'}[trainResult.params.kernelType];
+function renderMetrics(){
+  const m=trainResult.metrics;let wF=0,t=0;m.perClass.forEach(c=>{wF+=c.f1*c.support;t+=c.support;});
+  const kl={linear:'Linear',rbf:'RBF',poly:'Polinomial'}[trainResult.params.kernelType];
   document.getElementById('metricsRow').innerHTML=`
     <div class="metric-box"><div class="metric-value">${(m.accuracy*100).toFixed(1)}%</div><div class="metric-label">Acurácia</div></div>
-    <div class="metric-box"><div class="metric-value">${(wF1*100).toFixed(1)}%</div><div class="metric-label">F1 (wgt)</div></div>
+    <div class="metric-box"><div class="metric-value">${(wF/t*100).toFixed(1)}%</div><div class="metric-label">F1 (wgt)</div></div>
     <div class="metric-box"><div class="metric-value">${trainResult.model.numSV}</div><div class="metric-label">SVs</div></div>
-    <div class="metric-box"><div class="metric-value">${kLabel}</div><div class="metric-label">Kernel</div></div>`;
+    <div class="metric-box"><div class="metric-value">${kl}</div><div class="metric-label">Kernel</div></div>`;
 }
-
-function renderConfusionMatrix() {
-  const cm=trainResult.metrics.cm;
-  const names=currentData.classNames;
-  const maxVal=Math.max(...cm.flat(),1);
-  let html='<table class="cm-table">';
-  html+='<tr><td></td><td colspan="'+names.length+'" style="text-align:center;font-size:0.65rem;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:1px;padding-bottom:4px;">Predito</td></tr>';
-  html+='<tr><td></td>';
-  names.forEach(n=>html+=`<td class="cm-label">${n}</td>`);
-  html+='</tr>';
-  for(let i=0;i<cm.length;i++){
-    html+='<tr>';
-    html+=`<td class="cm-label" style="text-align:right;">${names[i]}</td>`;
-    for(let j=0;j<cm[i].length;j++){
-      const v=cm[i][j], int=v/maxVal, diag=i===j;
-      const bg=diag?`rgba(217,119,6,${0.15+int*0.55})`:`rgba(239,68,68,${int*0.5})`;
-      html+=`<td><div class="cm-cell" style="background:${bg};color:${int>0.35?'#fff':'#8b90a0'};">${v}</div></td>`;
-    }
-    html+='</tr>';
-  }
-  html+='</table>';
-  document.getElementById('confusionMatrix').innerHTML=html;
+function renderCM(){
+  const cm=trainResult.metrics.cm,ns=currentData.classNames,mx=Math.max(...cm.flat(),1);
+  let h='<table class="cm-table"><tr><td></td><td colspan="'+ns.length+'" style="text-align:center;font-size:.65rem;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:1px;padding-bottom:4px;">Predito</td></tr><tr><td></td>';
+  ns.forEach(n=>h+=`<td class="cm-label">${n}</td>`);h+='</tr>';
+  for(let i=0;i<cm.length;i++){h+='<tr>';h+=`<td class="cm-label" style="text-align:right;">${ns[i]}</td>`;
+    for(let j=0;j<cm[i].length;j++){const v=cm[i][j],int=v/mx,d=i===j;h+=`<td><div class="cm-cell" style="background:${d?`rgba(217,119,6,${.15+int*.55})`:`rgba(239,68,68,${int*.5})`};color:${int>.35?'#fff':'#8b90a0'};">${v}</div></td>`;}
+  h+='</tr>';}h+='</table>';document.getElementById('confusionMatrix').innerHTML=h;
 }
-
-function renderClassReport() {
-  const m=trainResult.metrics, names=currentData.classNames;
-  let html='<table class="report-table"><tr><th>Classe</th><th>Precision</th><th>Recall</th><th>F1-Score</th><th>Support</th></tr>';
-  for(let i=0;i<names.length;i++){
-    const c=m.perClass[i];
-    html+=`<tr><td><span class="class-dot" style="background:${CLASS_COLORS[i]};"></span>${names[i]}</td><td>${c.precision.toFixed(3)}</td><td>${c.recall.toFixed(3)}</td><td>${c.f1.toFixed(3)}</td><td>${c.support}</td></tr>`;
-  }
-  let wp=0,wr=0,wf=0,tot=0;
-  m.perClass.forEach(c=>{wp+=c.precision*c.support;wr+=c.recall*c.support;wf+=c.f1*c.support;tot+=c.support;});
-  html+=`<tr style="font-weight:700;"><td style="color:var(--accent);">Média ponderada</td><td>${(wp/tot).toFixed(3)}</td><td>${(wr/tot).toFixed(3)}</td><td>${(wf/tot).toFixed(3)}</td><td>${tot}</td></tr>`;
-  html+='</table>';
-  document.getElementById('classReport').innerHTML=html;
+function renderReport(){
+  const m=trainResult.metrics,ns=currentData.classNames;
+  let h='<table class="report-table"><tr><th>Classe</th><th>Precision</th><th>Recall</th><th>F1</th><th>Support</th></tr>';
+  for(let i=0;i<ns.length;i++){const c=m.perClass[i];h+=`<tr><td><span class="class-dot" style="background:${CC[i]};"></span>${ns[i]}</td><td>${c.precision.toFixed(3)}</td><td>${c.recall.toFixed(3)}</td><td>${c.f1.toFixed(3)}</td><td>${c.support}</td></tr>`;}
+  let wp=0,wr=0,wf=0,tot=0;m.perClass.forEach(c=>{wp+=c.precision*c.support;wr+=c.recall*c.support;wf+=c.f1*c.support;tot+=c.support;});
+  h+=`<tr style="font-weight:700;"><td style="color:var(--accent);">Média ponderada</td><td>${(wp/tot).toFixed(3)}</td><td>${(wr/tot).toFixed(3)}</td><td>${(wf/tot).toFixed(3)}</td><td>${tot}</td></tr></table>`;
+  document.getElementById('classReport').innerHTML=h;
 }
-
-function renderDataPreview() {
-  const{testX,testY,yPred}=trainResult;
-  const names=currentData.featureNames, cn=currentData.classNames;
-  const max=Math.min(20,testX.length);
-  let html='<table class="report-table"><tr>';
-  names.forEach(n=>html+=`<th>${n}</th>`);
-  html+='<th>Real</th><th>Predito</th><th>✓</th></tr>';
-  for(let i=0;i<max;i++){
-    const ok=testY[i]===yPred[i];
-    html+=`<tr style="${ok?'':'background:rgba(239,68,68,0.06);'}">`;
-    testX[i].forEach(v=>html+=`<td>${v.toFixed(1)}</td>`);
-    html+=`<td>${cn[testY[i]]}</td><td>${cn[yPred[i]]}</td><td>${ok?'✅':'❌'}</td></tr>`;
-  }
-  if(testX.length>max) html+=`<tr><td colspan="${names.length+3}" style="text-align:center;color:var(--text-dim);">... e mais ${testX.length-max} amostras</td></tr>`;
-  html+='</table>';
-  document.getElementById('dataPreview').innerHTML=html;
+function renderDataPreview(){
+  const{testX,testY,yPred}=trainResult,ns=currentData.featureNames,cn=currentData.classNames,max=Math.min(20,testX.length);
+  let h='<table class="report-table"><tr>';ns.forEach(n=>h+=`<th>${n}</th>`);h+='<th>Real</th><th>Predito</th><th>✓</th></tr>';
+  for(let i=0;i<max;i++){const ok=testY[i]===yPred[i];h+=`<tr style="${ok?'':'background:rgba(239,68,68,.06);'}">`;testX[i].forEach(v=>h+=`<td>${v.toFixed(1)}</td>`);h+=`<td>${cn[testY[i]]}</td><td>${cn[yPred[i]]}</td><td>${ok?'✅':'❌'}</td></tr>`;}
+  if(testX.length>max)h+=`<tr><td colspan="${ns.length+3}" style="text-align:center;color:var(--text-dim);">... e mais ${testX.length-max}</td></tr>`;
+  h+='</table>';document.getElementById('dataPreview').innerHTML=h;
 }
 
 // ============================================================
-//  UI HELPERS
+//  UI
 // ============================================================
-function switchTab(el, id) {
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('tab-'+id).classList.add('active');
-}
-
-function updateKernelInfo() {
-  const k=document.getElementById('kernel').value;
-  const info={
-    linear:'K(x,x\') = x · x\'',
-    rbf:'K(x,x\') = exp(−γ‖x−x\'‖²)',
-    poly:'K(x,x\') = (x · x\' + 1)^d'
-  };
-  document.getElementById('kernelInfo').textContent=info[k];
-  document.getElementById('gammaGroup').style.display=k==='rbf'?'':'none';
-  document.getElementById('degreeGroup').style.display=k==='poly'?'':'none';
-}
-
+function switchTab(el,id){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.getElementById('tab-'+id).classList.add('active');if(id==='kernel3d'&&trainResult)drawKernel3D();if(id==='ovr'&&trainResult)drawOVR();}
+function updateKernelInfo(){const k=document.getElementById('kernel').value;document.getElementById('kernelInfo').textContent={linear:"K(x,x') = x · x'",rbf:"K(x,x') = exp(−γ‖x−x'‖²)",poly:"K(x,x') = (x · x' + 1)^d"}[k];document.getElementById('gammaGroup').style.display=k==='rbf'?'':'none';document.getElementById('degreeGroup').style.display=k==='poly'?'':'none';}
 function setStatus(t){document.getElementById('statusText').textContent=t;}
-function showToast(msg,isErr=false){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.className='toast show'+(isErr?' error':'');
-  setTimeout(()=>t.className='toast',3000);
-}
-function resetAll(){
-  trainResult=null;
-  document.getElementById('placeholder').style.display='';
-  document.getElementById('resultsArea').style.display='none';
-  document.getElementById('paramC').value=0;
-  document.getElementById('cVal').textContent='1.00';
-  document.getElementById('paramGamma').value=-0.301;
-  document.getElementById('gammaVal').textContent='0.50';
-  document.getElementById('paramDegree').value=3;
-  document.getElementById('degreeVal').textContent='3';
-  document.getElementById('trainSplit').value=70;
-  document.getElementById('trainSplitVal').textContent='70';
-  document.getElementById('maxIter').value=100;
-  document.getElementById('maxIterVal').textContent='100';
-  document.getElementById('kernel').value='rbf';
-  updateKernelInfo();
-  setStatus('Pronto para treinar');
-  showToast('↺ Parâmetros resetados');
-}
+function showToast(m,e=false){const t=document.getElementById('toast');t.textContent=m;t.className='toast show'+(e?' error':'');setTimeout(()=>t.className='toast',3000);}
+function resetAll(){trainResult=null;document.getElementById('placeholder').style.display='';document.getElementById('resultsArea').style.display='none';document.getElementById('paramC').value=0;document.getElementById('cVal').textContent='1.00';document.getElementById('paramGamma').value=-0.301;document.getElementById('gammaVal').textContent='0.50';document.getElementById('paramDegree').value=3;document.getElementById('degreeVal').textContent='3';document.getElementById('trainSplit').value=70;document.getElementById('trainSplitVal').textContent='70';document.getElementById('maxIter').value=100;document.getElementById('maxIterVal').textContent='100';document.getElementById('kernel').value='rbf';updateKernelInfo();setStatus('Pronto para treinar');showToast('↺ Resetado');}
 
-// ============================================================
-//  INIT
-// ============================================================
-loadIris();
-updateKernelInfo();
+loadIris();updateKernelInfo();
 </script>
 </body>
 </html>
