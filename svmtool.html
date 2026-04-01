@@ -923,8 +923,8 @@ function trainBinarySVM(X, y, C, kernel, maxIter, tol=1e-3) {
 
   // Precompute kernel matrix
   const K = [];
+  for (let i=0;i<n;i++) K[i] = new Float64Array(n);
   for (let i=0;i<n;i++) {
-    K[i] = new Float64Array(n);
     for (let j=i;j<n;j++) {
       const v = kernel(X[i], X[j]);
       K[i][j] = v;
