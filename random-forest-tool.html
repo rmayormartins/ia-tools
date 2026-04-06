@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Random Forest Interativo — ICD/IFSC</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0b0d18;
+  --bg-card: #151827;
+  --bg-card-hover: #1d2133;
+  --bg-input: #0f1220;
+  --border: #262a3e;
+  --text: #e8eaf0;
+  --text-muted: #8a8fa3;
+  --text-dim: #4d5270;
+  --accent: #8b5cf6;
+  --accent-light: #a78bfa;
+  --accent-glow: rgba(139,92,246,0.12);
+  --accent-glow2: rgba(139,92,246,0.25);
+  --red: #ef4444;
+  --green: #22c55e;
+  --blue: #3b82f6;
+  --orange: #f97316;
+  --cyan: #06b6d4;
+  --yellow: #eab308;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+  --radius: 10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{font-size:14px;}
+body{font-family:var(--font-sans);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+.header{display:flex;align-items:center;gap:16px;padding:18px 28px;border-bottom:1px solid var(--border);background:linear-gradient(135deg,var(--bg),#0e1120);position:relative;}
+.header::after{content:'';position:absolute;bottom:0;left:0;width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);}
+.header-icon{width:44px;height:44px;background:var(--accent-glow);border:2px solid var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.header h1{font-family:var(--font-mono);font-size:1.35rem;font-weight:700;letter-spacing:-0.5px;}
+.header h1 span{color:var(--accent);}
+.header-sub{font-size:.78rem;color:var(--text-muted);margin-left:auto;font-family:var(--font-mono);}
+
+.app-layout{display:grid;grid-template-columns:330px 1fr;min-height:calc(100vh - 82px);}
+
+.sidebar{border-right:1px solid var(--border);padding:22px;display:flex;flex-direction:column;gap:18px;overflow-y:auto;max-height:calc(100vh - 82px);background:var(--bg);}
+.sidebar::-webkit-scrollbar{width:4px;}.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+.section-title{font-family:var(--font-mono);font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;}
+
+label{display:block;font-size:.75rem;font-weight:600;color:var(--text-muted);margin-bottom:5px;font-family:var(--font-mono);}
+select,input[type="number"]{width:100%;padding:8px 11px;background:var(--bg-input);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:var(--font-mono);font-size:.8rem;outline:none;transition:border-color .2s;}
+select:focus,input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
+select{cursor:pointer;appearance:none;}option{background:var(--bg-card);}
+.param-group{margin-bottom:11px;}.param-group:last-child{margin-bottom:0;}
+
+.slider-group{margin-bottom:12px;}
+.slider-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.slider-value{font-family:var(--font-mono);font-size:.8rem;color:var(--accent);font-weight:700;background:var(--accent-glow);padding:2px 8px;border-radius:4px;}
+input[type="range"]{-webkit-appearance:none;width:100%;height:5px;background:var(--border);border-radius:3px;outline:none;}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:var(--accent);border-radius:50%;cursor:pointer;box-shadow:0 0 8px var(--accent-glow2);}
+
+.btn{width:100%;padding:11px;border:none;border-radius:8px;font-family:var(--font-mono);font-size:.85rem;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.5px;}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent-light));color:#fff;box-shadow:0 4px 16px rgba(139,92,246,.25);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(139,92,246,.35);}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+.btn-secondary{background:var(--bg-card);color:var(--text-muted);border:1px solid var(--border);}
+.btn-secondary:hover{background:var(--bg-card-hover);color:var(--text);}
+
+.file-upload{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border:2px dashed var(--border);border-radius:8px;cursor:pointer;transition:all .2s;font-family:var(--font-mono);font-size:.75rem;color:var(--text-muted);}
+.file-upload:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-glow);}
+.file-upload input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;}
+
+.dataset-info{font-family:var(--font-mono);font-size:.7rem;color:var(--text-dim);margin-top:8px;line-height:1.5;padding:7px;background:var(--bg-input);border-radius:6px;}
+.dataset-info strong{color:var(--text-muted);}
+
+.info-box{font-family:var(--font-mono);font-size:.68rem;color:var(--text-dim);margin-top:6px;padding:6px 8px;background:var(--bg-input);border-radius:5px;border-left:3px solid var(--accent);line-height:1.5;}
+
+.main{padding:22px;overflow-y:auto;max-height:calc(100vh - 82px);background:linear-gradient(180deg,#0e1020,var(--bg));}
+.main::-webkit-scrollbar{width:4px;}.main::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+.results-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
+.result-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden;}
+.result-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:3px;background:linear-gradient(90deg,var(--accent),transparent);}
+.result-card h3{font-family:var(--font-mono);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--accent);margin-bottom:14px;}
+.result-card.full-width{grid-column:1/-1;}
+
+.metrics-row{display:flex;gap:10px;flex-wrap:wrap;}
+.metric-box{flex:1;min-width:75px;text-align:center;padding:11px 6px;background:var(--bg-input);border-radius:8px;border:1px solid var(--border);}
+.metric-value{font-family:var(--font-mono);font-size:1.4rem;font-weight:700;color:var(--accent-light);}
+.metric-label{font-size:.65rem;color:var(--text-muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.5px;margin-top:3px;}
+
+.cm-table{border-collapse:collapse;font-family:var(--font-mono);}
+.cm-table th,.cm-table td{padding:0;text-align:center;}
+.cm-cell{width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.95rem;border-radius:6px;margin:2px;transition:transform .2s;}
+.cm-cell:hover{transform:scale(1.08);}
+.cm-label{font-size:.65rem;color:var(--text-muted);padding:5px;max-width:65px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+.report-table{width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:.76rem;}
+.report-table th{text-align:left;padding:7px 10px;font-weight:700;color:var(--text-muted);border-bottom:2px solid var(--border);text-transform:uppercase;font-size:.65rem;letter-spacing:.5px;}
+.report-table td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text);}
+.report-table tr:last-child td{border-bottom:none;}
+.class-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;}
+
+.canvas-wrapper{position:relative;display:flex;justify-content:center;align-items:center;background:var(--bg-input);border-radius:8px;border:1px solid var(--border);padding:8px;}
+canvas{border-radius:6px;display:block;max-width:100%;}
+.canvas-legend{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap;justify-content:center;}
+.legend-item{display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:.7rem;color:var(--text-muted);}
+.legend-dot{width:10px;height:10px;border-radius:50%;}
+.feature-select-row{display:flex;gap:10px;margin-bottom:12px;}
+.feature-select-row>div{flex:1;}
+
+.placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:500px;color:var(--text-dim);text-align:center;gap:14px;}
+.placeholder-icon{font-size:60px;opacity:.3;}
+.placeholder-text{font-family:var(--font-mono);font-size:.88rem;max-width:360px;line-height:1.6;}
+.placeholder-hint{font-size:.73rem;color:var(--text-dim);font-family:var(--font-mono);}
+
+.status-bar{padding:8px 14px;font-family:var(--font-mono);font-size:.68rem;display:flex;align-items:center;gap:8px;}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+.tabs{display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid var(--border);flex-wrap:wrap;}
+.tab{padding:9px 16px;font-family:var(--font-mono);font-size:.74rem;font-weight:600;cursor:pointer;color:var(--text-muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s;user-select:none;white-space:nowrap;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-content{display:none;}.tab-content.active{display:block;}
+
+.toast{position:fixed;bottom:24px;right:24px;padding:11px 18px;background:var(--bg-card);border:1px solid var(--accent);border-radius:8px;font-family:var(--font-mono);font-size:.76rem;color:var(--accent);box-shadow:0 4px 24px rgba(0,0,0,.4);transform:translateY(80px);opacity:0;transition:all .3s;z-index:100;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.error{border-color:var(--red);color:var(--red);}
+
+.progress-bar{width:100%;height:4px;background:var(--bg-input);border-radius:2px;margin-top:8px;overflow:hidden;display:none;}
+.progress-bar.visible{display:block;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-light));transition:width .1s;width:0%;}
+
+.explain{font-family:var(--font-mono);font-size:.72rem;color:var(--text-muted);line-height:1.7;padding:12px;background:var(--bg-input);border-radius:8px;border:1px solid var(--border);margin-bottom:14px;}
+.explain strong{color:var(--accent);}
+.explain .formula{color:var(--accent-light);font-weight:700;}
+
+/* Tree visualization */
+.tree-container{width:100%;overflow:auto;padding:10px;min-height:300px;background:var(--bg-input);border-radius:8px;border:1px solid var(--border);}
+.tree-container svg{display:block;margin:0 auto;}
+
+/* Tree gallery navigator */
+.tree-nav{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+.tree-nav-buttons{display:flex;gap:6px;}
+.tree-nav-buttons button{padding:6px 12px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-muted);border-radius:5px;cursor:pointer;font-family:var(--font-mono);font-size:.7rem;font-weight:700;transition:all .2s;}
+.tree-nav-buttons button:hover{border-color:var(--accent);color:var(--accent);}
+.tree-counter{font-family:var(--font-mono);font-size:.78rem;color:var(--accent);font-weight:700;background:var(--accent-glow);padding:5px 12px;border-radius:5px;}
+.tree-info{font-family:var(--font-mono);font-size:.7rem;color:var(--text-dim);}
+.tree-info strong{color:var(--text-muted);}
+.tree-controls{display:flex;gap:8px;}
+.tree-controls button{padding:6px 14px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-muted);border-radius:5px;cursor:pointer;font-family:var(--font-mono);font-size:.7rem;font-weight:700;}
+
+/* Feature importance */
+.fi-bar-container{margin-bottom:8px;}
+.fi-bar-label{font-family:var(--font-mono);font-size:.72rem;color:var(--text-muted);margin-bottom:4px;display:flex;justify-content:space-between;}
+.fi-bar-track{height:20px;background:var(--bg-input);border-radius:4px;overflow:hidden;}
+.fi-bar-fill{height:100%;border-radius:4px;transition:width .6s ease;}
+
+/* Voting visualization */
+.vote-container{display:flex;flex-direction:column;gap:14px;}
+.vote-sample{display:flex;align-items:center;gap:10px;margin-bottom:6px;font-family:var(--font-mono);font-size:.72rem;}
+.vote-label{min-width:80px;color:var(--text-muted);}
+.vote-bar-track{flex:1;height:18px;background:var(--bg-input);border-radius:4px;overflow:hidden;display:flex;}
+.vote-bar-segment{height:100%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.65rem;transition:width .4s;}
+.sample-selector{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.sample-nav{display:flex;gap:6px;}
+.sample-nav button{padding:5px 10px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-muted);border-radius:5px;cursor:pointer;font-family:var(--font-mono);font-size:.7rem;font-weight:700;}
+.sample-nav button:hover{border-color:var(--accent);color:var(--accent);}
+.sample-counter{font-family:var(--font-mono);font-size:.7rem;color:var(--text-muted);min-width:80px;text-align:center;}
+.sample-data{font-family:var(--font-mono);font-size:.7rem;color:var(--text-dim);padding:10px;background:var(--bg-input);border-radius:6px;margin-bottom:12px;}
+.sample-data strong{color:var(--text);}
+
+/* Tree mini-cards in gallery */
+.tree-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:14px;}
+.tree-stat{padding:8px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;text-align:center;}
+.tree-stat-val{font-family:var(--font-mono);font-size:1.05rem;font-weight:700;color:var(--accent-light);}
+.tree-stat-lbl{font-family:var(--font-mono);font-size:.6rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
+
+@media(max-width:900px){.app-layout{grid-template-columns:1fr;}.sidebar{max-height:none;border-right:none;border-bottom:1px solid var(--border);}.main{max-height:none;}.results-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">🌲</div>
+  <h1><span>Random</span>Forest<span>.</span>lab</h1>
+  <div class="header-sub">ICD · IFSC · Prof. Ramon Mayor Martins</div>
+</div>
+
+<div class="app-layout">
+  <div class="sidebar">
+    <div>
+      <div class="section-title">📊 Dataset</div>
+      <div class="card">
+        <div class="param-group">
+          <label>Selecionar dataset</label>
+          <select id="datasetSelect" onchange="onDatasetChange()">
+            <option value="iris">Iris (Fisher, 1936)</option>
+            <option value="custom">Upload CSV personalizado</option>
+          </select>
+        </div>
+        <div id="csvUploadArea" style="display:none;">
+          <div class="file-upload">📁 Arraste ou clique para carregar CSV<input type="file" id="csvFile" accept=".csv" onchange="loadCSV(event)"></div>
+          <div class="dataset-info" style="margin-top:5px;">Formato: features numéricas + última coluna como <strong>target</strong></div>
+        </div>
+        <div id="datasetInfo" class="dataset-info">
+          <strong>Iris:</strong> 150 amostras, 4 features<br>
+          <strong>Classes:</strong> setosa, versicolor, virginica<br>
+          <strong>Features:</strong> sepal_length, sepal_width, petal_length, petal_width
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">🌲 Floresta</div>
+      <div class="card">
+        <div class="slider-group">
+          <div class="slider-header"><label style="margin:0;">Nº de árvores</label><span class="slider-value" id="nTreesVal">20</span></div>
+          <input type="range" id="paramNTrees" min="3" max="100" step="1" value="20" oninput="document.getElementById('nTreesVal').textContent=this.value;">
+        </div>
+        <div class="slider-group">
+          <div class="slider-header"><label style="margin:0;">Profundidade máxima</label><span class="slider-value" id="maxDepthVal">5</span></div>
+          <input type="range" id="paramMaxDepth" min="1" max="15" step="1" value="5" oninput="document.getElementById('maxDepthVal').textContent=this.value;">
+        </div>
+        <div class="slider-group">
+          <div class="slider-header"><label style="margin:0;">Min. amostras p/ split</label><span class="slider-value" id="minSplitVal">2</span></div>
+          <input type="range" id="paramMinSplit" min="2" max="20" step="1" value="2" oninput="document.getElementById('minSplitVal').textContent=this.value;">
+        </div>
+        <div class="param-group">
+          <label>Features por split (max_features)</label>
+          <select id="maxFeatures">
+            <option value="sqrt" selected>√(n_features) — padrão</option>
+            <option value="log2">log₂(n_features)</option>
+            <option value="all">Todas as features</option>
+          </select>
+          <div class="info-box">Quantas features cada split considera. <strong>√n</strong> aumenta diversidade entre as árvores.</div>
+        </div>
+        <div class="param-group">
+          <label>Critério de divisão</label>
+          <select id="criterion">
+            <option value="gini" selected>Gini (Impureza)</option>
+            <option value="entropy">Entropia</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">⚙️ Treino</div>
+      <div class="card">
+        <div class="slider-group">
+          <div class="slider-header"><label style="margin:0;">Proporção treino (%)</label><span class="slider-value" id="trainSplitVal">70</span></div>
+          <input type="range" id="trainSplit" min="50" max="90" step="5" value="70" oninput="document.getElementById('trainSplitVal').textContent=this.value;">
+        </div>
+        <div class="param-group">
+          <label>Bootstrap sampling</label>
+          <select id="bootstrap">
+            <option value="true" selected>Sim (com reposição)</option>
+            <option value="false">Não (todas as amostras)</option>
+          </select>
+          <div class="info-box">Bootstrap = cada árvore vê uma amostra aleatória com reposição do treino. Permite cálculo de <strong>OOB error</strong>.</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">▶️ Ação</div>
+      <button class="btn btn-primary" id="trainBtn" onclick="trainRF()">🌲 Treinar Floresta</button>
+      <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+      <div style="height:7px;"></div>
+      <button class="btn btn-secondary" onclick="resetAll()">↺ Resetar</button>
+    </div>
+    <div style="flex:1;"></div>
+    <div class="status-bar"><div class="status-dot"></div><span id="statusText" style="color:var(--text-dim);">Pronto para treinar</span></div>
+  </div>
+
+  <div class="main" id="mainContent">
+    <div class="placeholder" id="placeholder">
+      <div class="placeholder-icon">🌲</div>
+      <div class="placeholder-text">Configure o número de árvores e hiperparâmetros, depois clique em <strong style="color:var(--accent);">Treinar Floresta</strong>.</div>
+      <div class="placeholder-hint">Dataset Iris carregado • 150 amostras</div>
+    </div>
+
+    <div id="resultsArea" style="display:none;">
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab(this,'forest')">🌲 Floresta</div>
+        <div class="tab" onclick="switchTab(this,'gallery')">🖼️ Galeria de Árvores</div>
+        <div class="tab" onclick="switchTab(this,'voting')">🗳️ Votação</div>
+        <div class="tab" onclick="switchTab(this,'importance')">📊 Importância</div>
+        <div class="tab" onclick="switchTab(this,'boundary')">📐 Fronteira</div>
+        <div class="tab" onclick="switchTab(this,'metrics')">📈 Métricas</div>
+        <div class="tab" onclick="switchTab(this,'data')">📋 Dados</div>
+      </div>
+
+      <!-- Tab: Forest Overview -->
+      <div class="tab-content active" id="tab-forest">
+        <div class="result-card full-width">
+          <h3>🌲 Visão Geral da Floresta</h3>
+          <div class="explain">
+            O <strong>Random Forest</strong> é um <strong>ensemble</strong> de árvores de decisão treinadas com duas fontes de aleatoriedade:
+            <span class="formula">(1) bootstrap sampling</span> — cada árvore vê uma amostra aleatória com reposição —
+            e <span class="formula">(2) feature subsampling</span> — em cada split, apenas um subconjunto aleatório de features é considerado.
+            A predição final é o <strong>voto majoritário</strong> de todas as árvores. Isso reduz variância e overfitting.
+          </div>
+          <div class="metrics-row" id="forestStats"></div>
+          <h3 style="margin-top:18px;">📊 Distribuição de profundidade e tamanho das árvores</h3>
+          <div class="canvas-wrapper"><canvas id="forestCanvas" width="800" height="280"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Tab: Tree Gallery -->
+      <div class="tab-content" id="tab-gallery">
+        <div class="result-card full-width">
+          <h3>🖼️ Galeria de Árvores Individuais</h3>
+          <div class="explain">
+            Navegue pelas árvores individuais da floresta. Observe como cada árvore é <strong>diferente</strong> devido à amostragem bootstrap e ao subconjunto de features. Essa <strong>diversidade</strong> é o que torna o ensemble poderoso.
+          </div>
+          <div class="tree-nav">
+            <div class="tree-nav-buttons">
+              <button onclick="navTree(-1)">◀ Anterior</button>
+              <button onclick="navTree(1)">Próxima ▶</button>
+            </div>
+            <div class="tree-counter" id="treeCounter">Árvore 1 / N</div>
+            <div class="tree-info" id="treeInfo"></div>
+            <div style="flex:1;"></div>
+            <div class="tree-controls">
+              <button onclick="zoomTree(1.2)">🔍+</button>
+              <button onclick="zoomTree(0.8)">🔍−</button>
+              <button onclick="zoomTree(0)">↺</button>
+            </div>
+          </div>
+          <div class="tree-stats" id="treeStats"></div>
+          <div class="tree-container" id="treeContainer"></div>
+        </div>
+      </div>
+
+      <!-- Tab: Voting -->
+      <div class="tab-content" id="tab-voting">
+        <div class="result-card full-width">
+          <h3>🗳️ Voto das Árvores (por amostra de teste)</h3>
+          <div class="explain">
+            Cada árvore "vota" em uma classe. A classe com mais votos vence. Navegue pelas amostras de teste e veja como as árvores divergem ou concordam.
+          </div>
+          <div class="sample-selector">
+            <div class="sample-nav">
+              <button onclick="navVoteSample(-1)">◀ Anterior</button>
+              <button onclick="navVoteSample(1)">Próximo ▶</button>
+            </div>
+            <div class="sample-counter" id="voteSampleCounter"></div>
+          </div>
+          <div id="voteSampleContent"></div>
+        </div>
+      </div>
+
+      <!-- Tab: Feature Importance -->
+      <div class="tab-content" id="tab-importance">
+        <div class="result-card full-width">
+          <h3>📊 Importância Agregada das Features</h3>
+          <div class="explain">A importância de cada feature é calculada pela <strong>redução média de impureza</strong> ponderada, agregada sobre todas as árvores da floresta.</div>
+          <div id="featureImportance"></div>
+        </div>
+      </div>
+
+      <!-- Tab: Boundary -->
+      <div class="tab-content" id="tab-boundary">
+        <div class="result-card full-width">
+          <h3>📐 Fronteira de Decisão (projeção 2D)</h3>
+          <div class="explain">A fronteira do Random Forest é um <strong>mosaico</strong> resultante da combinação de muitas árvores, formando regiões com cantos e bordas características.</div>
+          <div class="feature-select-row">
+            <div><label>Feature eixo X</label><select id="featX" onchange="redrawBoundary()"></select></div>
+            <div><label>Feature eixo Y</label><select id="featY" onchange="redrawBoundary()"></select></div>
+          </div>
+          <div class="canvas-wrapper"><canvas id="boundaryCanvas" width="560" height="420"></canvas></div>
+          <div class="canvas-legend" id="canvasLegend"></div>
+        </div>
+      </div>
+
+      <!-- Tab: Metrics -->
+      <div class="tab-content" id="tab-metrics">
+        <div class="results-grid">
+          <div class="result-card"><h3>📊 Métricas Gerais</h3><div class="metrics-row" id="metricsRow"></div></div>
+          <div class="result-card"><h3>🎯 Matriz de Confusão</h3><div style="display:flex;justify-content:center;" id="confusionMatrix"></div></div>
+          <div class="result-card full-width"><h3>📋 Relatório de Classificação</h3><div id="classReport"></div></div>
+        </div>
+      </div>
+
+      <!-- Tab: Data -->
+      <div class="tab-content" id="tab-data">
+        <div class="result-card full-width"><h3>📋 Amostra dos Dados de Teste</h3><div style="overflow-x:auto;" id="dataPreview"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+//  IRIS
+// ============================================================
+const IRIS={featureNames:['sepal_length','sepal_width','petal_length','petal_width'],classNames:['setosa','versicolor','virginica'],samples:[
+[5.1,3.5,1.4,0.2,0],[4.9,3.0,1.4,0.2,0],[4.7,3.2,1.3,0.2,0],[4.6,3.1,1.5,0.2,0],[5.0,3.6,1.4,0.2,0],[5.4,3.9,1.7,0.4,0],[4.6,3.4,1.4,0.3,0],[5.0,3.4,1.5,0.2,0],[4.4,2.9,1.4,0.2,0],[4.9,3.1,1.5,0.1,0],[5.4,3.7,1.5,0.2,0],[4.8,3.4,1.6,0.2,0],[4.8,3.0,1.4,0.1,0],[4.3,3.0,1.1,0.1,0],[5.8,4.0,1.2,0.2,0],[5.7,4.4,1.5,0.4,0],[5.4,3.9,1.3,0.4,0],[5.1,3.5,1.4,0.3,0],[5.7,3.8,1.7,0.3,0],[5.1,3.8,1.5,0.3,0],[5.4,3.4,1.7,0.2,0],[5.1,3.7,1.5,0.4,0],[4.6,3.6,1.0,0.2,0],[5.1,3.3,1.7,0.5,0],[4.8,3.4,1.9,0.2,0],[5.0,3.0,1.6,0.2,0],[5.0,3.4,1.6,0.4,0],[5.2,3.5,1.5,0.2,0],[5.2,3.4,1.4,0.2,0],[4.7,3.2,1.6,0.2,0],[4.8,3.1,1.6,0.2,0],[5.4,3.4,1.5,0.4,0],[5.2,4.1,1.5,0.1,0],[5.5,4.2,1.4,0.2,0],[4.9,3.1,1.5,0.2,0],[5.0,3.2,1.2,0.2,0],[5.5,3.5,1.3,0.2,0],[4.9,3.6,1.4,0.1,0],[4.4,3.0,1.3,0.2,0],[5.1,3.4,1.5,0.2,0],[5.0,3.5,1.3,0.3,0],[4.5,2.3,1.3,0.3,0],[4.4,3.2,1.3,0.2,0],[5.0,3.5,1.6,0.6,0],[5.1,3.8,1.9,0.4,0],[4.8,3.0,1.4,0.3,0],[5.1,3.8,1.6,0.2,0],[4.6,3.2,1.4,0.2,0],[5.3,3.7,1.5,0.2,0],[5.0,3.3,1.4,0.2,0],
+[7.0,3.2,4.7,1.4,1],[6.4,3.2,4.5,1.5,1],[6.9,3.1,4.9,1.5,1],[5.5,2.3,4.0,1.3,1],[6.5,2.8,4.6,1.5,1],[5.7,2.8,4.5,1.3,1],[6.3,3.3,4.7,1.6,1],[4.9,2.4,3.3,1.0,1],[6.6,2.9,4.6,1.3,1],[5.2,2.7,3.9,1.4,1],[5.0,2.0,3.5,1.0,1],[5.9,3.0,4.2,1.5,1],[6.0,2.2,4.0,1.0,1],[6.1,2.9,4.7,1.4,1],[5.6,2.9,3.6,1.3,1],[6.7,3.1,4.4,1.4,1],[5.6,3.0,4.5,1.5,1],[5.8,2.7,4.1,1.0,1],[6.2,2.2,4.5,1.5,1],[5.6,2.5,3.9,1.1,1],[5.9,3.2,4.8,1.8,1],[6.1,2.8,4.0,1.3,1],[6.3,2.5,4.9,1.5,1],[6.1,2.8,4.7,1.2,1],[6.4,2.9,4.3,1.3,1],[6.6,3.0,4.4,1.4,1],[6.8,2.8,4.8,1.4,1],[6.7,3.0,5.0,1.7,1],[6.0,2.9,4.5,1.5,1],[5.7,2.6,3.5,1.0,1],[5.5,2.4,3.8,1.1,1],[5.5,2.4,3.7,1.0,1],[5.8,2.7,3.9,1.2,1],[6.0,2.7,5.1,1.6,1],[5.4,3.0,4.5,1.5,1],[6.0,3.4,4.5,1.6,1],[6.7,3.1,4.7,1.5,1],[6.3,2.3,4.4,1.3,1],[5.6,3.0,4.1,1.3,1],[5.5,2.5,4.0,1.3,1],[5.5,2.6,4.4,1.2,1],[6.1,3.0,4.6,1.4,1],[5.8,2.6,4.0,1.2,1],[5.0,2.3,3.3,1.0,1],[5.6,2.7,4.2,1.3,1],[5.7,3.0,4.2,1.2,1],[5.7,2.9,4.2,1.3,1],[6.2,2.9,4.3,1.3,1],[5.1,2.5,3.0,1.1,1],[5.7,2.8,4.1,1.3,1],
+[6.3,3.3,6.0,2.5,2],[5.8,2.7,5.1,1.9,2],[7.1,3.0,5.9,2.1,2],[6.3,2.9,5.6,1.8,2],[6.5,3.0,5.8,2.2,2],[7.6,3.0,6.6,2.1,2],[4.9,2.5,4.5,1.7,2],[7.3,2.9,6.3,1.8,2],[6.7,2.5,5.8,1.8,2],[7.2,3.6,6.1,2.5,2],[6.5,3.2,5.1,2.0,2],[6.4,2.7,5.3,1.9,2],[6.8,3.0,5.5,2.1,2],[5.7,2.5,5.0,2.0,2],[5.8,2.8,5.1,2.4,2],[6.4,3.2,5.3,2.3,2],[6.5,3.0,5.5,1.8,2],[7.7,3.8,6.7,2.2,2],[7.7,2.6,6.9,2.3,2],[6.0,2.2,5.0,1.5,2],[6.9,3.2,5.7,2.3,2],[5.6,2.8,4.9,2.0,2],[7.7,2.8,6.7,2.0,2],[6.3,2.7,4.9,1.8,2],[6.7,3.3,5.7,2.1,2],[7.2,3.2,6.0,1.8,2],[6.2,2.8,4.8,1.8,2],[6.1,3.0,4.9,1.8,2],[6.4,2.8,5.6,2.1,2],[7.2,3.0,5.8,1.6,2],[7.4,2.8,6.1,1.9,2],[7.9,3.8,6.4,2.0,2],[6.4,2.8,5.6,2.2,2],[6.3,2.8,5.1,1.5,2],[6.1,2.6,5.6,1.4,2],[7.7,3.0,6.1,2.3,2],[6.3,3.4,5.6,2.4,2],[6.4,3.1,5.5,1.8,2],[6.0,3.0,4.8,1.8,2],[6.9,3.1,5.4,2.1,2],[6.7,3.1,5.6,2.4,2],[6.9,3.1,5.1,2.3,2],[5.8,2.7,5.1,1.9,2],[6.8,3.2,5.9,2.3,2],[6.7,3.3,5.7,2.5,2],[6.7,3.0,5.2,2.3,2],[6.3,2.5,5.0,1.9,2],[6.5,3.0,5.2,2.0,2],[6.2,3.4,5.4,2.3,2],[5.9,3.0,5.1,1.8,2]
+]};
+
+const CC=['#22c55e','#3b82f6','#ef4444','#f59e0b','#a855f7','#06b6d4'];
+const CC_DIM=['rgba(34,197,94,0.18)','rgba(59,130,246,0.18)','rgba(239,68,68,0.18)','rgba(245,158,11,0.18)','rgba(168,85,247,0.18)','rgba(6,182,212,0.18)'];
+
+let currentData=null,trainResult=null;
+let currentTreeIdx=0,currentVoteSample=0,treeZoom=1;
+
+// ============================================================
+//  DATA
+// ============================================================
+function loadIris(){currentData={X:IRIS.samples.map(r=>r.slice(0,4)),y:IRIS.samples.map(r=>r[4]),featureNames:IRIS.featureNames,classNames:IRIS.classNames,name:'Iris'};updateDatasetInfo();populateFeatureSelects();}
+function onDatasetChange(){document.getElementById('csvUploadArea').style.display=document.getElementById('datasetSelect').value==='custom'?'block':'none';if(document.getElementById('datasetSelect').value==='iris')loadIris();}
+function loadCSV(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=function(ev){try{const ls=ev.target.result.trim().split('\n').map(l=>l.split(',').map(s=>s.trim()));if(ls.length<3)throw new Error('CSV muito pequeno');const h=ls[0],d=ls.slice(1).filter(r=>r.length===h.length),X=d.map(r=>r.slice(0,-1).map(Number));if(X.some(r=>r.some(isNaN)))throw new Error('Features devem ser numéricas');const raw=d.map(r=>r[r.length-1]),cn=[...new Set(raw)];currentData={X,y:raw.map(l=>cn.indexOf(l)),featureNames:h.slice(0,-1),classNames:cn,name:f.name};updateDatasetInfo();populateFeatureSelects();showToast('✅ CSV: '+X.length+' amostras');}catch(err){showToast('❌ '+err.message,true);}};r.readAsText(f);}
+function updateDatasetInfo(){const d=currentData;document.getElementById('datasetInfo').innerHTML=`<strong>${d.name}:</strong> ${d.X.length} amostras, ${d.featureNames.length} features<br><strong>Classes:</strong> ${d.classNames.join(', ')}<br><strong>Features:</strong> ${d.featureNames.join(', ')}`;document.querySelector('.placeholder-hint').textContent=`Dataset ${d.name} carregado • ${d.X.length} amostras`;}
+function populateFeatureSelects(){['featX','featY'].forEach((id,idx)=>{const s=document.getElementById(id);s.innerHTML=currentData.featureNames.map((n,i)=>`<option value="${i}" ${i===(idx%2===0?0:1)?'selected':''}>${n}</option>`).join('');});}
+
+// ============================================================
+//  CART DECISION TREE
+// ============================================================
+function giniImpurity(y){if(y.length===0)return 0;const c={};y.forEach(v=>c[v]=(c[v]||0)+1);let s=0;for(const k in c){const p=c[k]/y.length;s+=p*p;}return 1-s;}
+function entropy(y){if(y.length===0)return 0;const c={};y.forEach(v=>c[v]=(c[v]||0)+1);let s=0;for(const k in c){const p=c[k]/y.length;if(p>0)s-=p*Math.log2(p);}return s;}
+function impFn(crit){return crit==='entropy'?entropy:giniImpurity;}
+
+function findBestSplit(X,y,featureSubset,criterion){
+  const f=impFn(criterion);
+  let bestGain=-Infinity,bestFeat=-1,bestThr=0;
+  const parentImp=f(y),n=y.length;
+  for(const fi of featureSubset){
+    const vals=[...new Set(X.map(r=>r[fi]))].sort((a,b)=>a-b);
+    for(let i=0;i<vals.length-1;i++){
+      const thr=(vals[i]+vals[i+1])/2;
+      const lY=[],rY=[];
+      for(let j=0;j<n;j++){if(X[j][fi]<=thr)lY.push(y[j]);else rY.push(y[j]);}
+      if(lY.length===0||rY.length===0)continue;
+      const gain=parentImp-(lY.length/n)*f(lY)-(rY.length/n)*f(rY);
+      if(gain>bestGain){bestGain=gain;bestFeat=fi;bestThr=thr;}
+    }
+  }
+  return{feature:bestFeat,threshold:bestThr,gain:bestGain};
+}
+
+function majorityClass(y,nc){const c=new Array(nc).fill(0);y.forEach(v=>c[v]++);let mI=0,mV=-1;for(let i=0;i<nc;i++)if(c[i]>mV){mV=c[i];mI=i;}return mI;}
+function classCounts(y,nc){const c=new Array(nc).fill(0);y.forEach(v=>c[v]++);return c;}
+
+function buildTree(X,y,params,depth=0){
+  const{maxDepth,minSplit,criterion,nFeaturesPerSplit,nFeaturesTotal,numClasses}=params;
+  const f=impFn(criterion);
+  const nSamples=y.length,imp=f(y),counts=classCounts(y,numClasses),pred=majorityClass(y,numClasses);
+  if(depth>=maxDepth||nSamples<minSplit||imp===0)return{leaf:true,prediction:pred,counts,nSamples,impurity:imp};
+  // Random feature subset
+  const allFeats=Array.from({length:nFeaturesTotal},(_,i)=>i);
+  const shuffled=[...allFeats];for(let i=shuffled.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];}
+  const featureSubset=shuffled.slice(0,nFeaturesPerSplit);
+  const split=findBestSplit(X,y,featureSubset,criterion);
+  if(split.feature===-1||split.gain<=0)return{leaf:true,prediction:pred,counts,nSamples,impurity:imp};
+  const lX=[],lY=[],rX=[],rY=[];
+  for(let i=0;i<nSamples;i++){if(X[i][split.feature]<=split.threshold){lX.push(X[i]);lY.push(y[i]);}else{rX.push(X[i]);rY.push(y[i]);}}
+  return{leaf:false,feature:split.feature,threshold:split.threshold,gain:split.gain,impurity:imp,counts,nSamples,prediction:pred,
+    left:buildTree(lX,lY,params,depth+1),right:buildTree(rX,rY,params,depth+1)};
+}
+
+function predictTree(tree,x){if(tree.leaf)return tree.prediction;if(x[tree.feature]<=tree.threshold)return predictTree(tree.left,x);return predictTree(tree.right,x);}
+
+function treeFeatureImportance(tree,nFeatures){
+  const imp=new Array(nFeatures).fill(0);
+  const total=tree.nSamples;
+  function trav(node){if(node.leaf)return;const wg=(node.nSamples/total)*node.gain;imp[node.feature]+=wg;trav(node.left);trav(node.right);}
+  trav(tree);return imp;
+}
+
+function treeDepth(node){if(node.leaf)return 1;return 1+Math.max(treeDepth(node.left),treeDepth(node.right));}
+function treeNodeCount(node){if(node.leaf)return 1;return 1+treeNodeCount(node.left)+treeNodeCount(node.right);}
+
+// ============================================================
+//  RANDOM FOREST
+// ============================================================
+function bootstrapSample(X,y){
+  const n=X.length;const bX=[],bY=[],idx=[],used=new Set();
+  for(let i=0;i<n;i++){const j=Math.floor(Math.random()*n);bX.push(X[j]);bY.push(y[j]);idx.push(j);used.add(j);}
+  const oobIdx=[];for(let i=0;i<n;i++)if(!used.has(i))oobIdx.push(i);
+  return{bX,bY,inBagIdx:idx,oobIdx};
+}
+
+function trainRandomForest(X,y,params,onProgress){
+  const{nTrees,maxDepth,minSplit,maxFeaturesType,criterion,bootstrap,numClasses}=params;
+  const nFeatTotal=X[0].length;
+  let nFeaturesPerSplit;
+  if(maxFeaturesType==='sqrt')nFeaturesPerSplit=Math.max(1,Math.round(Math.sqrt(nFeatTotal)));
+  else if(maxFeaturesType==='log2')nFeaturesPerSplit=Math.max(1,Math.round(Math.log2(nFeatTotal)));
+  else nFeaturesPerSplit=nFeatTotal;
+
+  const trees=[],bootstraps=[];
+  const oobPredictions=Array.from({length:X.length},()=>({}));// per-sample vote counter for OOB
+
+  for(let t=0;t<nTrees;t++){
+    let bX,bY,inBagIdx,oobIdx;
+    if(bootstrap){const bs=bootstrapSample(X,y);bX=bs.bX;bY=bs.bY;inBagIdx=bs.inBagIdx;oobIdx=bs.oobIdx;}
+    else{bX=X;bY=y;inBagIdx=Array.from({length:X.length},(_,i)=>i);oobIdx=[];}
+    const tree=buildTree(bX,bY,{maxDepth,minSplit,criterion,nFeaturesPerSplit,nFeaturesTotal:nFeatTotal,numClasses});
+    trees.push(tree);
+    bootstraps.push({inBagIdx,oobIdx});
+
+    // Update OOB predictions
+    if(bootstrap){
+      for(const i of oobIdx){
+        const pred=predictTree(tree,X[i]);
+        oobPredictions[i][pred]=(oobPredictions[i][pred]||0)+1;
+      }
+    }
+    if(onProgress)onProgress(t+1,nTrees);
+  }
+
+  // Compute OOB error
+  let oobCorrect=0,oobTotal=0;
+  for(let i=0;i<X.length;i++){
+    const votes=oobPredictions[i];const keys=Object.keys(votes);
+    if(keys.length===0)continue;
+    let bestC=keys[0],bestV=-1;
+    for(const k of keys)if(votes[k]>bestV){bestV=votes[k];bestC=k;}
+    if(+bestC===y[i])oobCorrect++;
+    oobTotal++;
+  }
+  const oobScore=oobTotal>0?oobCorrect/oobTotal:null;
+
+  return{
+    trees,bootstraps,nFeaturesPerSplit,nFeaturesTotal:nFeatTotal,oobScore,
+    predict(x){
+      const votes=new Array(numClasses).fill(0);
+      for(const t of trees)votes[predictTree(t,x)]++;
+      let mI=0,mV=-1;for(let i=0;i<numClasses;i++)if(votes[i]>mV){mV=votes[i];mI=i;}
+      return mI;
+    },
+    voteDistribution(x){
+      const votes=new Array(numClasses).fill(0);
+      for(const t of trees)votes[predictTree(t,x)]++;
+      return votes;
+    }
+  };
+}
+
+function aggregatedFeatureImportance(forest,nFeatures){
+  const total=new Array(nFeatures).fill(0);
+  forest.trees.forEach(t=>{const imp=treeFeatureImportance(t,nFeatures);imp.forEach((v,i)=>total[i]+=v);});
+  total.forEach((_,i)=>total[i]/=forest.trees.length);
+  const sum=total.reduce((a,b)=>a+b,0);
+  if(sum>0)total.forEach((v,i)=>total[i]=v/sum);
+  return total;
+}
+
+// ============================================================
+//  UTILS
+// ============================================================
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+function trainTestSplit(X,y,r){const idx=shuffle(Array.from({length:X.length},(_,i)=>i)),s=Math.floor(X.length*r);return{trainX:idx.slice(0,s).map(i=>X[i]),trainY:idx.slice(0,s).map(i=>y[i]),testX:idx.slice(s).map(i=>X[i]),testY:idx.slice(s).map(i=>y[i])};}
+function computeMetrics(yT,yP,nc){const cm=Array.from({length:nc},()=>new Array(nc).fill(0));let c=0;for(let i=0;i<yT.length;i++){cm[yT[i]][yP[i]]++;if(yT[i]===yP[i])c++;}const acc=c/yT.length,pc=[];for(let k=0;k<nc;k++){const tp=cm[k][k],fp=cm.reduce((s,r,i)=>i!==k?s+r[k]:s,0),fn=cm[k].reduce((s,v,j)=>j!==k?s+v:s,0),pr=tp+fp>0?tp/(tp+fp):0,re=tp+fn>0?tp/(tp+fn):0,f1=pr+re>0?2*pr*re/(pr+re):0;pc.push({precision:pr,recall:re,f1,support:cm[k].reduce((a,b)=>a+b,0)});}return{cm,accuracy:acc,perClass:pc};}
+
+// ============================================================
+//  TRAIN
+// ============================================================
+function trainRF(){
+  if(!currentData){showToast('❌ Nenhum dataset',true);return;}
+  const nTrees=+document.getElementById('paramNTrees').value;
+  const maxDepth=+document.getElementById('paramMaxDepth').value;
+  const minSplit=+document.getElementById('paramMinSplit').value;
+  const maxFeaturesType=document.getElementById('maxFeatures').value;
+  const criterion=document.getElementById('criterion').value;
+  const bootstrap=document.getElementById('bootstrap').value==='true';
+  const ratio=+document.getElementById('trainSplit').value/100;
+  const nc=currentData.classNames.length;
+
+  document.getElementById('trainBtn').disabled=true;
+  document.getElementById('progressBar').classList.add('visible');
+  setStatus('Treinando árvores...');
+
+  setTimeout(()=>{
+    try{
+      const{trainX,trainY,testX,testY}=trainTestSplit(currentData.X,currentData.y,ratio);
+      const forest=trainRandomForest(trainX,trainY,{nTrees,maxDepth,minSplit,maxFeaturesType,criterion,bootstrap,numClasses:nc},(t,total)=>{
+        document.getElementById('progressFill').style.width=(t/total*100)+'%';
+        if(t%5===0||t===total)setStatus(`Treinando árvore ${t}/${total}`);
+      });
+      const yPred=testX.map(x=>forest.predict(x));
+      const metrics=computeMetrics(testY,yPred,nc);
+      const importance=aggregatedFeatureImportance(forest,currentData.featureNames.length);
+      trainResult={forest,trainX,trainY,testX,testY,yPred,metrics,importance,params:{nTrees,maxDepth,minSplit,maxFeaturesType,criterion,bootstrap}};
+      currentTreeIdx=0;currentVoteSample=0;treeZoom=1;
+      renderAll();
+      const oobStr=forest.oobScore!==null?` • OOB: ${(forest.oobScore*100).toFixed(1)}%`:'';
+      setStatus(`Treinado! Acurácia: ${(metrics.accuracy*100).toFixed(1)}%${oobStr}`);
+      showToast(`🌲 Floresta treinada — Acurácia: ${(metrics.accuracy*100).toFixed(1)}%`);
+    }catch(err){setStatus('Erro');showToast('❌ '+err.message,true);console.error(err);}
+    finally{
+      document.getElementById('trainBtn').disabled=false;
+      setTimeout(()=>document.getElementById('progressBar').classList.remove('visible'),500);
+    }
+  },50);
+}
+
+function renderAll(){
+  document.getElementById('placeholder').style.display='none';
+  document.getElementById('resultsArea').style.display='block';
+  drawForestOverview();drawTreeGallery();renderVotingSample();drawFeatureImportance();drawBoundary();renderMetrics();renderCM();renderReport();renderDataPreview();
+}
+
+// ============================================================
+//  FOREST OVERVIEW
+// ============================================================
+function drawForestOverview(){
+  const{forest,params}=trainResult;
+  const oobStr=forest.oobScore!==null?(forest.oobScore*100).toFixed(1)+'%':'N/A';
+  document.getElementById('forestStats').innerHTML=`
+    <div class="metric-box"><div class="metric-value">${forest.trees.length}</div><div class="metric-label">Árvores</div></div>
+    <div class="metric-box"><div class="metric-value">${forest.nFeaturesPerSplit}/${forest.nFeaturesTotal}</div><div class="metric-label">Feats/split</div></div>
+    <div class="metric-box"><div class="metric-value">${oobStr}</div><div class="metric-label">OOB Score</div></div>
+    <div class="metric-box"><div class="metric-value">${params.criterion==='gini'?'Gini':'Entropy'}</div><div class="metric-label">Critério</div></div>`;
+
+  const c=document.getElementById('forestCanvas'),ctx=c.getContext('2d'),W=c.width,H=c.height;
+  ctx.clearRect(0,0,W,H);
+  const depths=forest.trees.map(t=>treeDepth(t));
+  const sizes=forest.trees.map(t=>treeNodeCount(t));
+  const pad={l:50,r:50,t:30,b:35};
+  const pw=W-pad.l-pad.r,ph=H-pad.t-pad.b;
+  const n=forest.trees.length;
+  const maxD=Math.max(...depths,1);
+  const maxS=Math.max(...sizes,1);
+
+  // Axes
+  ctx.strokeStyle='#262a3e';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,H-pad.b);ctx.lineTo(W-pad.r,H-pad.b);ctx.stroke();
+
+  // Grid
+  ctx.strokeStyle='rgba(255,255,255,.04)';
+  for(let i=1;i<=5;i++){const y=pad.t+(ph*i/5);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();}
+
+  // Y-axis labels
+  ctx.fillStyle='#a78bfa';ctx.font='10px JetBrains Mono';ctx.textAlign='right';
+  for(let i=0;i<=5;i++){const v=maxD*(1-i/5);ctx.fillText(v.toFixed(0),pad.l-6,pad.t+ph*i/5+3);}
+  ctx.fillStyle='#06b6d4';ctx.textAlign='left';
+  for(let i=0;i<=5;i++){const v=maxS*(1-i/5);ctx.fillText(v.toFixed(0),W-pad.r+6,pad.t+ph*i/5+3);}
+
+  // X-axis labels
+  ctx.fillStyle='#8a8fa3';ctx.textAlign='center';
+  const stepX=Math.ceil(n/8);
+  for(let i=0;i<n;i+=stepX)ctx.fillText('T'+(i+1),pad.l+(pw*i/(n-1||1)),H-pad.b+15);
+  ctx.fillText('árvores',W/2,H-8);
+
+  // Y-axis titles
+  ctx.save();ctx.translate(14,H/2);ctx.rotate(-Math.PI/2);ctx.fillStyle='#a78bfa';ctx.font='bold 10px JetBrains Mono';ctx.fillText('Profundidade',0,0);ctx.restore();
+  ctx.save();ctx.translate(W-14,H/2);ctx.rotate(Math.PI/2);ctx.fillStyle='#06b6d4';ctx.font='bold 10px JetBrains Mono';ctx.fillText('Nº de nós',0,0);ctx.restore();
+
+  // Bars (depth)
+  const barW=Math.max(2,pw/n*0.6);
+  for(let i=0;i<n;i++){
+    const x=pad.l+(pw*i/(n-1||1))-barW/2;
+    const h=ph*(depths[i]/maxD);
+    ctx.fillStyle='rgba(167,139,250,0.5)';
+    ctx.fillRect(x,H-pad.b-h,barW,h);
+  }
+
+  // Line (sizes)
+  ctx.strokeStyle='#06b6d4';ctx.lineWidth=2;ctx.beginPath();
+  sizes.forEach((s,i)=>{const x=pad.l+(pw*i/(n-1||1)),y=pad.t+ph*(1-s/maxS);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});
+  ctx.stroke();
+  // Dots
+  sizes.forEach((s,i)=>{const x=pad.l+(pw*i/(n-1||1)),y=pad.t+ph*(1-s/maxS);ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fillStyle='#06b6d4';ctx.fill();});
+}
+
+// ============================================================
+//  TREE GALLERY
+// ============================================================
+function drawTreeGallery(){
+  if(!trainResult)return;
+  const tree=trainResult.forest.trees[currentTreeIdx];
+  const n=trainResult.forest.trees.length;
+  document.getElementById('treeCounter').textContent=`Árvore ${currentTreeIdx+1} / ${n}`;
+
+  const depth=treeDepth(tree);
+  const nodes=treeNodeCount(tree);
+  const bs=trainResult.forest.bootstraps[currentTreeIdx];
+  const inBagUnique=new Set(bs.inBagIdx).size;
+
+  document.getElementById('treeStats').innerHTML=`
+    <div class="tree-stat"><div class="tree-stat-val">${depth}</div><div class="tree-stat-lbl">Profundidade</div></div>
+    <div class="tree-stat"><div class="tree-stat-val">${nodes}</div><div class="tree-stat-lbl">Nós</div></div>
+    <div class="tree-stat"><div class="tree-stat-val">${inBagUnique}</div><div class="tree-stat-lbl">Únicas (bag)</div></div>
+    <div class="tree-stat"><div class="tree-stat-val">${bs.oobIdx.length}</div><div class="tree-stat-lbl">OOB</div></div>`;
+
+  document.getElementById('treeInfo').innerHTML=`<strong>${trainResult.params.bootstrap?'Bootstrap':'Sem bootstrap'}</strong> · features/split: <strong>${trainResult.forest.nFeaturesPerSplit}</strong>`;
+
+  renderTreeSVG(tree);
+}
+
+function navTree(delta){
+  const n=trainResult.forest.trees.length;
+  currentTreeIdx=(currentTreeIdx+delta+n)%n;
+  drawTreeGallery();
+}
+
+function getTreeDimensions(node){if(node.leaf)return{width:1,height:1};const l=getTreeDimensions(node.left),r=getTreeDimensions(node.right);return{width:l.width+r.width,height:1+Math.max(l.height,r.height)};}
+
+function renderTreeSVG(tree){
+  const container=document.getElementById('treeContainer');
+  const dims=getTreeDimensions(tree);
+  const nodeW=145,nodeH=68,hGap=14,vGap=64;
+  const svgW=dims.width*(nodeW+hGap)+40;
+  const svgH=dims.height*(nodeH+vGap)+40;
+  let svg='';
+
+  function draw(node,x,y,width){
+    const cx=x+width/2,cy=y;
+    if(!node.leaf){
+      const lW=getTreeDimensions(node.left).width;
+      const rW=getTreeDimensions(node.right).width;
+      const totalW=lW+rW;
+      const lP=(lW/totalW)*width,rP=(rW/totalW)*width;
+      const lCx=x+lP/2,rCx=x+lP+rP/2,childY=y+nodeH+vGap;
+      const midY=y+nodeH+vGap*0.4;
+      svg+=`<path d="M${cx},${cy+nodeH} C${cx},${midY} ${lCx},${midY} ${lCx},${childY}" stroke="#3a3e50" stroke-width="2" fill="none"/>`;
+      svg+=`<path d="M${cx},${cy+nodeH} C${cx},${midY} ${rCx},${midY} ${rCx},${childY}" stroke="#3a3e50" stroke-width="2" fill="none"/>`;
+      svg+=`<text x="${(cx+lCx)/2-10}" y="${midY-4}" text-anchor="middle" fill="#8a8fa3" font-family="JetBrains Mono" font-size="10">≤</text>`;
+      svg+=`<text x="${(cx+rCx)/2+10}" y="${midY-4}" text-anchor="middle" fill="#8a8fa3" font-family="JetBrains Mono" font-size="10">></text>`;
+      draw(node.left,x,childY,lP);
+      draw(node.right,x+lP,childY,rP);
+    }
+    const crit=trainResult.params.criterion==='entropy'?'entr':'gini';
+    const cls=node.prediction;
+    const color=CC[cls%CC.length];
+    const op=node.leaf?0.35:0.15;
+    const rx=cx-nodeW/2;
+    svg+=`<g>`;
+    svg+=`<rect x="${rx}" y="${cy}" width="${nodeW}" height="${nodeH}" rx="8" ry="8" fill="${color}" fill-opacity="${op}" stroke="${color}" stroke-width="1.5"/>`;
+    if(node.leaf){
+      svg+=`<text x="${cx}" y="${cy+18}" text-anchor="middle" fill="#fff" font-family="JetBrains Mono" font-size="10" font-weight="700">🍂 ${currentData.classNames[cls]}</text>`;
+      svg+=`<text x="${cx}" y="${cy+33}" text-anchor="middle" fill="#b0b8c8" font-family="JetBrains Mono" font-size="9">n=${node.nSamples}</text>`;
+      svg+=`<text x="${cx}" y="${cy+46}" text-anchor="middle" fill="#b0b8c8" font-family="JetBrains Mono" font-size="9">[${node.counts.join(',')}]</text>`;
+      svg+=`<text x="${cx}" y="${cy+59}" text-anchor="middle" fill="#8a8fa3" font-family="JetBrains Mono" font-size="8">${crit}=${node.impurity.toFixed(3)}</text>`;
+    }else{
+      const fname=currentData.featureNames[node.feature];
+      const sn=fname.length>15?fname.substring(0,13)+'..':fname;
+      svg+=`<text x="${cx}" y="${cy+16}" text-anchor="middle" fill="#fff" font-family="JetBrains Mono" font-size="10" font-weight="700">${sn}</text>`;
+      svg+=`<text x="${cx}" y="${cy+30}" text-anchor="middle" fill="${color}" font-family="JetBrains Mono" font-size="10">≤ ${node.threshold.toFixed(2)}</text>`;
+      svg+=`<text x="${cx}" y="${cy+44}" text-anchor="middle" fill="#b0b8c8" font-family="JetBrains Mono" font-size="9">n=${node.nSamples} [${node.counts.join(',')}]</text>`;
+      svg+=`<text x="${cx}" y="${cy+58}" text-anchor="middle" fill="#8a8fa3" font-family="JetBrains Mono" font-size="8">${crit}=${node.impurity.toFixed(3)}</text>`;
+    }
+    svg+=`</g>`;
+  }
+  draw(tree,20,20,svgW-40);
+  container.innerHTML=`<svg id="treeSvg" width="${svgW}" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}" xmlns="http://www.w3.org/2000/svg" style="transform:scale(${treeZoom});transform-origin:top left;transition:transform .3s;">${svg}</svg>`;
+}
+
+function zoomTree(factor){
+  const svg=document.getElementById('treeSvg');if(!svg)return;
+  if(factor===0)treeZoom=1;else treeZoom*=factor;
+  treeZoom=Math.max(0.3,Math.min(3,treeZoom));
+  svg.style.transform=`scale(${treeZoom})`;
+}
+
+// ============================================================
+//  VOTING VISUALIZATION
+// ============================================================
+function navVoteSample(delta){
+  const n=trainResult.testX.length;
+  currentVoteSample=(currentVoteSample+delta+n)%n;
+  renderVotingSample();
+}
+function renderVotingSample(){
+  const{forest,testX,testY,yPred}=trainResult;
+  const n=testX.length;
+  const idx=currentVoteSample;
+  document.getElementById('voteSampleCounter').textContent=`${idx+1} / ${n}`;
+
+  const x=testX[idx];
+  const votes=forest.voteDistribution(x);
+  const totalVotes=votes.reduce((a,b)=>a+b,0);
+  const cn=currentData.classNames;
+  const ytrue=testY[idx],ypred=yPred[idx];
+  const correct=ytrue===ypred;
+
+  let featHtml='';
+  currentData.featureNames.forEach((name,j)=>{featHtml+=`<strong>${name}</strong>: ${x[j].toFixed(2)}&nbsp;&nbsp;`;});
+
+  // Big vote bar showing all classes as segments
+  let segments='';
+  votes.forEach((v,c)=>{
+    const pct=(v/totalVotes)*100;
+    if(pct>0)segments+=`<div class="vote-bar-segment" style="width:${pct}%;background:${CC[c%CC.length]};">${pct>10?v:''}</div>`;
+  });
+
+  // Per-class detail bars
+  const detailBars=votes.map((v,c)=>{
+    const pct=(v/totalVotes*100);
+    return `<div class="vote-sample">
+      <div class="vote-label" style="${c===ypred?'color:'+CC[c]+';font-weight:700;':''}">${cn[c]}</div>
+      <div class="vote-bar-track"><div class="vote-bar-segment" style="width:${pct}%;background:${CC[c%CC.length]};">${v} votos (${pct.toFixed(0)}%)</div></div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('voteSampleContent').innerHTML=`
+    <div class="sample-data">📌 Features da amostra: ${featHtml}</div>
+    <div style="font-family:var(--font-mono);font-size:.7rem;color:var(--text-muted);margin-bottom:6px;">Votos das ${forest.trees.length} árvores:</div>
+    <div class="vote-bar-track" style="height:32px;margin-bottom:18px;">${segments}</div>
+    <div>${detailBars}</div>
+    <div style="font-family:var(--font-mono);font-size:.75rem;padding:10px;background:var(--bg-input);border-radius:6px;border-left:3px solid ${correct?'var(--green)':'var(--red)'};margin-top:14px;">
+      <strong>Classe real:</strong> <span style="color:${CC[ytrue]};">${cn[ytrue]}</span> &nbsp;|&nbsp;
+      <strong>Predito (maioria):</strong> <span style="color:${CC[ypred]};">${cn[ypred]}</span> &nbsp;|&nbsp;
+      <strong>Confiança:</strong> ${(votes[ypred]/totalVotes*100).toFixed(1)}% &nbsp;
+      ${correct?'<span style="color:var(--green);">✅ correto</span>':'<span style="color:var(--red);">❌ erro</span>'}
+    </div>`;
+}
+
+// ============================================================
+//  FEATURE IMPORTANCE
+// ============================================================
+function drawFeatureImportance(){
+  const imp=trainResult.importance;
+  const sorted=currentData.featureNames.map((n,i)=>({name:n,value:imp[i]})).sort((a,b)=>b.value-a.value);
+  let h='';
+  sorted.forEach((f,idx)=>{
+    const pct=(f.value*100).toFixed(1);
+    const color=CC[idx%CC.length];
+    h+=`<div class="fi-bar-container">
+      <div class="fi-bar-label"><span>${f.name}</span><span style="color:${color};font-weight:700;">${pct}%</span></div>
+      <div class="fi-bar-track"><div class="fi-bar-fill" style="width:${pct}%;background:linear-gradient(90deg,${color},${color}cc);"></div></div>
+    </div>`;
+  });
+  document.getElementById('featureImportance').innerHTML=h;
+}
+
+// ============================================================
+//  DECISION BOUNDARY
+// ============================================================
+function redrawBoundary(){if(trainResult)drawBoundary();}
+function drawBoundary(){
+  const c=document.getElementById('boundaryCanvas'),ctx=c.getContext('2d'),W=c.width,H=c.height;
+  const fi=+document.getElementById('featX').value,fj=+document.getElementById('featY').value;
+  const{forest,trainX,trainY}=trainResult;ctx.clearRect(0,0,W,H);
+  const aX=trainX.map(r=>r[fi]),aY=trainX.map(r=>r[fj]);
+  const xMin=Math.min(...aX)-.5,xMax=Math.max(...aX)+.5,yMin=Math.min(...aY)-.5,yMax=Math.max(...aY)+.5;
+  const tX=v=>(v-xMin)/(xMax-xMin)*W,tY=v=>H-(v-yMin)/(yMax-yMin)*H;
+  const nf=currentData.featureNames.length,res=4;
+
+  // Use mean of features for frozen dimensions
+  const allMeans=[];
+  for(let j=0;j<nf;j++){const vs=trainX.map(r=>r[j]);allMeans.push(vs.reduce((a,b)=>a+b,0)/vs.length);}
+
+  for(let px=0;px<W;px+=res)for(let py=0;py<H;py+=res){
+    const xi=xMin+(px/W)*(xMax-xMin),xj=yMin+((H-py)/H)*(yMax-yMin);
+    const vec=[...allMeans];vec[fi]=xi;vec[fj]=xj;
+    ctx.fillStyle=CC_DIM[forest.predict(vec)%CC_DIM.length];ctx.fillRect(px,py,res,res);
+  }
+  ctx.strokeStyle='rgba(255,255,255,.04)';ctx.lineWidth=1;
+  for(let i=0;i<=10;i++){const x=W*i/10,y=H*i/10;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  ctx.fillStyle='#4d5270';ctx.font='10px JetBrains Mono';ctx.textAlign='center';
+  for(let i=0;i<=4;i++){ctx.fillText((xMin+(xMax-xMin)*i/4).toFixed(1),W*i/4,H-4);}
+  ctx.textAlign='right';for(let i=0;i<=4;i++){ctx.fillText((yMin+(yMax-yMin)*i/4).toFixed(1),W-4,H-H*i/4-4);}
+  for(let k=0;k<trainX.length;k++){
+    const cx=tX(trainX[k][fi]),cy=tY(trainX[k][fj]),cls=trainY[k];
+    ctx.beginPath();ctx.arc(cx,cy,4,0,Math.PI*2);ctx.fillStyle=CC[cls%CC.length];ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.3)';ctx.lineWidth=1;ctx.stroke();
+  }
+  document.getElementById('canvasLegend').innerHTML=currentData.classNames.map((n,i)=>`<div class="legend-item"><div class="legend-dot" style="background:${CC[i]}"></div>${n}</div>`).join('');
+}
+
+// ============================================================
+//  METRICS / CM / REPORT / DATA
+// ============================================================
+function renderMetrics(){
+  const m=trainResult.metrics;let wF=0,t=0;m.perClass.forEach(c=>{wF+=c.f1*c.support;t+=c.support;});
+  const oob=trainResult.forest.oobScore!==null?(trainResult.forest.oobScore*100).toFixed(1)+'%':'N/A';
+  document.getElementById('metricsRow').innerHTML=`
+    <div class="metric-box"><div class="metric-value">${(m.accuracy*100).toFixed(1)}%</div><div class="metric-label">Acurácia</div></div>
+    <div class="metric-box"><div class="metric-value">${(wF/t*100).toFixed(1)}%</div><div class="metric-label">F1 (wgt)</div></div>
+    <div class="metric-box"><div class="metric-value">${oob}</div><div class="metric-label">OOB Score</div></div>
+    <div class="metric-box"><div class="metric-value">${trainResult.forest.trees.length}</div><div class="metric-label">Árvores</div></div>`;
+}
+function renderCM(){
+  const cm=trainResult.metrics.cm,ns=currentData.classNames,mx=Math.max(...cm.flat(),1);
+  let h='<table class="cm-table"><tr><td></td><td colspan="'+ns.length+'" style="text-align:center;font-size:.65rem;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:1px;padding-bottom:4px;">Predito</td></tr><tr><td></td>';
+  ns.forEach(n=>h+=`<td class="cm-label">${n}</td>`);h+='</tr>';
+  for(let i=0;i<cm.length;i++){h+='<tr>';h+=`<td class="cm-label" style="text-align:right;">${ns[i]}</td>`;
+    for(let j=0;j<cm[i].length;j++){const v=cm[i][j],int=v/mx,d=i===j;h+=`<td><div class="cm-cell" style="background:${d?`rgba(139,92,246,${.15+int*.55})`:`rgba(239,68,68,${int*.5})`};color:${int>.35?'#fff':'#8a8fa3'};">${v}</div></td>`;}
+  h+='</tr>';}h+='</table>';document.getElementById('confusionMatrix').innerHTML=h;
+}
+function renderReport(){
+  const m=trainResult.metrics,ns=currentData.classNames;
+  let h='<table class="report-table"><tr><th>Classe</th><th>Precision</th><th>Recall</th><th>F1</th><th>Support</th></tr>';
+  for(let i=0;i<ns.length;i++){const c=m.perClass[i];h+=`<tr><td><span class="class-dot" style="background:${CC[i]};"></span>${ns[i]}</td><td>${c.precision.toFixed(3)}</td><td>${c.recall.toFixed(3)}</td><td>${c.f1.toFixed(3)}</td><td>${c.support}</td></tr>`;}
+  let wp=0,wr=0,wf=0,tot=0;m.perClass.forEach(c=>{wp+=c.precision*c.support;wr+=c.recall*c.support;wf+=c.f1*c.support;tot+=c.support;});
+  h+=`<tr style="font-weight:700;"><td style="color:var(--accent);">Média ponderada</td><td>${(wp/tot).toFixed(3)}</td><td>${(wr/tot).toFixed(3)}</td><td>${(wf/tot).toFixed(3)}</td><td>${tot}</td></tr></table>`;
+  document.getElementById('classReport').innerHTML=h;
+}
+function renderDataPreview(){
+  const{testX,testY,yPred}=trainResult,ns=currentData.featureNames,cn=currentData.classNames,max=Math.min(20,testX.length);
+  let h='<table class="report-table"><tr>';ns.forEach(n=>h+=`<th>${n}</th>`);h+='<th>Real</th><th>Predito</th><th>✓</th></tr>';
+  for(let i=0;i<max;i++){const ok=testY[i]===yPred[i];h+=`<tr style="${ok?'':'background:rgba(239,68,68,.06);'}">`;testX[i].forEach(v=>h+=`<td>${v.toFixed(1)}</td>`);h+=`<td>${cn[testY[i]]}</td><td>${cn[yPred[i]]}</td><td>${ok?'✅':'❌'}</td></tr>`;}
+  if(testX.length>max)h+=`<tr><td colspan="${ns.length+3}" style="text-align:center;color:var(--text-dim);">... e mais ${testX.length-max}</td></tr>`;
+  h+='</table>';document.getElementById('dataPreview').innerHTML=h;
+}
+
+// ============================================================
+//  UI
+// ============================================================
+function switchTab(el,id){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.getElementById('tab-'+id).classList.add('active');}
+function setStatus(t){document.getElementById('statusText').textContent=t;}
+function showToast(m,e=false){const t=document.getElementById('toast');t.textContent=m;t.className='toast show'+(e?' error':'');setTimeout(()=>t.className='toast',3000);}
+function resetAll(){trainResult=null;currentTreeIdx=0;currentVoteSample=0;treeZoom=1;document.getElementById('placeholder').style.display='';document.getElementById('resultsArea').style.display='none';document.getElementById('paramNTrees').value=20;document.getElementById('nTreesVal').textContent='20';document.getElementById('paramMaxDepth').value=5;document.getElementById('maxDepthVal').textContent='5';document.getElementById('paramMinSplit').value=2;document.getElementById('minSplitVal').textContent='2';document.getElementById('maxFeatures').value='sqrt';document.getElementById('criterion').value='gini';document.getElementById('bootstrap').value='true';document.getElementById('trainSplit').value=70;document.getElementById('trainSplitVal').textContent='70';setStatus('Pronto para treinar');showToast('↺ Resetado');}
+
+loadIris();
+</script>
+</body>
+</html>
