@@ -97,7 +97,7 @@
     border-bottom: 1px solid var(--border);
     display: flex; align-items: center; gap: 8px;
   }
-  .section-body { padding: 12px; overflow: hidden; box-sizing: border-box; }
+  .section-body { padding: 12px; overflow: visible; box-sizing: border-box; }
 
   /* FORM CONTROLS */
   label { font-size: 11px; color: var(--text2); display: block; margin-bottom: 4px; }
@@ -220,7 +220,7 @@
   #status.error { color: var(--accent3); border-color: rgba(247,129,102,.4); }
 
   /* TABS */
-  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); }
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap; }
   .tab {
     padding: 10px 16px;
     font-size: 12px;
@@ -233,8 +233,8 @@
   }
   .tab:hover { color: var(--text3); }
   .tab.active { color: var(--accent2); border-bottom-color: var(--accent2); }
-  .tab-content { display: none; padding: 18px; }
-  .tab-content.active { display: block; }
+  .tab-content { display: none; padding: 18px; overflow-y: auto; overflow-x: hidden; }
+  .tab-content.active { display: block; flex: 1; min-height: 0; }
 
   /* CANVAS WRAPPER */
   .canvas-wrap {
@@ -243,6 +243,7 @@
     border-radius: 6px;
     border: 1px solid var(--border);
     overflow: hidden;
+    flex-shrink: 0;
   }
   canvas { display: block; width: 100%; }
   .canvas-controls {
@@ -261,7 +262,7 @@
   /* METRICS */
   .metric-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 12px;
   }
   .metric-card {
@@ -270,8 +271,10 @@
     border-radius: 8px;
     padding: 14px;
     text-align: center;
+    overflow: hidden;
+    min-width: 0;
   }
-  .metric-val { font-size: 26px; font-weight: 700; color: var(--accent2); }
+  .metric-val { font-size: 22px; font-weight: 700; color: var(--accent2); word-break: break-all; overflow-wrap: break-word; }
   .metric-label { font-size: 11px; color: var(--text2); margin-top: 4px; }
 
   /* CONFUSION MATRIX */
@@ -564,7 +567,7 @@
   </div>
 
   <!-- TABS -->
-  <div class="section" style="flex:1">
+  <div class="section" style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden">
     <div class="tabs">
       <div class="tab active" data-tab="boundary">📐 Fronteira</div>
       <div class="tab" data-tab="neighbors">👥 Vizinhos</div>
@@ -653,7 +656,7 @@
         <div class="metric-card"><div class="metric-val">—</div><div class="metric-label">Recall (macro)</div></div>
         <div class="metric-card"><div class="metric-val">—</div><div class="metric-label">F1-Score (macro)</div></div>
       </div>
-      <div style="display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start;flex-wrap:wrap">
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start;overflow-x:auto">
         <div>
           <div style="font-size:11px;color:var(--text2);margin-bottom:8px;text-align:center">🎯 Matriz de Confusão</div>
           <div class="conf-matrix" id="conf-matrix-wrap">
