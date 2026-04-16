@@ -93,7 +93,7 @@
     border-bottom: 1px solid var(--border);
     display: flex; align-items: center; gap: 8px;
   }
-  .section-body { padding: 12px; overflow: hidden; box-sizing: border-box; }
+  .section-body { padding: 12px; overflow: visible; box-sizing: border-box; }
 
   label { font-size: 11px; color: var(--text2); display: block; margin-bottom: 4px; }
   select, input[type=range] {
@@ -218,7 +218,7 @@
   #status.running { color: var(--accent2); border-color: rgba(56,139,253,.4); }
   #status.error { color: var(--accent3); border-color: rgba(247,129,102,.4); }
 
-  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); }
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap; }
   .tab {
     padding: 10px 16px;
     font-size: 12px;
@@ -231,8 +231,8 @@
   }
   .tab:hover { color: var(--text3); }
   .tab.active { color: var(--accent2); border-bottom-color: var(--accent2); }
-  .tab-content { display: none; padding: 18px; }
-  .tab-content.active { display: block; }
+  .tab-content { display: none; padding: 18px; overflow-y: auto; overflow-x: hidden; }
+  .tab-content.active { display: block; flex: 1; min-height: 0; }
 
   .canvas-wrap {
     position: relative;
@@ -240,14 +240,16 @@
     border-radius: 6px;
     border: 1px solid var(--border);
     overflow: hidden;
+    flex-shrink: 0;
   }
   canvas { display: block; width: 100%; }
 
   .metric-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 12px;
     margin-bottom: 18px;
+    width: 100%;
   }
   .metric-card {
     background: var(--bg);
@@ -255,8 +257,10 @@
     border-radius: 8px;
     padding: 14px;
     text-align: center;
+    overflow: hidden;
+    min-width: 0;
   }
-  .metric-val { font-size: 26px; font-weight: 700; color: var(--accent2); }
+  .metric-val { font-size: 22px; font-weight: 700; color: var(--accent2); word-break: break-all; overflow-wrap: break-word; }
   .metric-label { font-size: 11px; color: var(--text2); margin-top: 4px; }
 
   /* INERTIA CHART */
@@ -280,6 +284,8 @@
     border-top: 1px solid var(--border);
     font-size: 11px;
     color: var(--text2);
+    flex-wrap: wrap;
+    flex-shrink: 0;
   }
   .iter-bar button {
     background: var(--panel2);
@@ -302,7 +308,7 @@
   .iter-dot.current { background: var(--accent3); }
 
   /* CENTROID TABLE */
-  .centroid-table { overflow-x: auto; }
+  .centroid-table { overflow-x: auto; max-width: 100%; }
   .centroid-table table { border-collapse: collapse; width: 100%; font-size: 12px; }
   .centroid-table th, .centroid-table td {
     border: 1px solid var(--border);
@@ -510,7 +516,7 @@
     </div>
   </div>
 
-  <div class="section" style="flex:1">
+  <div class="section" style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden">
     <div class="tabs">
       <div class="tab active" data-tab="clusters">🗂️ Clusters</div>
       <div class="tab" data-tab="evolution">🔄 Evolução</div>
