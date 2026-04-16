@@ -57,10 +57,12 @@
     background: var(--panel);
     border-right: 1px solid var(--border);
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 16px;
     display: flex;
     flex-direction: column;
     gap: 14px;
+    min-width: 0;
   }
   main {
     overflow-y: auto;
@@ -87,7 +89,7 @@
     border-bottom: 1px solid var(--border);
     display: flex; align-items: center; gap: 8px;
   }
-  .section-body { padding: 14px; }
+  .section-body { padding: 14px; overflow: hidden; }
 
   label { font-size: 12px; color: var(--text2); display: block; margin-bottom: 4px; }
   select, input[type=range] {
@@ -119,13 +121,16 @@
 
   .radio-group { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
   .radio-item {
-    display: flex; align-items: center; gap: 8px;
+    display: flex; align-items: flex-start; gap: 8px;
     padding: 6px 10px;
     border: 1px solid var(--border);
     border-radius: 6px;
     cursor: pointer;
     transition: all .2s;
     font-size: 12px;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    min-width: 0;
   }
   .radio-item:hover { border-color: var(--accent2); background: rgba(56,139,253,.06); }
   .radio-item.active { border-color: var(--accent2); background: rgba(56,139,253,.12); color: var(--accent2); }
@@ -297,8 +302,9 @@
     transition: all .2s;
     font-size: 12px;
     color: var(--text2);
+    display: block;
   }
-  .upload-zone:hover { border-color: var(--accent2); color: var(--text3); }
+  .upload-zone:hover, .upload-zone.drag { border-color: var(--accent2); color: var(--text3); background: rgba(56,139,253,.04); }
   .upload-zone input { display: none; }
 
   .spinner {
@@ -349,30 +355,21 @@
     <div class="section-body">
       <div class="form-group">
         <label>Selecionar dataset</label>
-        <div class="radio-group" id="dataset-radios">
-          <label class="radio-item active" data-val="iris">
-            <input type="radio" name="dataset" value="iris" checked>
-            Iris (Fisher, 1936)
-          </label>
-          <label class="radio-item" data-val="blobs">
-            <input type="radio" name="dataset" value="blobs">
-            Blobs sintéticos (2D)
-          </label>
-          <label class="radio-item" data-val="moons">
-            <input type="radio" name="dataset" value="moons">
-            Moons (não-convexo)
-          </label>
-          <label class="radio-item" data-val="csv">
-            <input type="radio" name="dataset" value="csv">
-            Upload CSV personalizado
-          </label>
-        </div>
+        <select id="dataset-select" onchange="onDatasetChange(this.value)">
+          <option value="iris">Iris (Fisher, 1936)</option>
+          <option value="blobs">Blobs sintéticos (2D)</option>
+          <option value="moons">Moons (não-convexo)</option>
+          <option value="csv">Upload CSV personalizado</option>
+        </select>
       </div>
       <div id="csv-zone" style="display:none" class="form-group">
-        <label class="upload-zone">
+        <label class="upload-zone" id="upload-zone">
           <input type="file" accept=".csv" id="csv-input">
           📁 Arraste ou clique para carregar CSV
         </label>
+        <div style="font-size:10px;color:var(--text2);margin-top:6px;line-height:1.5">
+          Formato: features numéricas + última coluna como <strong>target</strong> (opcional)
+        </div>
       </div>
       <div class="dataset-info" id="dataset-info">
         <strong>Iris:</strong> 150 amostras, 4 features<br>
@@ -686,6 +683,15 @@ document.querySelectorAll('.tab').forEach(t=>{
   });
 });
 
+// Dataset select
+function onDatasetChange(val){
+  state.ds=val;
+  document.getElementById('csv-zone').style.display=val==='csv'?'block':'none';
+  document.getElementById('dataset-info').innerHTML=(val==='csv')
+    ? '<strong>CSV:</strong> Carregue um arquivo com features numéricas (última coluna = target ou ignorada)'
+    : (DATASETS[val]?.info||'');
+}
+
 document.querySelectorAll('[data-val]').forEach(el=>{
   el.addEventListener('click',()=>{
     const group=el.closest('.radio-group');
@@ -693,11 +699,6 @@ document.querySelectorAll('[data-val]').forEach(el=>{
     group.querySelectorAll('.radio-item').forEach(x=>x.classList.remove('active'));
     el.classList.add('active');
     const val=el.dataset.val;
-    if(el.closest('#dataset-radios')){
-      state.ds=val;
-      document.getElementById('csv-zone').style.display=val==='csv'?'block':'none';
-      document.getElementById('dataset-info').innerHTML=(val==='csv')?'CSV carregado':(DATASETS[val]?.info||'');
-    }
     if(el.closest('#init-radios')) state.init=val;
     if(el.closest('#tol-radios')) state.tol=+val;
     if(el.closest('#norm-radios')) state.norm=val;
@@ -707,18 +708,27 @@ document.querySelectorAll('[data-val]').forEach(el=>{
 document.getElementById('k-slider').addEventListener('input',function(){state.k=+this.value;document.getElementById('k-val').textContent=this.value;});
 document.getElementById('iter-slider').addEventListener('input',function(){state.maxIter=+this.value;document.getElementById('iter-val').textContent=this.value;});
 
-document.getElementById('csv-input').addEventListener('change',function(){
-  const f=this.files[0]; if(!f) return;
+// CSV upload with drag-and-drop
+const csvInput=document.getElementById('csv-input');
+const uploadZone=document.getElementById('upload-zone');
+uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.classList.add('drag');});
+uploadZone.addEventListener('dragleave',()=>uploadZone.classList.remove('drag'));
+uploadZone.addEventListener('drop',e=>{e.preventDefault();uploadZone.classList.remove('drag');handleCSV(e.dataTransfer.files[0]);});
+csvInput.addEventListener('change',()=>handleCSV(csvInput.files[0]));
+
+function handleCSV(file){
+  if(!file) return;
   const r=new FileReader();
   r.onload=e=>{
     const lines=e.target.result.trim().split('\n');
     const headers=lines[0].split(',').map(s=>s.trim());
     const rows=lines.slice(1).map(l=>l.split(',').map(s=>+s.trim()));
     state.csvData={features:headers,data:rows};
-    document.getElementById('dataset-info').innerHTML=`<strong>${f.name}:</strong> ${rows.length} amostras, ${headers.length} features`;
+    document.getElementById('dataset-info').innerHTML=`<strong>${file.name}:</strong> ${rows.length} amostras, ${headers.length} features`;
+    setStatus(`CSV carregado: ${rows.length} amostras · ${headers.length} features`,'ok');
   };
-  r.readAsText(f);
-});
+  r.readAsText(file);
+}
 
 // feature selects
 function populateFeatureSelects(features){
