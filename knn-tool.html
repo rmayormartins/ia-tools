@@ -60,10 +60,12 @@
     background: var(--panel);
     border-right: 1px solid var(--border);
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 16px;
     display: flex;
     flex-direction: column;
     gap: 14px;
+    min-width: 0;
   }
   main {
     overflow-y: auto;
@@ -91,7 +93,7 @@
     border-bottom: 1px solid var(--border);
     display: flex; align-items: center; gap: 8px;
   }
-  .section-body { padding: 14px; }
+  .section-body { padding: 14px; overflow: hidden; }
 
   /* FORM CONTROLS */
   label { font-size: 12px; color: var(--text2); display: block; margin-bottom: 4px; }
@@ -125,13 +127,16 @@
   /* RADIO GROUP */
   .radio-group { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
   .radio-item {
-    display: flex; align-items: center; gap: 8px;
+    display: flex; align-items: flex-start; gap: 8px;
     padding: 6px 10px;
     border: 1px solid var(--border);
     border-radius: 6px;
     cursor: pointer;
     transition: all .2s;
     font-size: 12px;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    min-width: 0;
   }
   .radio-item:hover { border-color: var(--accent2); background: rgba(56,139,253,.06); }
   .radio-item.active { border-color: var(--accent2); background: rgba(56,139,253,.12); color: var(--accent2); }
@@ -363,8 +368,9 @@
     transition: all .2s;
     font-size: 12px;
     color: var(--text2);
+    display: block;
   }
-  .upload-zone:hover, .upload-zone.drag { border-color: var(--accent2); color: var(--text3); }
+  .upload-zone:hover, .upload-zone.drag { border-color: var(--accent2); color: var(--text3); background: rgba(56,139,253,.04); }
   .upload-zone input { display: none; }
 
   /* DISTANCE VIZ */
@@ -410,26 +416,20 @@
     <div class="section-body">
       <div class="form-group">
         <label>Selecionar dataset</label>
-        <div class="radio-group" id="dataset-radios">
-          <label class="radio-item active" data-val="iris">
-            <input type="radio" name="dataset" value="iris" checked>
-            Iris (Fisher, 1936)
-          </label>
-          <label class="radio-item" data-val="wine">
-            <input type="radio" name="dataset" value="wine">
-            Wine (UCI, 1991)
-          </label>
-          <label class="radio-item" data-val="csv">
-            <input type="radio" name="dataset" value="csv">
-            Upload CSV personalizado
-          </label>
-        </div>
+        <select id="dataset-select" onchange="onDatasetChange(this.value)">
+          <option value="iris">Iris (Fisher, 1936)</option>
+          <option value="wine">Wine (UCI, 1991)</option>
+          <option value="csv">Upload CSV personalizado</option>
+        </select>
       </div>
       <div id="csv-zone" style="display:none" class="form-group">
         <label class="upload-zone" id="upload-zone">
           <input type="file" accept=".csv" id="csv-input">
           📁 Arraste ou clique para carregar CSV
         </label>
+        <div style="font-size:10px;color:var(--text2);margin-top:6px;line-height:1.5">
+          Formato: features numéricas + última coluna como <strong>target</strong>
+        </div>
       </div>
       <div class="dataset-info" id="dataset-info">
         <strong>Iris:</strong> 150 amostras, 4 features<br>
@@ -460,11 +460,11 @@
         <div class="radio-group" id="dist-radios">
           <label class="radio-item active" data-val="euclidean">
             <input type="radio" name="metric" value="euclidean" checked>
-            Euclidiana — √Σ(xᵢ−yᵢ)²
+            Euclidiana &mdash; √Σ(xᵢ−yᵢ)²
           </label>
           <label class="radio-item" data-val="manhattan">
             <input type="radio" name="metric" value="manhattan">
-            Manhattan — Σ|xᵢ−yᵢ|
+            Manhattan &mdash; Σ|xᵢ−yᵢ|
           </label>
           <label class="radio-item" data-val="minkowski3">
             <input type="radio" name="metric" value="minkowski3">
@@ -768,6 +768,15 @@ document.querySelectorAll('.tab').forEach(t=>{
   });
 });
 
+// Dataset select
+function onDatasetChange(val){
+  state.ds = val;
+  document.getElementById('csv-zone').style.display = val==='csv'?'block':'none';
+  document.getElementById('dataset-info').innerHTML = val==='csv'
+    ? '<strong>CSV:</strong> Carregue um arquivo com features numéricas e última coluna como target'
+    : (DATASETS[val]?.info||'');
+}
+
 document.querySelectorAll('[data-val]').forEach(el=>{
   el.addEventListener('click',()=>{
     const group = el.closest('.radio-group');
@@ -775,11 +784,6 @@ document.querySelectorAll('[data-val]').forEach(el=>{
     group.querySelectorAll('.radio-item').forEach(x=>x.classList.remove('active'));
     el.classList.add('active');
     const val = el.dataset.val;
-    if(el.closest('#dataset-radios')){
-      state.ds = val;
-      document.getElementById('csv-zone').style.display = val==='csv'?'block':'none';
-      document.getElementById('dataset-info').innerHTML = val==='csv' ? 'CSV carregado' : (DATASETS[val]?.info||'');
-    }
     if(el.closest('#dist-radios')) state.metric=val;
     if(el.closest('#weight-radios')) state.weight=val;
     if(el.closest('#norm-radios')) state.norm=val;
