@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KNN.lab</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --panel2: #1c2230;
+    --border: #30363d;
+    --accent: #2ea043;
+    --accent2: #388bfd;
+    --accent3: #f78166;
+    --text: #e6edf3;
+    --text2: #8b949e;
+    --text3: #c9d1d9;
+    --radius: 8px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .header-icon {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, #1a6b3a, #388bfd);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  header h1 span { color: var(--accent); }
+  header .sub { color: var(--text2); font-size: 12px; margin-top: 2px; }
+
+  /* LAYOUT */
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 0;
+    height: calc(100vh - 69px);
+    overflow: hidden;
+  }
+  aside {
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  main {
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* SECTIONS */
+  .section {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .section-header {
+    background: var(--panel2);
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-body { padding: 14px; }
+
+  /* FORM CONTROLS */
+  label { font-size: 12px; color: var(--text2); display: block; margin-bottom: 4px; }
+  select, input[type=range], input[type=number] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 7px 10px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  select:focus, input:focus { border-color: var(--accent2); }
+  .slider-row { display: flex; align-items: center; gap: 10px; }
+  .slider-row input { flex: 1; accent-color: var(--accent2); }
+  .slider-val {
+    min-width: 36px;
+    text-align: center;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 3px 6px;
+    font-size: 12px;
+    color: var(--text);
+  }
+  .form-group { margin-bottom: 12px; }
+  .form-group:last-child { margin-bottom: 0; }
+
+  /* RADIO GROUP */
+  .radio-group { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+  .radio-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all .2s;
+    font-size: 12px;
+  }
+  .radio-item:hover { border-color: var(--accent2); background: rgba(56,139,253,.06); }
+  .radio-item.active { border-color: var(--accent2); background: rgba(56,139,253,.12); color: var(--accent2); }
+  .radio-item input { display: none; }
+
+  /* DATASET PILL */
+  .dataset-info {
+    background: rgba(46,160,67,.08);
+    border: 1px solid rgba(46,160,67,.3);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 11px;
+    color: var(--text3);
+    line-height: 1.6;
+  }
+  .dataset-info strong { color: var(--accent); }
+
+  /* BUTTONS */
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    padding: 9px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all .2s;
+    width: 100%;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #3fb950);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(46,160,67,.3);
+  }
+  .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .btn-secondary {
+    background: var(--bg);
+    color: var(--text2);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--text2); color: var(--text); }
+  .btn-row { display: flex; gap: 8px; }
+  .btn-row .btn { flex: 1; }
+
+  /* STATUS */
+  #status {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--text2);
+    margin-top: 4px;
+    min-height: 38px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  #status.ok { color: var(--accent); border-color: rgba(46,160,67,.4); }
+  #status.error { color: var(--accent3); border-color: rgba(247,129,102,.4); }
+
+  /* TABS */
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); }
+  .tab {
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text2);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all .2s;
+    user-select: none;
+  }
+  .tab:hover { color: var(--text3); }
+  .tab.active { color: var(--accent2); border-bottom-color: var(--accent2); }
+  .tab-content { display: none; padding: 18px; }
+  .tab-content.active { display: block; }
+
+  /* CANVAS WRAPPER */
+  .canvas-wrap {
+    position: relative;
+    background: var(--bg);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  canvas { display: block; width: 100%; }
+  .canvas-controls {
+    display: flex; gap: 8px; align-items: center;
+    padding: 8px 12px;
+    border-top: 1px solid var(--border);
+    font-size: 11px; color: var(--text2);
+    flex-wrap: wrap;
+  }
+  .canvas-controls select {
+    width: auto;
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  /* METRICS */
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+  }
+  .metric-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    text-align: center;
+  }
+  .metric-val { font-size: 26px; font-weight: 700; color: var(--accent2); }
+  .metric-label { font-size: 11px; color: var(--text2); margin-top: 4px; }
+
+  /* CONFUSION MATRIX */
+  .conf-matrix { overflow-x: auto; }
+  .conf-matrix table { border-collapse: collapse; font-size: 12px; margin: 0 auto; }
+  .conf-matrix th, .conf-matrix td {
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    text-align: center;
+  }
+  .conf-matrix th { background: var(--panel2); color: var(--text2); font-size: 11px; }
+  .conf-matrix td { background: var(--bg); }
+  .conf-matrix td.diag { background: rgba(46,160,67,.15); color: var(--accent); font-weight: 700; }
+
+  /* REPORT TABLE */
+  .report-table { overflow-x: auto; }
+  .report-table table { border-collapse: collapse; width: 100%; font-size: 12px; }
+  .report-table th, .report-table td {
+    border: 1px solid var(--border);
+    padding: 7px 12px;
+    text-align: right;
+  }
+  .report-table th { background: var(--panel2); color: var(--text2); font-size: 11px; text-align: center; }
+  .report-table td:first-child { text-align: left; color: var(--accent2); font-weight: 600; }
+
+  /* DATA TABLE */
+  .data-table { overflow-x: auto; max-height: 300px; }
+  .data-table table { border-collapse: collapse; width: 100%; font-size: 11px; }
+  .data-table th {
+    position: sticky; top: 0;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    color: var(--text2);
+    font-size: 10px;
+    text-transform: uppercase;
+  }
+  .data-table td {
+    border: 1px solid var(--border);
+    padding: 5px 10px;
+    background: var(--bg);
+  }
+  .data-table tr:hover td { background: var(--panel2); }
+
+  /* KVOICE EXPLANATION */
+  .k-explain {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px;
+    margin-bottom: 14px;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--text3);
+  }
+  .k-explain strong { color: var(--accent2); }
+  .k-explain code {
+    background: var(--panel2);
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 11px;
+    color: var(--accent);
+  }
+
+  /* LEGEND */
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    font-size: 11px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* NEIGHBOR VIZ */
+  #neighbor-canvas-wrap {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text2);
+    min-height: 80px;
+  }
+
+  /* FOOTER */
+  footer {
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    padding: 10px 24px;
+    font-size: 11px;
+    color: var(--text2);
+    text-align: center;
+  }
+
+  /* LOADING */
+  .spinner {
+    display: inline-block;
+    width: 12px; height: 12px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* UPLOAD */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    font-size: 12px;
+    color: var(--text2);
+  }
+  .upload-zone:hover, .upload-zone.drag { border-color: var(--accent2); color: var(--text3); }
+  .upload-zone input { display: none; }
+
+  /* DISTANCE VIZ */
+  .dist-bar-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 5px; font-size: 11px;
+  }
+  .dist-bar-label { min-width: 70px; color: var(--text2); }
+  .dist-bar-track {
+    flex: 1; height: 8px;
+    background: var(--border);
+    border-radius: 4px; overflow: hidden;
+  }
+  .dist-bar-fill {
+    height: 100%; border-radius: 4px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    transition: width .4s;
+  }
+  .dist-bar-val { min-width: 45px; text-align: right; color: var(--text3); }
+
+  @media (max-width: 800px) {
+    .layout { grid-template-columns: 1fr; height: auto; }
+    aside { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-icon">🔍</div>
+  <div>
+    <h1>KNN<span>.lab</span></h1>
+    <div class="sub">ICD · IFSC · Prof. Ramon Mayor Martins</div>
+  </div>
+</header>
+
+<div class="layout">
+<!-- ASIDE -->
+<aside>
+  <!-- Dataset -->
+  <div class="section">
+    <div class="section-header">📊 Dataset</div>
+    <div class="section-body">
+      <div class="form-group">
+        <label>Selecionar dataset</label>
+        <div class="radio-group" id="dataset-radios">
+          <label class="radio-item active" data-val="iris">
+            <input type="radio" name="dataset" value="iris" checked>
+            Iris (Fisher, 1936)
+          </label>
+          <label class="radio-item" data-val="wine">
+            <input type="radio" name="dataset" value="wine">
+            Wine (UCI, 1991)
+          </label>
+          <label class="radio-item" data-val="csv">
+            <input type="radio" name="dataset" value="csv">
+            Upload CSV personalizado
+          </label>
+        </div>
+      </div>
+      <div id="csv-zone" style="display:none" class="form-group">
+        <label class="upload-zone" id="upload-zone">
+          <input type="file" accept=".csv" id="csv-input">
+          📁 Arraste ou clique para carregar CSV
+        </label>
+      </div>
+      <div class="dataset-info" id="dataset-info">
+        <strong>Iris:</strong> 150 amostras, 4 features<br>
+        <strong>Classes:</strong> setosa, versicolor, virginica<br>
+        <strong>Features:</strong> sepal_length, sepal_width, petal_length, petal_width
+      </div>
+    </div>
+  </div>
+
+  <!-- Hiperparâmetros -->
+  <div class="section">
+    <div class="section-header">⚙️ Hiperparâmetros</div>
+    <div class="section-body">
+
+      <div class="form-group">
+        <label>K (número de vizinhos)</label>
+        <div class="slider-row">
+          <input type="range" id="k-slider" min="1" max="21" step="2" value="5">
+          <span class="slider-val" id="k-val">5</span>
+        </div>
+        <div style="font-size:10px;color:var(--text2);margin-top:4px;">
+          Valores ímpares evitam empates na votação
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Métrica de distância</label>
+        <div class="radio-group" id="dist-radios">
+          <label class="radio-item active" data-val="euclidean">
+            <input type="radio" name="metric" value="euclidean" checked>
+            Euclidiana — √Σ(xᵢ−yᵢ)²
+          </label>
+          <label class="radio-item" data-val="manhattan">
+            <input type="radio" name="metric" value="manhattan">
+            Manhattan — Σ|xᵢ−yᵢ|
+          </label>
+          <label class="radio-item" data-val="minkowski3">
+            <input type="radio" name="metric" value="minkowski3">
+            Minkowski (p=3)
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Ponderação dos vizinhos</label>
+        <div class="radio-group" id="weight-radios">
+          <label class="radio-item active" data-val="uniform">
+            <input type="radio" name="weight" value="uniform" checked>
+            Uniforme — 1 voto cada
+          </label>
+          <label class="radio-item" data-val="distance">
+            <input type="radio" name="weight" value="distance">
+            Por distância — 1/d
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Normalização</label>
+        <div class="radio-group" id="norm-radios">
+          <label class="radio-item active" data-val="minmax">
+            <input type="radio" name="norm" value="minmax" checked>
+            Min-Max [0,1]
+          </label>
+          <label class="radio-item" data-val="standard">
+            <input type="radio" name="norm" value="standard">
+            Z-score (μ=0, σ=1)
+          </label>
+          <label class="radio-item" data-val="none">
+            <input type="radio" name="norm" value="none">
+            Sem normalização
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Proporção treino (%)</label>
+        <div class="slider-row">
+          <input type="range" id="split-slider" min="50" max="90" step="5" value="70">
+          <span class="slider-val" id="split-val">70</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Ação -->
+  <div class="section">
+    <div class="section-header">▶️ Ação</div>
+    <div class="section-body">
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="trainKNN()">🔍 Treinar KNN</button>
+        <button class="btn btn-secondary" onclick="resetAll()">↺ Resetar</button>
+      </div>
+      <div id="status">Pronto para treinar</div>
+    </div>
+  </div>
+
+</aside>
+
+<!-- MAIN -->
+<main>
+
+  <div class="section" style="flex-shrink:0">
+    <div style="padding:12px 16px;font-size:12px;color:var(--text2);display:flex;align-items:center;gap:8px;">
+      <span>🔍</span>
+      <span id="main-status">Configure K e os hiperparâmetros, depois clique em <strong style="color:var(--text)">Treinar KNN</strong> para visualizar.</span>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="section" style="flex:1">
+    <div class="tabs">
+      <div class="tab active" data-tab="boundary">📐 Fronteira</div>
+      <div class="tab" data-tab="neighbors">👥 Vizinhos</div>
+      <div class="tab" data-tab="k-analysis">📈 Análise K</div>
+      <div class="tab" data-tab="metrics">📊 Métricas</div>
+      <div class="tab" data-tab="data">📋 Dados</div>
+    </div>
+
+    <!-- TAB: FRONTEIRA -->
+    <div class="tab-content active" id="tab-boundary">
+      <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+        <div>
+          <label style="font-size:11px">Feature eixo X</label>
+          <select id="fx-sel" style="width:auto;padding:5px 8px;font-size:12px;margin-top:4px"></select>
+        </div>
+        <div>
+          <label style="font-size:11px">Feature eixo Y</label>
+          <select id="fy-sel" style="width:auto;padding:5px 8px;font-size:12px;margin-top:4px"></select>
+        </div>
+        <div id="legend-wrap" class="legend" style="margin-left:auto"></div>
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="boundary-canvas" height="420"></canvas>
+      </div>
+      <div style="font-size:11px;color:var(--text2);margin-top:8px;padding:0 4px;line-height:1.6">
+        A <strong style="color:var(--text3)">fronteira de decisão</strong> do KNN é formada por regiões de Voronoi determinadas pelos K vizinhos mais próximos. Regiões coloridas = zonas de classificação. Pontos com borda = dados de teste.
+      </div>
+    </div>
+
+    <!-- TAB: VIZINHOS -->
+    <div class="tab-content" id="tab-neighbors">
+      <div class="k-explain">
+        O KNN classifica um ponto novo encontrando os <strong>K vizinhos mais próximos</strong> no espaço de features
+        e realizando uma <strong>votação</strong> entre suas classes. Clique em qualquer ponto do gráfico abaixo para
+        ver os <code>K</code> vizinhos sendo destacados e o processo de votação.
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:8px;">Clique num ponto para inspecionar</div>
+          <div class="canvas-wrap">
+            <canvas id="neighbor-canvas" height="340"></canvas>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:8px;">Distâncias para os K vizinhos</div>
+          <div id="dist-bars" style="padding:4px">
+            <div style="color:var(--text2);font-size:12px;text-align:center;padding:40px 0">
+              Clique em um ponto no gráfico ao lado
+            </div>
+          </div>
+          <div style="margin-top:14px">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:8px;">Votação dos vizinhos</div>
+            <div id="vote-display" style="display:flex;flex-wrap:wrap;gap:8px;padding:4px">
+              <div style="color:var(--text2);font-size:12px;text-align:center;width:100%;padding:20px 0">
+                Aguardando seleção
+              </div>
+            </div>
+          </div>
+          <div id="prediction-box" style="display:none;margin-top:14px;background:rgba(56,139,253,.1);border:1px solid rgba(56,139,253,.3);border-radius:6px;padding:12px;font-size:12px;">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: K ANALYSIS -->
+    <div class="tab-content" id="tab-k-analysis">
+      <div class="k-explain">
+        A escolha de <strong>K</strong> impacta diretamente o balanço bias-variância.
+        <strong>K pequeno</strong> → baixo bias, alta variância (overfitting). <strong>K grande</strong> → alto bias, baixa variância (underfitting).
+        O gráfico abaixo mostra a acurácia de treino e teste para diferentes valores de K.
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="k-curve-canvas" height="300"></canvas>
+      </div>
+      <div style="font-size:11px;color:var(--text2);margin-top:8px;padding:0 4px">
+        Linha <span style="color:var(--accent2)">azul</span> = acurácia de treino · Linha <span style="color:var(--accent)">verde</span> = acurácia de teste · 
+        <span style="color:var(--accent3)">Marcador</span> = K atual selecionado
+      </div>
+    </div>
+
+    <!-- TAB: MÉTRICAS -->
+    <div class="tab-content" id="tab-metrics">
+      <div class="metric-grid" id="metric-cards" style="margin-bottom:18px">
+        <div class="metric-card"><div class="metric-val">—</div><div class="metric-label">Acurácia</div></div>
+        <div class="metric-card"><div class="metric-val">—</div><div class="metric-label">Precisão (macro)</div></div>
+        <div class="metric-card"><div class="metric-val">—</div><div class="metric-label">Recall (macro)</div></div>
+        <div class="metric-card"><div class="metric-val">—</div><div class="metric-label">F1-Score (macro)</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start;flex-wrap:wrap">
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:8px;text-align:center">🎯 Matriz de Confusão</div>
+          <div class="conf-matrix" id="conf-matrix-wrap">
+            <div style="color:var(--text2);text-align:center;padding:20px">Treine primeiro</div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:8px;">📋 Relatório de Classificação</div>
+          <div class="report-table" id="report-table-wrap">
+            <div style="color:var(--text2);padding:20px">Treine primeiro</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: DADOS -->
+    <div class="tab-content" id="tab-data">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px;">Amostra dos dados de teste com predição KNN</div>
+      <div class="data-table" id="data-table-wrap">
+        <div style="color:var(--text2);padding:20px">Treine primeiro</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<footer>Desenvolvido por Ramon Mayor Martins · IFSC · ICD 2026</footer>
+
+<script>
+// ===================================================
+// DATA
+// ===================================================
+const DATASETS = {
+  iris: {
+    info: '<strong>Iris:</strong> 150 amostras, 4 features<br><strong>Classes:</strong> setosa, versicolor, virginica<br><strong>Features:</strong> sepal_length, sepal_width, petal_length, petal_width',
+    features: ['sepal_length','sepal_width','petal_length','petal_width'],
+    classes: ['setosa','versicolor','virginica'],
+    data: generateIris()
+  },
+  wine: {
+    info: '<strong>Wine:</strong> 178 amostras, 4 features (simplificado)<br><strong>Classes:</strong> Classe 1, Classe 2, Classe 3<br><strong>Features:</strong> alcohol, malic_acid, ash, flavanoids',
+    features: ['alcohol','malic_acid','ash','flavanoids'],
+    classes: ['Classe 1','Classe 2','Classe 3'],
+    data: generateWine()
+  }
+};
+
+function generateIris() {
+  const rng = mulberry32(42);
+  const rows = [];
+  const params = [
+    {cl:0, sl:[4.8,5.4], sw:[3.0,3.6], pl:[1.2,1.8], pw:[0.1,0.4]},
+    {cl:1, sl:[5.8,6.8], sw:[2.6,3.1], pl:[4.0,5.2], pw:[1.2,1.8]},
+    {cl:2, sl:[6.3,7.5], sw:[2.8,3.3], pl:[5.5,6.8], pw:[1.8,2.5]}
+  ];
+  params.forEach(p => {
+    for(let i=0;i<50;i++){
+      rows.push([
+        +(p.sl[0]+(p.sl[1]-p.sl[0])*rng()).toFixed(1),
+        +(p.sw[0]+(p.sw[1]-p.sw[0])*rng()).toFixed(1),
+        +(p.pl[0]+(p.pl[1]-p.pl[0])*rng()).toFixed(1),
+        +(p.pw[0]+(p.pw[1]-p.pw[0])*rng()).toFixed(2),
+        p.cl
+      ]);
+    }
+  });
+  return rows;
+}
+
+function generateWine() {
+  const rng = mulberry32(7);
+  const rows = [];
+  const params = [
+    {cl:0, a:[13.5,14.5], m:[1.5,3.0], ash:[2.4,2.8], fl:[2.8,3.8]},
+    {cl:1, a:[11.5,13.5], m:[1.5,3.0], ash:[2.0,2.5], fl:[1.5,2.8]},
+    {cl:2, a:[11.5,13.5], m:[3.0,5.0], ash:[2.5,3.0], fl:[0.5,1.5]}
+  ];
+  const counts=[59,71,48];
+  params.forEach((p,i)=>{
+    for(let j=0;j<counts[i];j++){
+      rows.push([
+        +(p.a[0]+(p.a[1]-p.a[0])*rng()).toFixed(2),
+        +(p.m[0]+(p.m[1]-p.m[0])*rng()).toFixed(2),
+        +(p.ash[0]+(p.ash[1]-p.ash[0])*rng()).toFixed(2),
+        +(p.fl[0]+(p.fl[1]-p.fl[0])*rng()).toFixed(2),
+        p.cl
+      ]);
+    }
+  });
+  return rows;
+}
+
+function mulberry32(a){
+  return function(){
+    a|=0;a=a+0x6D2B79F5|0;
+    var t=Math.imul(a^a>>>15,1|a);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296;
+  }
+}
+
+// ===================================================
+// STATE
+// ===================================================
+let state = {
+  ds: 'iris',
+  trainX:[], trainY:[], testX:[], testY:[],
+  features:[], classes:[],
+  k:5, metric:'euclidean', weight:'uniform', norm:'minmax',
+  split:70,
+  trained:false,
+  kCurve:null,
+  predY:[],
+  trainXraw:[], testXraw:[],
+  csvData:null
+};
+
+const COLORS = ['#388bfd','#2ea043','#f78166','#d2a8ff','#ffa657','#79c0ff'];
+
+// ===================================================
+// UI INIT
+// ===================================================
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('tab-'+t.dataset.tab).classList.add('active');
+    if(state.trained){
+      if(t.dataset.tab==='boundary') drawBoundary();
+      if(t.dataset.tab==='neighbors') drawNeighborCanvas();
+      if(t.dataset.tab==='k-analysis') drawKCurve();
+    }
+  });
+});
+
+document.querySelectorAll('[data-val]').forEach(el=>{
+  el.addEventListener('click',()=>{
+    const group = el.closest('.radio-group');
+    if(!group) return;
+    group.querySelectorAll('.radio-item').forEach(x=>x.classList.remove('active'));
+    el.classList.add('active');
+    const val = el.dataset.val;
+    if(el.closest('#dataset-radios')){
+      state.ds = val;
+      document.getElementById('csv-zone').style.display = val==='csv'?'block':'none';
+      document.getElementById('dataset-info').innerHTML = val==='csv' ? 'CSV carregado' : (DATASETS[val]?.info||'');
+    }
+    if(el.closest('#dist-radios')) state.metric=val;
+    if(el.closest('#weight-radios')) state.weight=val;
+    if(el.closest('#norm-radios')) state.norm=val;
+  });
+});
+
+const kSlider = document.getElementById('k-slider');
+kSlider.addEventListener('input',()=>{ state.k=+kSlider.value; document.getElementById('k-val').textContent=kSlider.value; });
+
+const splitSlider = document.getElementById('split-slider');
+splitSlider.addEventListener('input',()=>{ state.split=+splitSlider.value; document.getElementById('split-val').textContent=splitSlider.value; });
+
+// CSV upload
+const csvInput = document.getElementById('csv-input');
+const uploadZone = document.getElementById('upload-zone');
+uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.classList.add('drag');});
+uploadZone.addEventListener('dragleave',()=>uploadZone.classList.remove('drag'));
+uploadZone.addEventListener('drop',e=>{e.preventDefault();uploadZone.classList.remove('drag');handleCSV(e.dataTransfer.files[0]);});
+csvInput.addEventListener('change',()=>handleCSV(csvInput.files[0]));
+
+function handleCSV(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const lines = e.target.result.trim().split('\n');
+    const headers = lines[0].split(',').map(s=>s.trim());
+    const rows = lines.slice(1).map(l=>l.split(',').map(s=>+s.trim()));
+    state.csvData = { headers, rows };
+    document.getElementById('dataset-info').innerHTML = `<strong>${file.name}:</strong> ${rows.length} amostras, ${headers.length-1} features`;
+    setStatus(`CSV carregado: ${rows.length} amostras`,'ok');
+  };
+  reader.readAsText(file);
+}
+
+// ===================================================
+// TRAIN
+// ===================================================
+function trainKNN(){
+  setStatus('<span class="spinner"></span> Treinando...','');
+  setTimeout(()=>{
+    try {
+      // Load data
+      let raw, features, classes;
+      if(state.ds==='csv' && state.csvData){
+        const {headers,rows} = state.csvData;
+        features = headers.slice(0,-1);
+        const labelSet = [...new Set(rows.map(r=>r[r.length-1]))].sort();
+        classes = labelSet.map(String);
+        raw = rows.map(r=>[...r.slice(0,-1), labelSet.indexOf(r[r.length-1])]);
+      } else {
+        const ds = DATASETS[state.ds==='csv'?'iris':state.ds];
+        raw = ds.data; features = ds.features; classes = ds.classes;
+      }
+
+      state.features = features;
+      state.classes = classes;
+
+      // Populate feature selects
+      ['fx-sel','fy-sel'].forEach((id,i)=>{
+        const sel = document.getElementById(id);
+        sel.innerHTML = features.map((f,j)=>`<option value="${j}" ${j===(i===0?0:2)?'selected':''}>${f}</option>`).join('');
+        sel.onchange = ()=>{ if(state.trained) drawBoundary(); };
+      });
+
+      // Shuffle & split
+      const rng = mulberry32(99);
+      const shuffled = [...raw].sort(()=>rng()-0.5);
+      const n = shuffled.length;
+      const nTrain = Math.floor(n * state.split/100);
+      const trainRaw = shuffled.slice(0,nTrain);
+      const testRaw = shuffled.slice(nTrain);
+
+      state.trainXraw = trainRaw.map(r=>r.slice(0,-1));
+      state.testXraw = testRaw.map(r=>r.slice(0,-1));
+      state.trainY = trainRaw.map(r=>r[r.length-1]);
+      state.testY = testRaw.map(r=>r[r.length-1]);
+
+      // Normalize
+      const {trainX, testX, params} = normalize(state.trainXraw, state.testXraw, state.norm);
+      state.trainX = trainX;
+      state.testX = testX;
+      state.normParams = params;
+
+      // Predict
+      state.predY = state.testX.map(x=>knnPredict(x, state.trainX, state.trainY, state.k, state.metric, state.weight));
+
+      // K curve
+      state.kCurve = buildKCurve(state.trainX, state.trainY, state.testX, state.testY);
+
+      state.trained = true;
+
+      // Update UI
+      const acc = accuracy(state.predY, state.testY);
+      setStatus(`✔ Treinado — K=${state.k} · ${state.metric} · acurácia ${(acc*100).toFixed(1)}%`,'ok');
+      document.getElementById('main-status').innerHTML = `Dataset <strong style="color:var(--text)">${state.ds}</strong> carregado · ${n} amostras · treino: ${nTrain} · teste: ${n-nTrain}`;
+
+      drawBoundary();
+      drawNeighborCanvas();
+      drawKCurve();
+      renderMetrics();
+      renderDataTable();
+
+    } catch(err){
+      setStatus('Erro: '+err.message,'error');
+      console.error(err);
+    }
+  },30);
+}
+
+// ===================================================
+// KNN CORE
+// ===================================================
+function dist(a, b, metric){
+  if(metric==='euclidean'){
+    return Math.sqrt(a.reduce((s,v,i)=>s+(v-b[i])**2,0));
+  } else if(metric==='manhattan'){
+    return a.reduce((s,v,i)=>s+Math.abs(v-b[i]),0);
+  } else { // minkowski3
+    return Math.pow(a.reduce((s,v,i)=>s+Math.abs(v-b[i])**3,0),1/3);
+  }
+}
+
+function knnPredict(x, trainX, trainY, k, metric, weight){
+  const dists = trainX.map((t,i)=>({d:dist(x,t,metric),y:trainY[i]}));
+  dists.sort((a,b)=>a.d-b.d);
+  const neighbors = dists.slice(0,k);
+  const votes = {};
+  neighbors.forEach(n=>{
+    const w = weight==='distance' ? (n.d===0?1e6:1/n.d) : 1;
+    votes[n.y] = (votes[n.y]||0)+w;
+  });
+  return +Object.entries(votes).sort((a,b)=>b[1]-a[1])[0][0];
+}
+
+function knnPredictNeighbors(x, trainX, trainY, k, metric, weight){
+  const dists = trainX.map((t,i)=>({d:dist(x,t,metric),y:trainY[i],idx:i}));
+  dists.sort((a,b)=>a.d-b.d);
+  const neighbors = dists.slice(0,k);
+  const votes = {};
+  neighbors.forEach(n=>{
+    const w = weight==='distance' ? (n.d===0?1e6:1/n.d) : 1;
+    votes[n.y] = (votes[n.y]||0)+w;
+  });
+  const pred = +Object.entries(votes).sort((a,b)=>b[1]-a[1])[0][0];
+  return {neighbors, votes, pred};
+}
+
+function buildKCurve(trainX, trainY, testX, testY){
+  const ks = [];
+  for(let k=1;k<=Math.min(21,trainX.length);k+=2) ks.push(k);
+  return ks.map(k=>({
+    k,
+    train: accuracy(trainX.map(x=>knnPredict(x,trainX,trainY,k,state.metric,state.weight)), trainY),
+    test: accuracy(testX.map(x=>knnPredict(x,trainX,trainY,k,state.metric,state.weight)), testY)
+  }));
+}
+
+// ===================================================
+// NORMALIZE
+// ===================================================
+function normalize(trainX, testX, method){
+  const nf = trainX[0].length;
+  const params = [];
+  if(method==='none') return {trainX,testX,params};
+  for(let f=0;f<nf;f++){
+    const vals = trainX.map(r=>r[f]);
+    if(method==='minmax'){
+      const mn=Math.min(...vals), mx=Math.max(...vals);
+      params.push({mn,mx});
+    } else {
+      const mu=vals.reduce((a,b)=>a+b,0)/vals.length;
+      const sg=Math.sqrt(vals.reduce((a,b)=>a+(b-mu)**2,0)/vals.length)||1;
+      params.push({mu,sg});
+    }
+  }
+  const norm = X => X.map(r=>r.map((v,f)=>{
+    if(method==='minmax'){const {mn,mx}=params[f];return mx===mn?0:(v-mn)/(mx-mn);}
+    else {const {mu,sg}=params[f];return (v-mu)/sg;}
+  }));
+  return {trainX:norm(trainX),testX:norm(testX),params};
+}
+
+// ===================================================
+// METRICS
+// ===================================================
+function accuracy(pred,true_){
+  return pred.reduce((s,p,i)=>s+(p===true_[i]?1:0),0)/pred.length;
+}
+
+function confMatrix(pred,true_,nc){
+  const cm=Array.from({length:nc},()=>Array(nc).fill(0));
+  pred.forEach((p,i)=>cm[true_[i]][p]++);
+  return cm;
+}
+
+function precRecF1(cm,nc){
+  return Array.from({length:nc},(_,c)=>{
+    const tp=cm[c][c];
+    const fp=cm.reduce((s,r)=>s+r[c],0)-tp;
+    const fn=cm[c].reduce((s,v)=>s+v,0)-tp;
+    const prec=tp/(tp+fp)||0, rec=tp/(tp+fn)||0;
+    const f1=prec+rec>0?2*prec*rec/(prec+rec):0;
+    return {prec,rec,f1,support:cm[c].reduce((s,v)=>s+v,0)};
+  });
+}
+
+// ===================================================
+// DRAW BOUNDARY
+// ===================================================
+function drawBoundary(){
+  const canvas = document.getElementById('boundary-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth||700, H=420;
+  canvas.width=W; canvas.height=H;
+  const pad=50;
+  const fx=+document.getElementById('fx-sel').value;
+  const fy=+document.getElementById('fy-sel').value;
+
+  const allX = [...state.trainX,...state.testX];
+  const xs=allX.map(r=>r[fx]), ys=allX.map(r=>r[fy]);
+  const minX=Math.min(...xs)-0.05, maxX=Math.max(...xs)+0.05;
+  const minY=Math.min(...ys)-0.05, maxY=Math.max(...ys)+0.05;
+  const toC = (x,y)=>[(x-minX)/(maxX-minX)*(W-2*pad)+pad,(y-minY)/(maxY-minY)*(H-2*pad)+pad];
+
+  // Background grid (decision regions) - low resolution for speed
+  const step=6;
+  const cols=[
+    [56,139,253],[46,160,67],[247,129,102],[210,168,255],[255,166,87],[121,192,255]
+  ];
+  for(let px=pad;px<W-pad;px+=step){
+    for(let py=pad;py<H-pad;py+=step){
+      const nx=(px-pad)/(W-2*pad)*(maxX-minX)+minX;
+      const ny=(py-pad)/(H-2*pad)*(maxY-minY)+minY;
+      const full=state.trainX[0].map((_,f)=>f===fx?nx:f===fy?ny:0);
+      const pred=knnPredict(full,state.trainX,state.trainY,state.k,state.metric,state.weight);
+      const c=cols[pred%cols.length];
+      ctx.fillStyle=`rgba(${c[0]},${c[1]},${c[2]},0.18)`;
+      ctx.fillRect(px-step/2,py-step/2,step,step);
+    }
+  }
+
+  // Axes
+  ctx.strokeStyle='#30363d'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pad,pad); ctx.lineTo(pad,H-pad); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad,H-pad); ctx.lineTo(W-pad,H-pad); ctx.stroke();
+
+  // Ticks
+  ctx.fillStyle='#8b949e'; ctx.font='10px Segoe UI'; ctx.textAlign='center';
+  for(let i=0;i<=5;i++){
+    const v=minX+(maxX-minX)*i/5;
+    const px=pad+(W-2*pad)*i/5;
+    ctx.fillText(v.toFixed(1),px,H-pad+14);
+  }
+  ctx.textAlign='right';
+  for(let i=0;i<=5;i++){
+    const v=minY+(maxY-minY)*i/5;
+    const py=H-pad-(H-2*pad)*i/5;
+    ctx.fillText(v.toFixed(1),pad-6,py+4);
+  }
+
+  // Axis labels
+  ctx.fillStyle='#c9d1d9'; ctx.font='11px Segoe UI'; ctx.textAlign='center';
+  ctx.fillText(state.features[fx], W/2, H-10);
+  ctx.save(); ctx.translate(12, H/2); ctx.rotate(-Math.PI/2);
+  ctx.fillText(state.features[fy], 0, 0); ctx.restore();
+
+  // Train points
+  state.trainX.forEach((row,i)=>{
+    const [cx,cy]=toC(row[fx],row[fy]);
+    const c=cols[state.trainY[i]%cols.length];
+    ctx.beginPath(); ctx.arc(cx,cy,4,0,2*Math.PI);
+    ctx.fillStyle=`rgb(${c[0]},${c[1]},${c[2]})`;
+    ctx.fill();
+  });
+
+  // Test points
+  state.testX.forEach((row,i)=>{
+    const [cx,cy]=toC(row[fx],row[fy]);
+    const correct=state.predY[i]===state.testY[i];
+    const c=cols[state.testY[i]%cols.length];
+    ctx.beginPath(); ctx.arc(cx,cy,7,0,2*Math.PI);
+    ctx.strokeStyle=correct?`rgb(${c[0]},${c[1]},${c[2]})`:'#f78166';
+    ctx.lineWidth=2.5; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx,cy,4,0,2*Math.PI);
+    ctx.fillStyle=`rgb(${c[0]},${c[1]},${c[2]})`;
+    ctx.fill();
+  });
+
+  // Legend
+  const legWrap = document.getElementById('legend-wrap');
+  legWrap.innerHTML = state.classes.map((cl,i)=>`
+    <div class="legend-item">
+      <div class="legend-dot" style="background:rgb(${cols[i%cols.length].join(',')})"></div>
+      <span>${cl}</span>
+    </div>`).join('');
+}
+
+// ===================================================
+// DRAW NEIGHBOR CANVAS
+// ===================================================
+let neighborCanvasReady = false;
+function drawNeighborCanvas(){
+  const canvas = document.getElementById('neighbor-canvas');
+  const W = canvas.offsetWidth||380, H=340;
+  canvas.width=W; canvas.height=H;
+  const ctx = canvas.getContext('2d');
+  const fx=+document.getElementById('fx-sel').value;
+  const fy=+document.getElementById('fy-sel').value;
+  const cols=[[56,139,253],[46,160,67],[247,129,102],[210,168,255],[255,166,87]];
+  const pad=40;
+  const allX=[...state.trainX,...state.testX];
+  const xs=allX.map(r=>r[fx]), ys=allX.map(r=>r[fy]);
+  const minX=Math.min(...xs)-0.05, maxX=Math.max(...xs)+0.05;
+  const minY=Math.min(...ys)-0.05, maxY=Math.max(...ys)+0.05;
+  const toC=(x,y)=>[(x-minX)/(maxX-minX)*(W-2*pad)+pad,(y-minY)/(maxY-minY)*(H-2*pad)+pad];
+
+  function draw(highlight=null){
+    ctx.clearRect(0,0,W,H);
+    // axes
+    ctx.strokeStyle='#30363d'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pad,pad); ctx.lineTo(pad,H-pad); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad,H-pad); ctx.lineTo(W-pad,H-pad); ctx.stroke();
+
+    // train
+    state.trainX.forEach((row,i)=>{
+      const [cx,cy]=toC(row[fx],row[fy]);
+      const c=cols[state.trainY[i]%cols.length];
+      ctx.beginPath(); ctx.arc(cx,cy,4,0,2*Math.PI);
+      ctx.fillStyle=`rgba(${c[0]},${c[1]},${c[2]},0.6)`;
+      ctx.fill();
+    });
+
+    // test
+    state.testX.forEach((row,i)=>{
+      const [cx,cy]=toC(row[fx],row[fy]);
+      const c=cols[state.testY[i]%cols.length];
+      ctx.beginPath(); ctx.arc(cx,cy,6,0,2*Math.PI);
+      ctx.strokeStyle=`rgb(${c[0]},${c[1]},${c[2]})`; ctx.lineWidth=2; ctx.stroke();
+    });
+
+    if(highlight!==null){
+      const {x2d, neighbors} = highlight;
+      const [qx,qy]=toC(x2d[fx],x2d[fy]);
+
+      // lines to neighbors
+      neighbors.forEach(n=>{
+        const pt=state.trainX[n.idx];
+        const [nx,ny]=toC(pt[fx],pt[fy]);
+        ctx.beginPath(); ctx.moveTo(qx,qy); ctx.lineTo(nx,ny);
+        ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.lineWidth=1; ctx.stroke();
+      });
+
+      // highlight neighbors
+      neighbors.forEach((n,ni)=>{
+        const pt=state.trainX[n.idx];
+        const [nx,ny]=toC(pt[fx],pt[fy]);
+        const c=cols[state.trainY[n.idx]%cols.length];
+        ctx.beginPath(); ctx.arc(nx,ny,8,0,2*Math.PI);
+        ctx.strokeStyle=`rgb(${c[0]},${c[1]},${c[2]})`; ctx.lineWidth=3; ctx.stroke();
+        ctx.fillStyle='#0d1117'; ctx.fill();
+        ctx.fillStyle=`rgb(${c[0]},${c[1]},${c[2]})`; ctx.font='bold 9px Segoe UI'; ctx.textAlign='center';
+        ctx.fillText(ni+1,nx,ny+3);
+      });
+
+      // query point
+      ctx.beginPath(); ctx.arc(qx,qy,9,0,2*Math.PI);
+      ctx.fillStyle='#f78166'; ctx.fill();
+      ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
+    }
+  }
+
+  draw();
+
+  // click handler
+  canvas.onclick = e => {
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+    // find nearest test point
+    let best=null, bd=1e9;
+    state.testX.forEach((row,i)=>{
+      const [cx,cy]=toC(row[fx],row[fy]);
+      const d=Math.hypot(cx-mx,cy-my);
+      if(d<bd){bd=d;best=i;}
+    });
+    if(best===null || bd>20) return;
+    const {neighbors,votes,pred}=knnPredictNeighbors(state.testX[best],state.trainX,state.trainY,state.k,state.metric,state.weight);
+    draw({x2d:state.testX[best],neighbors});
+    renderDistBars(neighbors);
+    renderVotes(votes,pred,state.testY[best]);
+  };
+
+  neighborCanvasReady=true;
+}
+
+function renderDistBars(neighbors){
+  const maxD=Math.max(...neighbors.map(n=>n.d))||1;
+  document.getElementById('dist-bars').innerHTML = neighbors.map((n,i)=>`
+    <div class="dist-bar-row">
+      <div class="dist-bar-label">Viz. #${i+1} (${state.classes[n.y]})</div>
+      <div class="dist-bar-track"><div class="dist-bar-fill" style="width:${(n.d/maxD*100).toFixed(0)}%"></div></div>
+      <div class="dist-bar-val">${n.d.toFixed(3)}</div>
+    </div>`).join('');
+}
+
+function renderVotes(votes,pred,trueLabel){
+  const cols=['#388bfd','#2ea043','#f78166','#d2a8ff','#ffa657'];
+  document.getElementById('vote-display').innerHTML = Object.entries(votes).sort((a,b)=>b[1]-a[1]).map(([cl,w],i)=>`
+    <div style="background:${cols[+cl%cols.length]}22;border:1px solid ${cols[+cl%cols.length]}55;border-radius:6px;padding:8px 12px;font-size:12px;">
+      <div style="color:${cols[+cl%cols.length]};font-weight:700">${state.classes[+cl]}</div>
+      <div style="color:var(--text2);font-size:10px;margin-top:2px">${typeof w==='number'?w.toFixed(2):w} votos</div>
+    </div>`).join('');
+  const box=document.getElementById('prediction-box');
+  const correct=pred===trueLabel;
+  box.style.display='block';
+  box.innerHTML=`<strong>Predição:</strong> <span style="color:var(--accent2)">${state.classes[pred]}</span> &nbsp; 
+    <strong>Real:</strong> <span style="color:${correct?'var(--accent)':'var(--accent3)'}">${state.classes[trueLabel]}</span> &nbsp;
+    <span style="color:${correct?'var(--accent)':'var(--accent3)'};">${correct?'✔ Correto':'✘ Incorreto'}</span>`;
+}
+
+// ===================================================
+// K CURVE
+// ===================================================
+function drawKCurve(){
+  if(!state.kCurve) return;
+  const canvas=document.getElementById('k-curve-canvas');
+  const W=canvas.offsetWidth||700, H=300;
+  canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  const pad={t:30,r:40,b:50,l:60};
+  const cw=W-pad.l-pad.r, ch=H-pad.t-pad.b;
+  const ks=state.kCurve.map(p=>p.k);
+  const toX=k=>(ks.indexOf(k))/(ks.length-1)*cw+pad.l;
+  const toY=v=>H-pad.b-(v-0.5)/(1-0.5)*ch;
+
+  // Grid
+  ctx.strokeStyle='#21262d'; ctx.lineWidth=1;
+  [0.5,0.6,0.7,0.8,0.9,1.0].forEach(v=>{
+    const y=toY(v);
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
+    ctx.fillStyle='#8b949e'; ctx.font='10px Segoe UI'; ctx.textAlign='right';
+    ctx.fillText((v*100).toFixed(0)+'%',pad.l-8,y+4);
+  });
+
+  // Axes
+  ctx.strokeStyle='#30363d'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(pad.l,pad.t); ctx.lineTo(pad.l,H-pad.b); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad.l,H-pad.b); ctx.lineTo(W-pad.r,H-pad.b); ctx.stroke();
+
+  // X ticks
+  ctx.fillStyle='#8b949e'; ctx.font='10px Segoe UI'; ctx.textAlign='center';
+  ks.forEach(k=>{ ctx.fillText('K='+k,toX(k),H-pad.b+16); });
+
+  // Train curve
+  ctx.beginPath(); ctx.strokeStyle='#388bfd'; ctx.lineWidth=2;
+  state.kCurve.forEach((p,i)=>{ const x=toX(p.k),y=toY(p.train); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
+  ctx.stroke();
+
+  // Test curve
+  ctx.beginPath(); ctx.strokeStyle='#2ea043'; ctx.lineWidth=2;
+  state.kCurve.forEach((p,i)=>{ const x=toX(p.k),y=toY(p.test); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
+  ctx.stroke();
+
+  // Current K marker
+  state.kCurve.filter(p=>p.k===state.k).forEach(p=>{
+    const x=toX(p.k), y=toY(p.test);
+    ctx.beginPath(); ctx.arc(x,y,6,0,2*Math.PI);
+    ctx.fillStyle='#f78166'; ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
+  });
+
+  // Labels
+  ctx.fillStyle='#c9d1d9'; ctx.font='11px Segoe UI'; ctx.textAlign='center';
+  ctx.fillText('Número de vizinhos (K)', W/2, H-10);
+  ctx.save(); ctx.translate(14,H/2); ctx.rotate(-Math.PI/2);
+  ctx.fillText('Acurácia', 0, 0); ctx.restore();
+}
+
+// ===================================================
+// METRICS
+// ===================================================
+function renderMetrics(){
+  const nc=state.classes.length;
+  const cm=confMatrix(state.predY,state.testY,nc);
+  const prf=precRecF1(cm,nc);
+  const acc=accuracy(state.predY,state.testY);
+  const macroP=prf.reduce((s,x)=>s+x.prec,0)/nc;
+  const macroR=prf.reduce((s,x)=>s+x.rec,0)/nc;
+  const macroF=prf.reduce((s,x)=>s+x.f1,0)/nc;
+
+  document.getElementById('metric-cards').innerHTML=[
+    [acc,(acc*100).toFixed(1)+'%','Acurácia'],
+    [macroP,(macroP*100).toFixed(1)+'%','Precisão (macro)'],
+    [macroR,(macroR*100).toFixed(1)+'%','Recall (macro)'],
+    [macroF,(macroF*100).toFixed(1)+'%','F1-Score (macro)']
+  ].map(([v,s,l])=>`<div class="metric-card"><div class="metric-val" style="color:${v>=0.8?'var(--accent)':v>=0.6?'var(--accent2)':'var(--accent3)'}">${s}</div><div class="metric-label">${l}</div></div>`).join('');
+
+  // Confusion matrix
+  const cmHtml=`<table>
+    <tr><th></th>${state.classes.map(c=>`<th>Pred ${c}</th>`).join('')}</tr>
+    ${cm.map((row,r)=>`<tr><th>Real ${state.classes[r]}</th>${row.map((v,c)=>`<td class="${r===c?'diag':''}">${v}</td>`).join('')}</tr>`).join('')}
+  </table>`;
+  document.getElementById('conf-matrix-wrap').innerHTML=cmHtml;
+
+  // Report
+  const repHtml=`<table>
+    <tr><th>Classe</th><th>Precisão</th><th>Recall</th><th>F1</th><th>Suporte</th></tr>
+    ${prf.map((p,i)=>`<tr><td>${state.classes[i]}</td><td>${(p.prec*100).toFixed(1)}%</td><td>${(p.rec*100).toFixed(1)}%</td><td>${(p.f1*100).toFixed(1)}%</td><td>${p.support}</td></tr>`).join('')}
+    <tr><td>macro avg</td><td>${(macroP*100).toFixed(1)}%</td><td>${(macroR*100).toFixed(1)}%</td><td>${(macroF*100).toFixed(1)}%</td><td>${state.testY.length}</td></tr>
+  </table>`;
+  document.getElementById('report-table-wrap').innerHTML=repHtml;
+}
+
+// ===================================================
+// DATA TABLE
+// ===================================================
+function renderDataTable(){
+  const n=Math.min(50,state.testX.length);
+  const cols=['#388bfd','#2ea043','#f78166','#d2a8ff','#ffa657'];
+  let html=`<table><tr>${state.features.map(f=>`<th>${f}</th>`).join('')}<th>Real</th><th>Predito</th><th>OK?</th></tr>`;
+  for(let i=0;i<n;i++){
+    const ok=state.predY[i]===state.testY[i];
+    html+=`<tr>${state.testXraw[i].map(v=>`<td>${+v.toFixed(3)}</td>`).join('')}
+      <td style="color:${cols[state.testY[i]%cols.length]}">${state.classes[state.testY[i]]}</td>
+      <td style="color:${cols[state.predY[i]%cols.length]}">${state.classes[state.predY[i]]}</td>
+      <td style="color:${ok?'var(--accent)':'var(--accent3)'};">${ok?'✔':'✘'}</td></tr>`;
+  }
+  html+='</table>';
+  document.getElementById('data-table-wrap').innerHTML=html;
+}
+
+// ===================================================
+// HELPERS
+// ===================================================
+function setStatus(msg, type){
+  const el=document.getElementById('status');
+  el.innerHTML=msg;
+  el.className=type||'';
+}
+
+function resetAll(){
+  state.trained=false;
+  setStatus('Pronto para treinar','');
+  document.getElementById('main-status').textContent='Configure K e os hiperparâmetros, depois clique em Treinar KNN para visualizar.';
+  ['boundary-canvas','neighbor-canvas','k-curve-canvas'].forEach(id=>{
+    const c=document.getElementById(id);
+    if(c){const ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);}
+  });
+  document.getElementById('metric-cards').innerHTML='<div class="metric-card"><div class="metric-val">—</div><div class="metric-label">Acurácia</div></div>'.repeat(4);
+  document.getElementById('conf-matrix-wrap').innerHTML='<div style="color:var(--text2);text-align:center;padding:20px">Treine primeiro</div>';
+  document.getElementById('report-table-wrap').innerHTML='<div style="color:var(--text2);padding:20px">Treine primeiro</div>';
+  document.getElementById('data-table-wrap').innerHTML='<div style="color:var(--text2);padding:20px">Treine primeiro</div>';
+  document.getElementById('dist-bars').innerHTML='<div style="color:var(--text2);font-size:12px;text-align:center;padding:40px 0">Clique em um ponto no gráfico ao lado</div>';
+  document.getElementById('vote-display').innerHTML='<div style="color:var(--text2);font-size:12px;text-align:center;width:100%;padding:20px 0">Aguardando seleção</div>';
+  document.getElementById('prediction-box').style.display='none';
+  document.getElementById('legend-wrap').innerHTML='';
+}
+
+window.addEventListener('resize',()=>{ if(state.trained){
+  const active=document.querySelector('.tab.active').dataset.tab;
+  if(active==='boundary') drawBoundary();
+  if(active==='neighbors') drawNeighborCanvas();
+  if(active==='k-analysis') drawKCurve();
+}});
+</script>
+</body>
+</html>

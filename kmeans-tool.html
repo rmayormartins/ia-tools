@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KMeans.lab</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --panel2: #1c2230;
+    --border: #30363d;
+    --accent: #2ea043;
+    --accent2: #388bfd;
+    --accent3: #f78166;
+    --text: #e6edf3;
+    --text2: #8b949e;
+    --text3: #c9d1d9;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .header-icon {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, #38405a, #388bfd);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  header h1 span { color: var(--accent2); }
+  header .sub { color: var(--text2); font-size: 12px; margin-top: 2px; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 0;
+    height: calc(100vh - 69px);
+    overflow: hidden;
+  }
+  aside {
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  main {
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .section {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .section-header {
+    background: var(--panel2);
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-body { padding: 14px; }
+
+  label { font-size: 12px; color: var(--text2); display: block; margin-bottom: 4px; }
+  select, input[type=range] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 7px 10px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  select:focus { border-color: var(--accent2); }
+  .slider-row { display: flex; align-items: center; gap: 10px; }
+  .slider-row input { flex: 1; accent-color: var(--accent2); }
+  .slider-val {
+    min-width: 36px;
+    text-align: center;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 3px 6px;
+    font-size: 12px;
+    color: var(--text);
+  }
+  .form-group { margin-bottom: 12px; }
+  .form-group:last-child { margin-bottom: 0; }
+
+  .radio-group { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+  .radio-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all .2s;
+    font-size: 12px;
+  }
+  .radio-item:hover { border-color: var(--accent2); background: rgba(56,139,253,.06); }
+  .radio-item.active { border-color: var(--accent2); background: rgba(56,139,253,.12); color: var(--accent2); }
+  .radio-item input { display: none; }
+
+  .dataset-info {
+    background: rgba(56,139,253,.08);
+    border: 1px solid rgba(56,139,253,.3);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 11px;
+    color: var(--text3);
+    line-height: 1.6;
+  }
+  .dataset-info strong { color: var(--accent2); }
+
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    padding: 9px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all .2s;
+    width: 100%;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #1a3a6b, var(--accent2));
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(56,139,253,.25);
+  }
+  .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .btn-step {
+    background: rgba(56,139,253,.15);
+    color: var(--accent2);
+    border: 1px solid rgba(56,139,253,.35);
+  }
+  .btn-step:hover { background: rgba(56,139,253,.25); }
+  .btn-secondary {
+    background: var(--bg);
+    color: var(--text2);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--text2); color: var(--text); }
+  .btn-row { display: flex; gap: 8px; }
+  .btn-row .btn { flex: 1; }
+
+  #status {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--text2);
+    margin-top: 4px;
+    min-height: 38px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  #status.ok { color: var(--accent); border-color: rgba(46,160,67,.4); }
+  #status.running { color: var(--accent2); border-color: rgba(56,139,253,.4); }
+  #status.error { color: var(--accent3); border-color: rgba(247,129,102,.4); }
+
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); }
+  .tab {
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text2);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all .2s;
+    user-select: none;
+  }
+  .tab:hover { color: var(--text3); }
+  .tab.active { color: var(--accent2); border-bottom-color: var(--accent2); }
+  .tab-content { display: none; padding: 18px; }
+  .tab-content.active { display: block; }
+
+  .canvas-wrap {
+    position: relative;
+    background: var(--bg);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  canvas { display: block; width: 100%; }
+
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .metric-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    text-align: center;
+  }
+  .metric-val { font-size: 26px; font-weight: 700; color: var(--accent2); }
+  .metric-label { font-size: 11px; color: var(--text2); margin-top: 4px; }
+
+  /* INERTIA CHART */
+  .elbow-note {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    font-size: 12px;
+    color: var(--text3);
+    line-height: 1.7;
+    margin-bottom: 14px;
+  }
+  .elbow-note strong { color: var(--accent2); }
+
+  /* ITERATION STEPPER */
+  .iter-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text2);
+  }
+  .iter-bar button {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text3);
+    cursor: pointer;
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+  .iter-bar button:hover { border-color: var(--accent2); color: var(--accent2); }
+  .iter-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--border);
+    flex-shrink: 0;
+    transition: background .3s;
+  }
+  .iter-dot.done { background: var(--accent2); }
+  .iter-dot.current { background: var(--accent3); }
+
+  /* CENTROID TABLE */
+  .centroid-table { overflow-x: auto; }
+  .centroid-table table { border-collapse: collapse; width: 100%; font-size: 12px; }
+  .centroid-table th, .centroid-table td {
+    border: 1px solid var(--border);
+    padding: 7px 12px;
+    text-align: right;
+  }
+  .centroid-table th { background: var(--panel2); color: var(--text2); font-size: 11px; text-align: center; }
+  .centroid-table td:first-child { text-align: left; font-weight: 600; }
+
+  /* SILHOUETTE */
+  .silhouette-bar-wrap { display: flex; align-items: stretch; gap: 2px; height: 140px; margin-top: 8px; }
+  .sil-col { display: flex; flex-direction: column; justify-content: flex-end; }
+  .sil-fill { border-radius: 2px 2px 0 0; transition: height .4s; }
+
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    font-size: 12px;
+    color: var(--text2);
+  }
+  .upload-zone:hover { border-color: var(--accent2); color: var(--text3); }
+  .upload-zone input { display: none; }
+
+  .spinner {
+    display: inline-block;
+    width: 12px; height: 12px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent2);
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: 11px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  footer {
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    padding: 10px 24px;
+    font-size: 11px;
+    color: var(--text2);
+    text-align: center;
+  }
+
+  @media (max-width: 800px) {
+    .layout { grid-template-columns: 1fr; height: auto; }
+    aside { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-icon">📊</div>
+  <div>
+    <h1>KMeans<span>.lab</span></h1>
+    <div class="sub">ICD · IFSC · Prof. Ramon Mayor Martins</div>
+  </div>
+</header>
+
+<div class="layout">
+<aside>
+
+  <!-- Dataset -->
+  <div class="section">
+    <div class="section-header">📊 Dataset</div>
+    <div class="section-body">
+      <div class="form-group">
+        <label>Selecionar dataset</label>
+        <div class="radio-group" id="dataset-radios">
+          <label class="radio-item active" data-val="iris">
+            <input type="radio" name="dataset" value="iris" checked>
+            Iris (Fisher, 1936)
+          </label>
+          <label class="radio-item" data-val="blobs">
+            <input type="radio" name="dataset" value="blobs">
+            Blobs sintéticos (2D)
+          </label>
+          <label class="radio-item" data-val="moons">
+            <input type="radio" name="dataset" value="moons">
+            Moons (não-convexo)
+          </label>
+          <label class="radio-item" data-val="csv">
+            <input type="radio" name="dataset" value="csv">
+            Upload CSV personalizado
+          </label>
+        </div>
+      </div>
+      <div id="csv-zone" style="display:none" class="form-group">
+        <label class="upload-zone">
+          <input type="file" accept=".csv" id="csv-input">
+          📁 Arraste ou clique para carregar CSV
+        </label>
+      </div>
+      <div class="dataset-info" id="dataset-info">
+        <strong>Iris:</strong> 150 amostras, 4 features<br>
+        <strong>Features:</strong> sepal_length, sepal_width, petal_length, petal_width
+      </div>
+    </div>
+  </div>
+
+  <!-- Hiperparâmetros -->
+  <div class="section">
+    <div class="section-header">⚙️ Hiperparâmetros</div>
+    <div class="section-body">
+
+      <div class="form-group">
+        <label>K (número de clusters)</label>
+        <div class="slider-row">
+          <input type="range" id="k-slider" min="2" max="10" step="1" value="3">
+          <span class="slider-val" id="k-val">3</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Inicialização de centroides</label>
+        <div class="radio-group" id="init-radios">
+          <label class="radio-item active" data-val="kmeans++">
+            <input type="radio" name="init" value="kmeans++" checked>
+            K-Means++ (inteligente)
+          </label>
+          <label class="radio-item" data-val="random">
+            <input type="radio" name="init" value="random">
+            Aleatória
+          </label>
+          <label class="radio-item" data-val="manual">
+            <input type="radio" name="init" value="manual">
+            Clique no gráfico (2D)
+          </label>
+        </div>
+        <div style="font-size:10px;color:var(--text2);margin-top:4px;line-height:1.5">
+          K-Means++ seleciona centroides iniciais afastados entre si, reduzindo dependência da inicialização.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Máx. iterações</label>
+        <div class="slider-row">
+          <input type="range" id="iter-slider" min="1" max="30" step="1" value="10">
+          <span class="slider-val" id="iter-val">10</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Tolerância de convergência</label>
+        <div class="radio-group" id="tol-radios">
+          <label class="radio-item active" data-val="1e-4">
+            <input type="radio" name="tol" value="1e-4" checked>
+            1×10⁻⁴ (padrão)
+          </label>
+          <label class="radio-item" data-val="1e-3">
+            <input type="radio" name="tol" value="1e-3">
+            1×10⁻³ (rápido)
+          </label>
+          <label class="radio-item" data-val="0">
+            <input type="radio" name="tol" value="0">
+            Sem tolerância (max iters)
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Normalização</label>
+        <div class="radio-group" id="norm-radios">
+          <label class="radio-item active" data-val="standard">
+            <input type="radio" name="norm" value="standard" checked>
+            Z-score (μ=0, σ=1)
+          </label>
+          <label class="radio-item" data-val="minmax">
+            <input type="radio" name="norm" value="minmax">
+            Min-Max [0,1]
+          </label>
+          <label class="radio-item" data-val="none">
+            <input type="radio" name="norm" value="none">
+            Sem normalização
+          </label>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Ação -->
+  <div class="section">
+    <div class="section-header">▶️ Ação</div>
+    <div class="section-body">
+      <div class="btn-row" style="margin-bottom:8px">
+        <button class="btn btn-primary" onclick="runKMeans()">📊 Executar K-Means</button>
+      </div>
+      <div class="btn-row" style="margin-bottom:4px">
+        <button class="btn btn-step" onclick="stepBack()">◀ Passo</button>
+        <button class="btn btn-step" onclick="stepForward()">Passo ▶</button>
+      </div>
+      <button class="btn btn-secondary" onclick="resetAll()">↺ Resetar</button>
+      <div id="status" style="margin-top:8px">Pronto para executar</div>
+    </div>
+  </div>
+
+</aside>
+
+<main>
+
+  <div class="section" style="flex-shrink:0">
+    <div style="padding:12px 16px;font-size:12px;color:var(--text2);display:flex;align-items:center;gap:8px;">
+      <span>📊</span>
+      <span id="main-status">Configure K e os parâmetros, depois clique em <strong style="color:var(--text)">Executar K-Means</strong>.</span>
+    </div>
+  </div>
+
+  <div class="section" style="flex:1">
+    <div class="tabs">
+      <div class="tab active" data-tab="clusters">🗂️ Clusters</div>
+      <div class="tab" data-tab="evolution">🔄 Evolução</div>
+      <div class="tab" data-tab="elbow">📐 Cotovelo</div>
+      <div class="tab" data-tab="metrics">📈 Métricas</div>
+      <div class="tab" data-tab="centroids">📌 Centroides</div>
+    </div>
+
+    <!-- TAB: CLUSTERS -->
+    <div class="tab-content active" id="tab-clusters">
+      <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+        <div>
+          <label style="font-size:11px">Feature eixo X</label>
+          <select id="fx-sel" style="width:auto;padding:5px 8px;font-size:12px;margin-top:4px"></select>
+        </div>
+        <div>
+          <label style="font-size:11px">Feature eixo Y</label>
+          <select id="fy-sel" style="width:auto;padding:5px 8px;font-size:12px;margin-top:4px"></select>
+        </div>
+        <div id="legend-wrap" class="legend" style="margin-left:auto"></div>
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="cluster-canvas" height="400"></canvas>
+      </div>
+      <div class="iter-bar">
+        <button onclick="stepBack()">◀</button>
+        <span id="iter-label">Iteração —</span>
+        <div id="iter-dots" style="display:flex;gap:4px"></div>
+        <button onclick="stepForward()">▶</button>
+        <span id="inertia-label" style="margin-left:auto"></span>
+      </div>
+      <div style="font-size:11px;color:var(--text2);margin-top:8px;padding:0 4px;line-height:1.6">
+        <strong style="color:var(--text3)">Centroides</strong> são marcados com ✦. Use os botões Passo para navegar pelas iterações do algoritmo.
+      </div>
+    </div>
+
+    <!-- TAB: EVOLUÇÃO -->
+    <div class="tab-content" id="tab-evolution">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.7;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px">
+        O gráfico de <strong style="color:var(--accent2)">inércia por iteração</strong> mostra a soma das distâncias quadradas de cada ponto ao centroide do seu cluster.
+        A inércia cai a cada iteração e converge quando os centroides param de se mover significativamente.
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="evo-canvas" height="300"></canvas>
+      </div>
+    </div>
+
+    <!-- TAB: COTOVELO -->
+    <div class="tab-content" id="tab-elbow">
+      <div class="elbow-note">
+        O <strong>método do cotovelo</strong> ajuda a escolher o K ideal. Plota a inércia para diferentes valores de K.
+        O ponto onde a curva forma um "cotovelo" (redução de inércia diminui significativamente) sugere o K ótimo.
+        Busque o ponto de inflexão — onde adicionar mais clusters traz pouco ganho.
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="elbow-canvas" height="300"></canvas>
+      </div>
+      <div style="font-size:11px;color:var(--text2);margin-top:8px">
+        Linha <span style="color:var(--accent2)">azul</span> = inércia · <span style="color:var(--accent3)">Marcador</span> = K atual
+      </div>
+    </div>
+
+    <!-- TAB: MÉTRICAS -->
+    <div class="tab-content" id="tab-metrics">
+      <div class="metric-grid" id="metric-cards">
+        <div class="metric-card"><div class="metric-val">—</div><div class="metric-label">K clusters</div></div>
+        <div class="metric-card"><div class="metric-val">—</div><div class="metric-label">Inércia</div></div>
+        <div class="metric-card"><div class="metric-val">—</div><div class="metric-label">Silhouette Score</div></div>
+        <div class="metric-card"><div class="metric-val">—</div><div class="metric-label">Iterações</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:8px">📊 Tamanho dos Clusters</div>
+          <div class="canvas-wrap"><canvas id="size-canvas" height="200"></canvas></div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:8px">🔷 Silhouette por Cluster</div>
+          <div id="sil-bars"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: CENTROIDES -->
+    <div class="tab-content" id="tab-centroids">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Coordenadas finais dos centroides (espaço normalizado)</div>
+      <div class="centroid-table" id="centroid-table-wrap">
+        <div style="color:var(--text2);padding:20px">Execute primeiro</div>
+      </div>
+      <div style="margin-top:18px">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Coordenadas dos centroides (espaço original)</div>
+        <div class="centroid-table" id="centroid-table-orig">
+          <div style="color:var(--text2);padding:20px">Execute primeiro</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+</div>
+
+<footer>Desenvolvido por Ramon Mayor Martins · IFSC · ICD 2026</footer>
+
+<script>
+// ===================================================
+// DATA GENERATORS
+// ===================================================
+function mulberry32(a){
+  return function(){
+    a|=0;a=a+0x6D2B79F5|0;
+    var t=Math.imul(a^a>>>15,1|a);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296;
+  }
+}
+
+function genBlobs(rng,n=200,k=3){
+  const centers=[[2,2],[6,2],[4,6],[-1,5],[8,7]].slice(0,k);
+  const rows=[];
+  centers.forEach((c,i)=>{ for(let j=0;j<Math.floor(n/k);j++) rows.push([c[0]+(rng()-.5)*2,c[1]+(rng()-.5)*2]); });
+  return rows;
+}
+
+function genMoons(rng,n=200){
+  const rows=[];
+  for(let i=0;i<n/2;i++){
+    const t=Math.PI*i/(n/2);
+    rows.push([Math.cos(t)+(rng()-.5)*.3,Math.sin(t)+(rng()-.5)*.3]);
+  }
+  for(let i=0;i<n/2;i++){
+    const t=Math.PI*i/(n/2);
+    rows.push([1-Math.cos(t)+(rng()-.5)*.3,0.5-Math.sin(t)+(rng()-.5)*.3]);
+  }
+  return rows;
+}
+
+function genIris(){
+  const rng=mulberry32(42);
+  const rows=[];
+  [[4.8,5.4,3.0,3.6,1.2,1.8,0.1,0.4],
+   [5.8,6.8,2.6,3.1,4.0,5.2,1.2,1.8],
+   [6.3,7.5,2.8,3.3,5.5,6.8,1.8,2.5]].forEach((p,cl)=>{
+    for(let i=0;i<50;i++){
+      rows.push([
+        +(p[0]+(p[1]-p[0])*rng()).toFixed(1),
+        +(p[2]+(p[3]-p[2])*rng()).toFixed(1),
+        +(p[4]+(p[5]-p[4])*rng()).toFixed(1),
+        +(p[6]+(p[7]-p[6])*rng()).toFixed(2),
+        cl
+      ]);
+    }
+  });
+  return rows;
+}
+
+const DATASETS={
+  iris:{ features:['sepal_length','sepal_width','petal_length','petal_width'], data:genIris().map(r=>r.slice(0,4)),
+    info:'<strong>Iris:</strong> 150 amostras, 4 features<br><strong>Features:</strong> sepal_length, sepal_width, petal_length, petal_width'},
+  blobs:{ features:['x','y'], data:genBlobs(mulberry32(17),150,3),
+    info:'<strong>Blobs:</strong> 150 amostras, 2 features sintéticas<br>Clusters gaussianos bem separados'},
+  moons:{ features:['x','y'], data:genMoons(mulberry32(7)),
+    info:'<strong>Moons:</strong> 200 amostras, 2 features<br>Forma de meia-lua — desafio para K-Means (convexo)'},
+};
+
+// ===================================================
+// STATE
+// ===================================================
+let state={
+  ds:'iris', k:3, init:'kmeans++', maxIter:10, tol:1e-4, norm:'standard',
+  features:[], X:[], Xraw:[],
+  history:[], currentStep:0,
+  elbowData:null,
+  csvData:null,
+  manualCentroids:[],
+};
+
+const COLORS=['#388bfd','#2ea043','#f78166','#d2a8ff','#ffa657','#79c0ff','#ff8c69','#56d364'];
+
+// ===================================================
+// UI INIT
+// ===================================================
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('tab-'+t.dataset.tab).classList.add('active');
+    if(state.history.length>0){
+      if(t.dataset.tab==='clusters') renderStep(state.currentStep);
+      if(t.dataset.tab==='evolution') drawEvoChart();
+      if(t.dataset.tab==='elbow' && state.elbowData) drawElbow();
+      if(t.dataset.tab==='metrics') renderMetrics();
+      if(t.dataset.tab==='centroids') renderCentroids();
+    }
+  });
+});
+
+document.querySelectorAll('[data-val]').forEach(el=>{
+  el.addEventListener('click',()=>{
+    const group=el.closest('.radio-group');
+    if(!group) return;
+    group.querySelectorAll('.radio-item').forEach(x=>x.classList.remove('active'));
+    el.classList.add('active');
+    const val=el.dataset.val;
+    if(el.closest('#dataset-radios')){
+      state.ds=val;
+      document.getElementById('csv-zone').style.display=val==='csv'?'block':'none';
+      document.getElementById('dataset-info').innerHTML=(val==='csv')?'CSV carregado':(DATASETS[val]?.info||'');
+    }
+    if(el.closest('#init-radios')) state.init=val;
+    if(el.closest('#tol-radios')) state.tol=+val;
+    if(el.closest('#norm-radios')) state.norm=val;
+  });
+});
+
+document.getElementById('k-slider').addEventListener('input',function(){state.k=+this.value;document.getElementById('k-val').textContent=this.value;});
+document.getElementById('iter-slider').addEventListener('input',function(){state.maxIter=+this.value;document.getElementById('iter-val').textContent=this.value;});
+
+document.getElementById('csv-input').addEventListener('change',function(){
+  const f=this.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=e=>{
+    const lines=e.target.result.trim().split('\n');
+    const headers=lines[0].split(',').map(s=>s.trim());
+    const rows=lines.slice(1).map(l=>l.split(',').map(s=>+s.trim()));
+    state.csvData={features:headers,data:rows};
+    document.getElementById('dataset-info').innerHTML=`<strong>${f.name}:</strong> ${rows.length} amostras, ${headers.length} features`;
+  };
+  r.readAsText(f);
+});
+
+// feature selects
+function populateFeatureSelects(features){
+  ['fx-sel','fy-sel'].forEach((id,i)=>{
+    const sel=document.getElementById(id);
+    sel.innerHTML=features.map((f,j)=>`<option value="${j}" ${j===(i===0?0:2%features.length)?'selected':''}>${f}</option>`).join('');
+    sel.onchange=()=>{ if(state.history.length) renderStep(state.currentStep); };
+  });
+}
+
+// ===================================================
+// NORMALIZE
+// ===================================================
+function normalizeData(X, method){
+  if(method==='none') return {Xn:[...X.map(r=>[...r])],params:[]};
+  const nf=X[0].length;
+  const params=[];
+  for(let f=0;f<nf;f++){
+    const vals=X.map(r=>r[f]);
+    if(method==='minmax'){
+      const mn=Math.min(...vals),mx=Math.max(...vals);
+      params.push({mn,mx});
+    } else {
+      const mu=vals.reduce((a,b)=>a+b,0)/vals.length;
+      const sg=Math.sqrt(vals.reduce((a,b)=>a+(b-mu)**2,0)/vals.length)||1;
+      params.push({mu,sg});
+    }
+  }
+  const Xn=X.map(r=>r.map((v,f)=>{
+    if(method==='minmax'){const {mn,mx}=params[f];return mx===mn?0:(v-mn)/(mx-mn);}
+    else{const {mu,sg}=params[f];return (v-mu)/sg;}
+  }));
+  return {Xn,params};
+}
+
+// ===================================================
+// K-MEANS CORE
+// ===================================================
+function eucl(a,b){ return Math.sqrt(a.reduce((s,v,i)=>s+(v-b[i])**2,0)); }
+
+function initCentroids(X, k, method, rng){
+  if(method==='random'){
+    const idx=[...X.keys()].sort(()=>rng()-.5).slice(0,k);
+    return idx.map(i=>[...X[i]]);
+  }
+  // kmeans++
+  const cents=[]; const used=new Set();
+  const first=Math.floor(rng()*X.length);
+  cents.push([...X[first]]); used.add(first);
+  while(cents.length<k){
+    const dists=X.map((x,i)=>used.has(i)?0:Math.min(...cents.map(c=>eucl(x,c)**2)));
+    const sum=dists.reduce((a,b)=>a+b,0);
+    let r=rng()*sum, ci=0;
+    for(let i=0;i<dists.length;i++){r-=dists[i];if(r<=0){ci=i;break;}}
+    cents.push([...X[ci]]); used.add(ci);
+  }
+  return cents;
+}
+
+function assignClusters(X,centroids){
+  return X.map(x=>{
+    let best=0,bd=1e18;
+    centroids.forEach((c,i)=>{const d=eucl(x,c);if(d<bd){bd=d;best=i;}});
+    return best;
+  });
+}
+
+function updateCentroids(X,assignments,k){
+  return Array.from({length:k},(_,ci)=>{
+    const pts=X.filter((_,i)=>assignments[i]===ci);
+    if(pts.length===0) return X[Math.floor(Math.random()*X.length)]; // reinit empty
+    const nf=X[0].length;
+    return Array.from({length:nf},(_,f)=>pts.reduce((s,p)=>s+p[f],0)/pts.length);
+  });
+}
+
+function inertia(X,assignments,centroids){
+  return X.reduce((s,x,i)=>s+eucl(x,centroids[assignments[i]])**2,0);
+}
+
+function silhouette(X,assignments,k){
+  if(k<2) return 0;
+  const n=X.length;
+  const scores=X.map((x,i)=>{
+    const myK=assignments[i];
+    const sameClust=X.filter((_,j)=>assignments[j]===myK&&j!==i);
+    if(sameClust.length===0) return 0;
+    const a=sameClust.reduce((s,y)=>s+eucl(x,y),0)/sameClust.length;
+    let b=Infinity;
+    for(let ci=0;ci<k;ci++){
+      if(ci===myK) continue;
+      const other=X.filter((_,j)=>assignments[j]===ci);
+      if(other.length===0) continue;
+      const d=other.reduce((s,y)=>s+eucl(x,y),0)/other.length;
+      if(d<b) b=d;
+    }
+    const m=Math.max(a,b);
+    return m===0?0:(b-a)/m;
+  });
+  return scores.reduce((a,b)=>a+b,0)/n;
+}
+
+function runKMeansOnData(X,k,init,maxIter,tol,rng){
+  let centroids=initCentroids(X,k,init,rng);
+  const history=[{centroids:[...centroids.map(c=>[...c])],assignments:assignClusters(X,centroids),iter:0}];
+  for(let it=1;it<=maxIter;it++){
+    const asgn=assignClusters(X,centroids);
+    const newC=updateCentroids(X,asgn,k);
+    const shift=centroids.reduce((s,c,i)=>s+eucl(c,newC[i]),0);
+    centroids=newC;
+    history.push({centroids:[...centroids.map(c=>[...c])],assignments:[...asgn],iter:it});
+    if(shift<tol) break;
+  }
+  return history;
+}
+
+// ===================================================
+// RUN
+// ===================================================
+function runKMeans(){
+  setStatus('<span class="spinner"></span> Executando...','running');
+  setTimeout(()=>{
+    try{
+      let X,features;
+      if(state.ds==='csv'&&state.csvData){
+        features=state.csvData.features; X=state.csvData.data;
+      } else {
+        const ds=DATASETS[state.ds==='csv'?'iris':state.ds];
+        features=ds.features; X=ds.data;
+      }
+      state.features=features;
+      state.Xraw=X;
+
+      const {Xn}=normalizeData(X,state.norm);
+      state.X=Xn;
+
+      populateFeatureSelects(features);
+
+      const rng=mulberry32(Date.now()%1000);
+      state.history=runKMeansOnData(Xn,state.k,state.init,state.maxIter,state.tol,rng);
+      state.currentStep=state.history.length-1;
+
+      // Elbow
+      const rng2=mulberry32(42);
+      state.elbowData=[];
+      for(let k=1;k<=Math.min(10,Xn.length-1);k++){
+        const h=runKMeansOnData(Xn,k,'kmeans++',15,1e-4,mulberry32(42+k));
+        const last=h[h.length-1];
+        state.elbowData.push({k,inertia:inertia(Xn,last.assignments,last.centroids)});
+      }
+
+      const last=state.history[state.currentStep];
+      const sil=silhouette(Xn,last.assignments,state.k);
+      const iner=inertia(Xn,last.assignments,last.centroids);
+
+      setStatus(`✔ Convergido em ${state.history.length-1} iteração(ões) · K=${state.k} · inércia ${iner.toFixed(2)} · silhouette ${sil.toFixed(3)}`,'ok');
+      document.getElementById('main-status').innerHTML=`<strong style="color:var(--text)">${features.length} features</strong> · ${X.length} amostras · K=${state.k} clusters`;
+
+      renderStep(state.currentStep);
+      drawEvoChart();
+      drawElbow();
+      renderMetrics();
+      renderCentroids();
+      buildIterDots();
+      updateLegend();
+
+    } catch(err){ setStatus('Erro: '+err.message,'error'); console.error(err); }
+  },30);
+}
+
+// ===================================================
+// STEP NAVIGATION
+// ===================================================
+function stepForward(){
+  if(!state.history.length) return;
+  state.currentStep=Math.min(state.currentStep+1,state.history.length-1);
+  renderStep(state.currentStep);
+  updateIterDots();
+}
+function stepBack(){
+  if(!state.history.length) return;
+  state.currentStep=Math.max(state.currentStep-1,0);
+  renderStep(state.currentStep);
+  updateIterDots();
+}
+
+function buildIterDots(){
+  const wrap=document.getElementById('iter-dots');
+  wrap.innerHTML=state.history.map((_,i)=>`<div class="iter-dot" id="idot-${i}"></div>`).join('');
+  updateIterDots();
+}
+
+function updateIterDots(){
+  state.history.forEach((_,i)=>{
+    const el=document.getElementById('idot-'+i);
+    if(!el) return;
+    el.className='iter-dot'+(i<state.currentStep?' done':i===state.currentStep?' current':'');
+  });
+  document.getElementById('iter-label').textContent=`Iteração ${state.currentStep} / ${state.history.length-1}`;
+  const step=state.history[state.currentStep];
+  const iner=inertia(state.X,step.assignments,step.centroids);
+  document.getElementById('inertia-label').textContent=`Inércia: ${iner.toFixed(2)}`;
+}
+
+// ===================================================
+// DRAW CLUSTERS
+// ===================================================
+function renderStep(stepIdx){
+  const canvas=document.getElementById('cluster-canvas');
+  const W=canvas.offsetWidth||700,H=400;
+  canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  const fx=+document.getElementById('fx-sel').value;
+  const fy=+document.getElementById('fy-sel').value;
+  const step=state.history[stepIdx];
+  const {centroids,assignments}=step;
+  const pad=50;
+
+  const allX=state.X;
+  const xs=allX.map(r=>r[fx]),ys=allX.map(r=>r[fy]);
+  const cx2=centroids.map(c=>c[fx]),cy2=centroids.map(c=>c[fy]);
+  const minX=Math.min(...xs,...cx2)-.1,maxX=Math.max(...xs,...cx2)+.1;
+  const minY=Math.min(...ys,...cy2)-.1,maxY=Math.max(...ys,...cy2)+.1;
+  const toC=(x,y)=>[(x-minX)/(maxX-minX)*(W-2*pad)+pad,(y-minY)/(maxY-minY)*(H-2*pad)+pad];
+
+  // Voronoi background (low res)
+  const step2=6;
+  for(let px=pad;px<W-pad;px+=step2){
+    for(let py=pad;py<H-pad;py+=step2){
+      const nx=(px-pad)/(W-2*pad)*(maxX-minX)+minX;
+      const ny=(py-pad)/(H-2*pad)*(maxY-minY)+minY;
+      const pt=state.X[0].map((_,f)=>f===fx?nx:f===fy?ny:0);
+      let best=0,bd=1e18;
+      centroids.forEach((c,i)=>{
+        const d=(c[fx]-nx)**2+(c[fy]-ny)**2;
+        if(d<bd){bd=d;best=i;}
+      });
+      const c=hexToRgb(COLORS[best%COLORS.length]);
+      ctx.fillStyle=`rgba(${c.r},${c.g},${c.b},0.14)`;
+      ctx.fillRect(px-step2/2,py-step2/2,step2,step2);
+    }
+  }
+
+  // Axes
+  ctx.strokeStyle='#30363d'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pad,pad); ctx.lineTo(pad,H-pad); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad,H-pad); ctx.lineTo(W-pad,H-pad); ctx.stroke();
+  ctx.fillStyle='#8b949e'; ctx.font='10px Segoe UI'; ctx.textAlign='center';
+  for(let i=0;i<=5;i++){
+    const v=minX+(maxX-minX)*i/5;
+    ctx.fillText(v.toFixed(2),pad+(W-2*pad)*i/5,H-pad+14);
+  }
+  ctx.textAlign='right';
+  for(let i=0;i<=5;i++){
+    const v=minY+(maxY-minY)*i/5;
+    ctx.fillText(v.toFixed(2),pad-6,H-pad-(H-2*pad)*i/5+4);
+  }
+  ctx.fillStyle='#c9d1d9'; ctx.font='11px Segoe UI'; ctx.textAlign='center';
+  ctx.fillText(state.features[fx],W/2,H-10);
+  ctx.save(); ctx.translate(12,H/2); ctx.rotate(-Math.PI/2); ctx.fillText(state.features[fy],0,0); ctx.restore();
+
+  // Points
+  allX.forEach((row,i)=>{
+    const [cx,cy]=toC(row[fx],row[fy]);
+    const col=COLORS[assignments[i]%COLORS.length];
+    ctx.beginPath(); ctx.arc(cx,cy,4,0,2*Math.PI);
+    ctx.fillStyle=col+'bb'; ctx.fill();
+  });
+
+  // Centroids
+  centroids.forEach((c,i)=>{
+    const [cx,cy]=toC(c[fx],c[fy]);
+    const col=COLORS[i%COLORS.length];
+    // Star
+    ctx.beginPath();
+    for(let p=0;p<5;p++){
+      const a=Math.PI*2*p/5-Math.PI/2;
+      const a2=a+Math.PI/5;
+      const r1=14,r2=6;
+      p?ctx.lineTo(cx+r1*Math.cos(a),cy+r1*Math.sin(a)):ctx.moveTo(cx+r1*Math.cos(a),cy+r1*Math.sin(a));
+      ctx.lineTo(cx+r2*Math.cos(a2),cy+r2*Math.sin(a2));
+    }
+    ctx.closePath();
+    ctx.fillStyle=col; ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
+  });
+
+  updateIterDots();
+}
+
+function hexToRgb(hex){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return {r,g,b};
+}
+
+function updateLegend(){
+  document.getElementById('legend-wrap').innerHTML=Array.from({length:state.k},(_,i)=>`
+    <div class="legend-item">
+      <div class="legend-dot" style="background:${COLORS[i%COLORS.length]}"></div>
+      <span>Cluster ${i+1}</span>
+    </div>`).join('');
+}
+
+// ===================================================
+// EVO CHART
+// ===================================================
+function drawEvoChart(){
+  if(!state.history.length) return;
+  const canvas=document.getElementById('evo-canvas');
+  const W=canvas.offsetWidth||700,H=300;
+  canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  const pad={t:30,r:40,b:50,l:70};
+  const cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
+
+  const iners=state.history.map(s=>inertia(state.X,s.assignments,s.centroids));
+  const minI=Math.min(...iners),maxI=Math.max(...iners);
+  const n=iners.length;
+
+  ctx.strokeStyle='#21262d'; ctx.lineWidth=1;
+  [0,.25,.5,.75,1].forEach(t=>{
+    const v=minI+(maxI-minI)*t;
+    const y=H-pad.b-t*ch;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
+    ctx.fillStyle='#8b949e'; ctx.font='10px Segoe UI'; ctx.textAlign='right';
+    ctx.fillText(v.toFixed(0),pad.l-6,y+4);
+  });
+
+  ctx.strokeStyle='#30363d'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(pad.l,pad.t); ctx.lineTo(pad.l,H-pad.b); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad.l,H-pad.b); ctx.lineTo(W-pad.r,H-pad.b); ctx.stroke();
+
+  // Curve
+  ctx.beginPath(); ctx.strokeStyle='#388bfd'; ctx.lineWidth=2.5;
+  iners.forEach((v,i)=>{
+    const x=pad.l+i/(n-1||1)*cw;
+    const y=H-pad.b-(v-minI)/(maxI-minI||1)*ch;
+    i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+  });
+  ctx.stroke();
+
+  // Dots
+  iners.forEach((v,i)=>{
+    const x=pad.l+i/(n-1||1)*cw;
+    const y=H-pad.b-(v-minI)/(maxI-minI||1)*ch;
+    ctx.beginPath(); ctx.arc(x,y,4,0,2*Math.PI);
+    ctx.fillStyle=i===state.currentStep?'#f78166':'#388bfd'; ctx.fill();
+    ctx.fillStyle='#8b949e'; ctx.font='9px Segoe UI'; ctx.textAlign='center';
+    ctx.fillText('I'+i,x,H-pad.b+14);
+  });
+
+  ctx.fillStyle='#c9d1d9'; ctx.font='11px Segoe UI'; ctx.textAlign='center';
+  ctx.fillText('Iteração',W/2,H-10);
+  ctx.save(); ctx.translate(14,H/2); ctx.rotate(-Math.PI/2); ctx.fillText('Inércia',0,0); ctx.restore();
+}
+
+// ===================================================
+// ELBOW
+// ===================================================
+function drawElbow(){
+  if(!state.elbowData) return;
+  const canvas=document.getElementById('elbow-canvas');
+  const W=canvas.offsetWidth||700,H=300;
+  canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  const pad={t:30,r:40,b:50,l:70};
+  const cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
+  const ks=state.elbowData.map(d=>d.k);
+  const iners=state.elbowData.map(d=>d.inertia);
+  const minI=Math.min(...iners),maxI=Math.max(...iners);
+  const n=ks.length;
+  const toX=i=>pad.l+i/(n-1)*cw;
+  const toY=v=>H-pad.b-(v-minI)/(maxI-minI||1)*ch;
+
+  ctx.strokeStyle='#21262d'; ctx.lineWidth=1;
+  [0,.25,.5,.75,1].forEach(t=>{
+    const y=H-pad.b-t*ch;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
+    ctx.fillStyle='#8b949e'; ctx.font='10px Segoe UI'; ctx.textAlign='right';
+    ctx.fillText((minI+(maxI-minI)*t).toFixed(0),pad.l-6,y+4);
+  });
+
+  ctx.strokeStyle='#30363d'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(pad.l,pad.t); ctx.lineTo(pad.l,H-pad.b); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad.l,H-pad.b); ctx.lineTo(W-pad.r,H-pad.b); ctx.stroke();
+
+  ctx.beginPath(); ctx.strokeStyle='#388bfd'; ctx.lineWidth=2.5;
+  ks.forEach((k,i)=>{ i?ctx.lineTo(toX(i),toY(iners[i])):ctx.moveTo(toX(i),toY(iners[i])); });
+  ctx.stroke();
+
+  ks.forEach((k,i)=>{
+    ctx.fillStyle='#8b949e'; ctx.font='10px Segoe UI'; ctx.textAlign='center';
+    ctx.fillText('K='+k,toX(i),H-pad.b+14);
+    ctx.beginPath(); ctx.arc(toX(i),toY(iners[i]),k===state.k?7:4,0,2*Math.PI);
+    ctx.fillStyle=k===state.k?'#f78166':'#388bfd'; ctx.fill();
+  });
+
+  ctx.fillStyle='#c9d1d9'; ctx.font='11px Segoe UI'; ctx.textAlign='center';
+  ctx.fillText('Número de clusters K',W/2,H-10);
+  ctx.save(); ctx.translate(14,H/2); ctx.rotate(-Math.PI/2); ctx.fillText('Inércia',0,0); ctx.restore();
+}
+
+// ===================================================
+// METRICS
+// ===================================================
+function renderMetrics(){
+  const last=state.history[state.history.length-1];
+  const {assignments,centroids}=last;
+  const iner=inertia(state.X,assignments,centroids);
+  const sil=silhouette(state.X,assignments,state.k);
+
+  document.getElementById('metric-cards').innerHTML=[
+    [state.k,state.k,'K clusters'],
+    [1-iner/1e6,iner.toFixed(1),'Inércia'],
+    [sil,sil.toFixed(3),'Silhouette Score'],
+    [1,state.history.length-1,'Iterações']
+  ].map(([v,s,l])=>`<div class="metric-card"><div class="metric-val" style="color:var(--accent2)">${s}</div><div class="metric-label">${l}</div></div>`).join('');
+
+  // Cluster sizes bar chart
+  const sizes=Array.from({length:state.k},(_,i)=>assignments.filter(a=>a===i).length);
+  const canvas=document.getElementById('size-canvas');
+  const W=canvas.offsetWidth||340,H=200;
+  canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  const pad=30, bw=(W-2*pad)/(state.k+1);
+  const maxS=Math.max(...sizes);
+  sizes.forEach((s,i)=>{
+    const bh=(s/maxS)*(H-2*pad);
+    const x=pad+i*(bw+4);
+    const col=COLORS[i%COLORS.length];
+    const {r,g,b}=hexToRgb(col);
+    ctx.fillStyle=`rgba(${r},${g},${b},0.7)`;
+    ctx.fillRect(x,H-pad-bh,bw,bh);
+    ctx.fillStyle='#8b949e'; ctx.font='10px Segoe UI'; ctx.textAlign='center';
+    ctx.fillText('C'+(i+1),x+bw/2,H-pad+14);
+    ctx.fillStyle='#c9d1d9';
+    ctx.fillText(s,x+bw/2,H-pad-bh-4);
+  });
+
+  // Silhouette per cluster
+  if(state.k>=2){
+    const silPerC=Array.from({length:state.k},(_,ci)=>{
+      const pts=state.X.filter((_,j)=>assignments[j]===ci);
+      if(pts.length<2) return 0;
+      const allA=state.X.map((x,j)=>{
+        if(assignments[j]!==ci) return null;
+        const same=state.X.filter((_,k)=>assignments[k]===ci&&k!==j);
+        if(same.length===0) return 0;
+        return same.reduce((s,y)=>s+eucl(x,y),0)/same.length;
+      }).filter(x=>x!==null);
+      const allB=state.X.map((x,j)=>{
+        if(assignments[j]!==ci) return null;
+        let b=Infinity;
+        for(let c2=0;c2<state.k;c2++){
+          if(c2===ci) continue;
+          const other=state.X.filter((_,k)=>assignments[k]===c2);
+          if(!other.length) continue;
+          const d=other.reduce((s,y)=>s+eucl(x,y),0)/other.length;
+          if(d<b) b=d;
+        }
+        return b===Infinity?0:b;
+      }).filter(x=>x!==null);
+      const sc=allA.map((a,i)=>{const m=Math.max(a,allB[i]);return m===0?0:(allB[i]-a)/m;});
+      return sc.reduce((a,b)=>a+b,0)/sc.length;
+    });
+    document.getElementById('sil-bars').innerHTML=silPerC.map((s,i)=>`
+      <div class="dist-bar-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px">
+        <div style="min-width:60px;color:${COLORS[i%COLORS.length]}">Cluster ${i+1}</div>
+        <div style="flex:1;height:10px;background:var(--border);border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${Math.max(0,s*100).toFixed(0)}%;background:${COLORS[i%COLORS.length]};border-radius:4px;transition:width .4s"></div>
+        </div>
+        <div style="min-width:40px;text-align:right;color:var(--text3)">${s.toFixed(3)}</div>
+      </div>`).join('');
+  }
+}
+
+// ===================================================
+// CENTROIDS TABLE
+// ===================================================
+function renderCentroids(){
+  const last=state.history[state.history.length-1];
+  const {centroids}=last;
+  const nf=state.features.length;
+
+  const html=(cents,label)=>`<table>
+    <tr><th>${label}</th>${state.features.map(f=>`<th>${f}</th>`).join('')}</tr>
+    ${cents.map((c,i)=>`<tr><td style="color:${COLORS[i%COLORS.length]}">Cluster ${i+1}</td>${c.map(v=>`<td>${(+v).toFixed(4)}</td>`).join('')}</tr>`).join('')}
+  </table>`;
+
+  document.getElementById('centroid-table-wrap').innerHTML=html(centroids,'Centroide');
+
+  // Denormalize if possible
+  if(state.norm!=='none' && state.Xraw.length){
+    const {params}=normalizeData(state.Xraw,state.norm);
+    const orig=centroids.map(c=>c.map((v,f)=>{
+      if(state.norm==='minmax'){const {mn,mx}=params[f];return v*(mx-mn)+mn;}
+      else{const {mu,sg}=params[f];return v*sg+mu;}
+    }));
+    document.getElementById('centroid-table-orig').innerHTML=html(orig,'Centroide (original)');
+  } else {
+    document.getElementById('centroid-table-orig').innerHTML=html(centroids,'Centroide (original)');
+  }
+}
+
+// ===================================================
+// HELPERS
+// ===================================================
+function setStatus(msg,type){
+  const el=document.getElementById('status');
+  el.innerHTML=msg; el.className=type||'';
+}
+
+function resetAll(){
+  state.history=[]; state.currentStep=0; state.elbowData=null;
+  setStatus('Pronto para executar','');
+  document.getElementById('main-status').textContent='Configure K e os parâmetros, depois clique em Executar K-Means.';
+  ['cluster-canvas','evo-canvas','elbow-canvas','size-canvas'].forEach(id=>{
+    const c=document.getElementById(id);
+    if(c){const ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);}
+  });
+  document.getElementById('iter-dots').innerHTML='';
+  document.getElementById('iter-label').textContent='Iteração —';
+  document.getElementById('inertia-label').textContent='';
+  document.getElementById('legend-wrap').innerHTML='';
+  document.getElementById('metric-cards').innerHTML=['K clusters','Inércia','Silhouette Score','Iterações'].map(l=>`<div class="metric-card"><div class="metric-val">—</div><div class="metric-label">${l}</div></div>`).join('');
+  document.getElementById('centroid-table-wrap').innerHTML='<div style="color:var(--text2);padding:20px">Execute primeiro</div>';
+  document.getElementById('centroid-table-orig').innerHTML='<div style="color:var(--text2);padding:20px">Execute primeiro</div>';
+  document.getElementById('sil-bars').innerHTML='';
+}
+
+window.addEventListener('resize',()=>{
+  if(!state.history.length) return;
+  const active=document.querySelector('.tab.active')?.dataset.tab;
+  if(active==='clusters') renderStep(state.currentStep);
+  if(active==='evolution') drawEvoChart();
+  if(active==='elbow') drawElbow();
+  if(active==='metrics') renderMetrics();
+});
+</script>
+</body>
+</html>
