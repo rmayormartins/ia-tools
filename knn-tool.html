@@ -82,10 +82,11 @@
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    overflow: hidden;
     width: 100%;
     box-sizing: border-box;
   }
+  aside .section { overflow: visible; }
+  main .section { overflow: hidden; }
   .section-header {
     background: var(--panel2);
     padding: 7px 12px;
@@ -97,7 +98,24 @@
     border-bottom: 1px solid var(--border);
     display: flex; align-items: center; gap: 8px;
   }
-  .section-body { padding: 12px; overflow: visible; box-sizing: border-box; }
+  .section-body { padding: 12px; box-sizing: border-box; }
+
+  /* Custom scrollbar */
+  aside::-webkit-scrollbar, main::-webkit-scrollbar, .tab-content::-webkit-scrollbar,
+  .data-table::-webkit-scrollbar, .report-table::-webkit-scrollbar, .conf-matrix::-webkit-scrollbar {
+    width: 6px; height: 6px;
+  }
+  aside::-webkit-scrollbar-track, main::-webkit-scrollbar-track, .tab-content::-webkit-scrollbar-track,
+  .data-table::-webkit-scrollbar-track, .report-table::-webkit-scrollbar-track, .conf-matrix::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  aside::-webkit-scrollbar-thumb, main::-webkit-scrollbar-thumb, .tab-content::-webkit-scrollbar-thumb,
+  .data-table::-webkit-scrollbar-thumb, .report-table::-webkit-scrollbar-thumb, .conf-matrix::-webkit-scrollbar-thumb {
+    background: var(--border); border-radius: 3px;
+  }
+  aside::-webkit-scrollbar-thumb:hover, main::-webkit-scrollbar-thumb:hover, .tab-content::-webkit-scrollbar-thumb:hover {
+    background: var(--text2);
+  }
 
   /* FORM CONTROLS */
   label { font-size: 11px; color: var(--text2); display: block; margin-bottom: 4px; }
@@ -180,9 +198,7 @@
     transition: all .2s;
     width: 100%;
     box-sizing: border-box;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    text-align: center;
   }
   .btn-primary {
     background: linear-gradient(135deg, var(--accent), #3fb950);
@@ -419,7 +435,9 @@
 
   @media (max-width: 800px) {
     .layout { grid-template-columns: 1fr; height: auto; }
-    aside { border-right: none; border-bottom: 1px solid var(--border); }
+    aside { border-right: none; border-bottom: 1px solid var(--border); width: 100%; max-width: 100%; }
+    main .section { overflow: visible; }
+    .tab-content.active { overflow-y: visible; }
   }
 </style>
 </head>
@@ -567,7 +585,7 @@
   </div>
 
   <!-- TABS -->
-  <div class="section" style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden">
+  <div class="section" style="flex:1;min-height:0;display:flex;flex-direction:column">
     <div class="tabs">
       <div class="tab active" data-tab="boundary">📐 Fronteira</div>
       <div class="tab" data-tab="neighbors">👥 Vizinhos</div>
