@@ -428,10 +428,10 @@
           </label>
           <label class="radio-item" data-val="manual">
             <input type="radio" name="init" value="manual">
-            Clique no gráfico (2D)
+            Manual (clique no gráfico)
           </label>
         </div>
-        <div style="font-size:10px;color:var(--text2);margin-top:4px;line-height:1.5">
+        <div id="init-hint" style="font-size:10px;color:var(--text2);margin-top:4px;line-height:1.5">
           K-Means++ seleciona centroides iniciais afastados entre si, reduzindo dependência da inicialização.
         </div>
       </div>
@@ -439,8 +439,11 @@
       <div class="form-group">
         <label>Máx. iterações</label>
         <div class="slider-row">
-          <input type="range" id="iter-slider" min="1" max="30" step="1" value="10">
-          <span class="slider-val" id="iter-val">10</span>
+          <input type="range" id="iter-slider" min="1" max="300" step="1" value="10">
+          <input type="number" id="iter-num" min="1" max="9999" value="10" style="width:58px;max-width:58px;text-align:center;padding:3px 4px;font-size:11px;flex-shrink:0">
+        </div>
+        <div style="font-size:10px;color:var(--text2);margin-top:4px;line-height:1.5">
+          Slider vai até 300. Digite no campo numérico para valores maiores.
         </div>
       </div>
 
@@ -723,14 +726,54 @@ document.querySelectorAll('[data-val]').forEach(el=>{
     group.querySelectorAll('.radio-item').forEach(x=>x.classList.remove('active'));
     el.classList.add('active');
     const val=el.dataset.val;
-    if(el.closest('#init-radios')) state.init=val;
+    if(el.closest('#init-radios')){
+      state.init=val;
+      state.manualCentroids=[]; // reset when switching modes
+      updateInitHint();
+    }
     if(el.closest('#tol-radios')) state.tol=+val;
     if(el.closest('#norm-radios')) state.norm=val;
   });
 });
 
-document.getElementById('k-slider').addEventListener('input',function(){state.k=+this.value;document.getElementById('k-val').textContent=this.value;});
-document.getElementById('iter-slider').addEventListener('input',function(){state.maxIter=+this.value;document.getElementById('iter-val').textContent=this.value;});
+function updateInitHint(){
+  const el=document.getElementById('init-hint');
+  if(state.init==='kmeans++'){
+    el.innerHTML='K-Means++ seleciona centroides iniciais afastados entre si, reduzindo dependência da inicialização.';
+    el.style.color='var(--text2)';
+  } else if(state.init==='random'){
+    el.innerHTML='Seleção aleatória uniforme de K pontos como centroides iniciais. Mais simples, porém sensível à inicialização.';
+    el.style.color='var(--text2)';
+  } else {
+    el.innerHTML=`⚠ Modo manual: após "Executar", clique <strong>${state.k} vez(es)</strong> no gráfico de Clusters para posicionar os centroides iniciais.`;
+    el.style.color='var(--accent3)';
+  }
+}
+
+document.getElementById('k-slider').addEventListener('input',function(){
+  state.k=+this.value;
+  document.getElementById('k-val').textContent=this.value;
+  state.manualCentroids=[]; // any K change invalidates manual centroids
+  if(state.init==='manual') updateInitHint();
+});
+
+// Iter: slider ↔ numeric input sync
+const iterSlider = document.getElementById('iter-slider');
+const iterNum = document.getElementById('iter-num');
+iterSlider.addEventListener('input', function(){
+  state.maxIter = +this.value;
+  iterNum.value = this.value;
+});
+iterNum.addEventListener('input', function(){
+  let v = parseInt(this.value)||1;
+  if(v<1) v=1; if(v>9999) v=9999;
+  state.maxIter = v;
+  // sync slider visually if within its range
+  if(v<=+iterSlider.max) iterSlider.value = v;
+});
+iterNum.addEventListener('blur', function(){
+  if(!this.value||+this.value<1) this.value=1;
+});
 
 // CSV upload with drag-and-drop
 const csvInput=document.getElementById('csv-input');
@@ -794,6 +837,9 @@ function normalizeData(X, method){
 function eucl(a,b){ return Math.sqrt(a.reduce((s,v,i)=>s+(v-b[i])**2,0)); }
 
 function initCentroids(X, k, method, rng){
+  if(method==='manual' && state.manualCentroids.length===k){
+    return state.manualCentroids.map(c=>[...c]);
+  }
   if(method==='random'){
     const idx=[...X.keys()].sort(()=>rng()-.5).slice(0,k);
     return idx.map(i=>[...X[i]]);
@@ -884,9 +930,151 @@ function showDebugError(stage, err){
 }
 
 // ===================================================
+// MANUAL CAPTURE MODE
+// ===================================================
+function enterManualCaptureMode(){
+  try{
+    // Load data + normalize so we can draw points
+    let X, features;
+    if(state.ds==='csv' && state.csvData){
+      features=state.csvData.features; X=state.csvData.data;
+    } else {
+      const ds=DATASETS[state.ds==='csv'?'iris':state.ds];
+      features=ds.features; X=ds.data;
+    }
+    state.features=features;
+    state.Xraw=X;
+    const {Xn}=normalizeData(X,state.norm);
+    state.X=Xn;
+    populateFeatureSelects(features);
+    state.manualCentroids=[];
+    state.manualCapturing=true;
+
+    // Switch to Clusters tab
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+    document.querySelector('[data-tab="clusters"]').classList.add('active');
+    document.getElementById('tab-clusters').classList.add('active');
+
+    drawManualCaptureCanvas();
+    setStatus(`Clique ${state.k} vez(es) no gráfico — 0 / ${state.k}`, 'running');
+    document.getElementById('main-status').innerHTML=`<strong style="color:var(--accent3)">Modo manual:</strong> clique no gráfico para posicionar os centroides iniciais (${state.k} restantes)`;
+  } catch(err){
+    setStatus('Erro ao entrar em modo manual: '+err.message,'error');
+    console.error(err);
+  }
+}
+
+function drawManualCaptureCanvas(){
+  const canvas=document.getElementById('cluster-canvas');
+  const W=canvas.offsetWidth||700, H=400;
+  canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  const fx=+document.getElementById('fx-sel').value;
+  const fy=+document.getElementById('fy-sel').value;
+  const pad=50;
+
+  const xs=state.X.map(r=>r[fx]), ys=state.X.map(r=>r[fy]);
+  const extraX=state.manualCentroids.map(c=>c[fx]);
+  const extraY=state.manualCentroids.map(c=>c[fy]);
+  const minX=Math.min(...xs,...extraX)-.1, maxX=Math.max(...xs,...extraX)+.1;
+  const minY=Math.min(...ys,...extraY)-.1, maxY=Math.max(...ys,...extraY)+.1;
+  const toC=(x,y)=>[(x-minX)/(maxX-minX)*(W-2*pad)+pad,(y-minY)/(maxY-minY)*(H-2*pad)+pad];
+
+  // Clear
+  ctx.clearRect(0,0,W,H);
+
+  // Axes
+  ctx.strokeStyle='#30363d'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pad,pad); ctx.lineTo(pad,H-pad); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad,H-pad); ctx.lineTo(W-pad,H-pad); ctx.stroke();
+  ctx.fillStyle='#8b949e'; ctx.font='10px Segoe UI'; ctx.textAlign='center';
+  for(let i=0;i<=5;i++){
+    const v=minX+(maxX-minX)*i/5;
+    ctx.fillText(v.toFixed(2),pad+(W-2*pad)*i/5,H-pad+14);
+  }
+  ctx.textAlign='right';
+  for(let i=0;i<=5;i++){
+    const v=minY+(maxY-minY)*i/5;
+    ctx.fillText(v.toFixed(2),pad-6,H-pad-(H-2*pad)*i/5+4);
+  }
+  ctx.fillStyle='#c9d1d9'; ctx.font='11px Segoe UI'; ctx.textAlign='center';
+  ctx.fillText(state.features[fx],W/2,H-10);
+  ctx.save(); ctx.translate(12,H/2); ctx.rotate(-Math.PI/2); ctx.fillText(state.features[fy],0,0); ctx.restore();
+
+  // Points (all gray, unassigned)
+  state.X.forEach(row=>{
+    const [cx,cy]=toC(row[fx],row[fy]);
+    ctx.beginPath(); ctx.arc(cx,cy,4,0,2*Math.PI);
+    ctx.fillStyle='rgba(139,148,158,0.55)';
+    ctx.fill();
+  });
+
+  // Placed centroids (stars)
+  state.manualCentroids.forEach((c,i)=>{
+    const [cx,cy]=toC(c[fx],c[fy]);
+    const col=COLORS[i%COLORS.length];
+    ctx.beginPath();
+    for(let p=0;p<5;p++){
+      const a=Math.PI*2*p/5-Math.PI/2;
+      const a2=a+Math.PI/5;
+      const r1=14,r2=6;
+      p?ctx.lineTo(cx+r1*Math.cos(a),cy+r1*Math.sin(a)):ctx.moveTo(cx+r1*Math.cos(a),cy+r1*Math.sin(a));
+      ctx.lineTo(cx+r2*Math.cos(a2),cy+r2*Math.sin(a2));
+    }
+    ctx.closePath();
+    ctx.fillStyle=col; ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.fillStyle='#fff'; ctx.font='bold 10px Segoe UI'; ctx.textAlign='center';
+    ctx.fillText((i+1),cx,cy+3);
+  });
+
+  // Instructions overlay
+  const remaining = state.k - state.manualCentroids.length;
+  if(remaining>0){
+    ctx.fillStyle='rgba(247,129,102,0.95)';
+    ctx.fillRect(pad, pad-34, W-2*pad, 26);
+    ctx.fillStyle='#000'; ctx.font='bold 12px Segoe UI'; ctx.textAlign='center';
+    ctx.fillText(`👆 Clique no gráfico para posicionar o centroide ${state.manualCentroids.length+1} de ${state.k}`, W/2, pad-16);
+  }
+
+  // Set up click capture
+  canvas.style.cursor = state.manualCapturing && remaining>0 ? 'crosshair' : 'default';
+  canvas.onclick = e => {
+    if(!state.manualCapturing) return;
+    if(state.manualCentroids.length>=state.k) return;
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+    const nx=(mx-pad)/(W-2*pad)*(maxX-minX)+minX;
+    const ny=(my-pad)/(H-2*pad)*(maxY-minY)+minY;
+    // Build full-dimensional centroid: use clicked coords for fx/fy, mean of data for other features
+    const nf=state.X[0].length;
+    const means=Array.from({length:nf},(_,f)=>state.X.reduce((s,r)=>s+r[f],0)/state.X.length);
+    const newC=means.slice();
+    newC[fx]=nx; newC[fy]=ny;
+    state.manualCentroids.push(newC);
+    const left = state.k - state.manualCentroids.length;
+    setStatus(`Centroide ${state.manualCentroids.length}/${state.k} posicionado. ${left>0?`Faltam ${left}.`:'Executando...'}`,'running');
+    drawManualCaptureCanvas();
+
+    // When all are placed, run kmeans
+    if(state.manualCentroids.length===state.k){
+      canvas.onclick=null;
+      canvas.style.cursor='default';
+      state.manualCapturing=false;
+      setTimeout(()=>runKMeans(), 150);
+    }
+  };
+}
+
+// ===================================================
 // RUN
 // ===================================================
 function runKMeans(){
+  // Manual init: if not enough centroids yet, enter capture mode instead of running
+  if(state.init==='manual' && state.manualCentroids.length<state.k){
+    return enterManualCaptureMode();
+  }
   setStatus('<span class="spinner"></span> Executando...','running');
   setTimeout(()=>{
     let stage='init';
@@ -1292,6 +1480,9 @@ function setStatus(msg,type){
 
 function resetAll(){
   state.history=[]; state.currentStep=0; state.elbowData=null;
+  state.manualCentroids=[]; state.manualCapturing=false;
+  const cvs=document.getElementById('cluster-canvas');
+  if(cvs){ cvs.onclick=null; cvs.style.cursor='default'; }
   setStatus('Pronto para executar','');
   document.getElementById('main-status').textContent='Configure K e os parâmetros, depois clique em Executar K-Means.';
   ['cluster-canvas','evo-canvas','elbow-canvas','size-canvas'].forEach(id=>{
