@@ -1872,7 +1872,8 @@ async function showFeatureMaps(pixels){
     block.appendChild(grid);
     container.appendChild(block);
     out.dispose();
-    subModel.dispose();
+    // NÃO chamar subModel.dispose() — ele referencia as mesmas camadas
+    // do state.model e disposá-lo destrói os pesos do modelo principal.
   }
   x.dispose();
 }
