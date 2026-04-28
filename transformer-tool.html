@@ -1,0 +1,2521 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transformer.lab — ICD/IFSC</title>
+<style>
+  :root{
+    --bg-0:#0b0f14;
+    --bg-1:#10161d;
+    --bg-2:#161e27;
+    --bg-3:#1c2631;
+    --border:#243140;
+    --border-soft:#1d2734;
+    --text-0:#e6edf3;
+    --text-1:#9aa6b2;
+    --text-2:#6b7785;
+    --accent:#3F9A4B;
+    --accent-2:#32A041;
+    --accent-light:#5fb86c;
+    --accent-soft:rgba(63,154,75,0.12);
+    --accent-glow:rgba(63,154,75,0.35);
+    --warn:#e0a83c;
+    --error:#e25c5c;
+    --info:#4ea1d3;
+    --purple:#a874e8;
+    --pink:#e879b8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg-0);
+    color:var(--text-0);
+    font-family:"Inter","Segoe UI",system-ui,sans-serif;
+    font-size:14px;
+    line-height:1.5;
+    overflow-x:hidden;
+  }
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-track{background:var(--bg-1)}
+  ::-webkit-scrollbar-thumb{background:var(--bg-3);border-radius:6px}
+  ::-webkit-scrollbar-thumb:hover{background:#2d3a48}
+
+  /* HEADER */
+  header.top{
+    background:linear-gradient(180deg,var(--bg-1) 0%,var(--bg-0) 100%);
+    border-bottom:1px solid var(--border);
+    padding:18px 28px;
+    display:flex;align-items:center;justify-content:space-between;gap:24px;
+    position:relative;
+  }
+  header.top::after{
+    content:'';position:absolute;bottom:0;left:0;width:100%;height:1px;
+    background:linear-gradient(90deg,transparent,var(--accent),transparent);
+    opacity:0.4;
+  }
+  .brand{display:flex;align-items:center;gap:16px}
+  .brand-icon{
+    width:54px;height:54px;border-radius:14px;
+    background:linear-gradient(135deg,var(--accent) 0%,var(--accent-2) 100%);
+    display:flex;align-items:center;justify-content:center;
+    font-size:28px;
+    box-shadow:0 4px 18px var(--accent-glow);
+  }
+  .brand h1{font-size:22px;font-weight:700;letter-spacing:-0.02em;color:var(--text-0)}
+  .brand h1 span{color:var(--accent)}
+  .brand p{font-size:12px;color:var(--text-1);margin-top:2px;letter-spacing:0.04em}
+  .header-meta{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text-1)}
+  .pill{
+    padding:5px 12px;border-radius:999px;
+    background:var(--accent-soft);color:var(--accent);
+    font-weight:600;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;
+    border:1px solid rgba(63,154,75,0.25);
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .pill::before{
+    content:"";width:6px;height:6px;border-radius:50%;
+    background:var(--accent);box-shadow:0 0 8px var(--accent);
+  }
+  .pill.busy{
+    background:rgba(224,168,60,0.12);color:var(--warn);border-color:rgba(224,168,60,0.3);
+  }
+  .pill.busy::before{background:var(--warn);box-shadow:0 0 8px var(--warn);animation:pulse 1.2s infinite}
+  .pill.error{background:rgba(226,92,92,0.12);color:var(--error);border-color:rgba(226,92,92,0.3)}
+  .pill.error::before{background:var(--error)}
+  .help-link{
+    color:var(--text-2);font-size:11px;text-decoration:none;
+    padding:4px 10px;border:1px solid var(--border);border-radius:6px;
+    transition:all 0.15s;
+  }
+  .help-link:hover{color:var(--accent);border-color:var(--accent)}
+
+  /* LAYOUT */
+  main.layout{
+    display:grid;grid-template-columns:340px 1fr;
+    min-height:calc(100vh - 90px);
+  }
+  aside.sidebar{
+    background:var(--bg-1);border-right:1px solid var(--border);
+    padding:18px;overflow-y:auto;
+    height:calc(100vh - 90px);position:sticky;top:0;
+  }
+  section.panel{padding:22px 28px;overflow-x:hidden}
+
+  /* CARDS */
+  .card{
+    background:var(--bg-2);border:1px solid var(--border-soft);
+    border-radius:12px;padding:16px;margin-bottom:14px;
+  }
+  .card h3{
+    font-size:13px;font-weight:700;color:var(--text-0);
+    margin-bottom:12px;display:flex;align-items:center;gap:8px;
+    letter-spacing:0.02em;
+  }
+  .card h3 .ico{font-size:16px}
+  .card-help{font-size:11px;color:var(--text-2);margin-top:8px;line-height:1.5}
+  .card-help strong{color:var(--text-1)}
+
+  /* INPUTS */
+  label.field{
+    display:block;font-size:11px;color:var(--text-1);
+    margin-bottom:5px;margin-top:10px;
+    letter-spacing:0.03em;text-transform:uppercase;font-weight:600;
+  }
+  label.field:first-child{margin-top:0}
+  select,input[type="text"],input[type="number"],textarea{
+    width:100%;background:var(--bg-3);border:1px solid var(--border);
+    color:var(--text-0);padding:8px 10px;border-radius:8px;
+    font-size:13px;font-family:inherit;outline:none;
+    transition:border-color 0.15s;
+  }
+  textarea{
+    resize:vertical;min-height:50px;
+    font-family:"JetBrains Mono","Fira Code",monospace;
+    font-size:12px;line-height:1.5;
+  }
+  select:focus,input:focus,textarea:focus{border-color:var(--accent)}
+
+  .range-row{display:flex;align-items:center;gap:8px}
+  .range-row input[type="range"]{flex:1;accent-color:var(--accent)}
+  .range-val{
+    min-width:48px;text-align:right;
+    font-variant-numeric:tabular-nums;font-weight:600;
+    color:var(--accent);font-size:12px;
+    font-family:"JetBrains Mono",monospace;
+  }
+
+  /* radio chip */
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+  .chips label{
+    cursor:pointer;flex:1;
+    background:var(--bg-3);border:1px solid var(--border);color:var(--text-1);
+    padding:6px 10px;border-radius:8px;font-size:12px;text-align:center;
+    transition:all 0.15s;user-select:none;min-width:48px;
+  }
+  .chips label:hover{border-color:var(--accent)}
+  .chips input{display:none}
+  .chips label:has(input:checked){
+    background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600;
+  }
+
+  /* toggle */
+  .toggle-row{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-top:10px;padding:8px 10px;
+    background:var(--bg-3);border:1px solid var(--border);border-radius:8px;gap:10px;
+  }
+  .toggle-row .toggle-text{flex:1}
+  .toggle-row .toggle-text .t{font-size:12px;color:var(--text-0);font-weight:600}
+  .toggle-row .toggle-text .d{font-size:10px;color:var(--text-2);margin-top:2px;font-family:"JetBrains Mono",monospace}
+  .switch{position:relative;width:36px;height:20px;flex-shrink:0}
+  .switch input{display:none}
+  .switch .bg{
+    position:absolute;inset:0;background:var(--bg-2);
+    border:1px solid var(--border);border-radius:10px;cursor:pointer;
+    transition:background 0.2s,border-color 0.2s;
+  }
+  .switch .bg::before{
+    content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;
+    background:var(--text-2);border-radius:50%;
+    transition:transform 0.2s,background 0.2s;
+  }
+  .switch input:checked + .bg{background:var(--accent-soft);border-color:var(--accent)}
+  .switch input:checked + .bg::before{transform:translateX(16px);background:var(--accent)}
+
+  /* example chips */
+  .ex-cat{margin-top:8px}
+  .ex-cat-lbl{
+    font-size:9px;color:var(--text-2);text-transform:uppercase;
+    letter-spacing:0.08em;margin-bottom:4px;
+  }
+  .ex-chips{display:flex;flex-wrap:wrap;gap:4px}
+  .ex-chip{
+    padding:3px 8px;background:var(--bg-3);border:1px solid var(--border);
+    color:var(--text-1);border-radius:5px;font-size:10px;cursor:pointer;
+    transition:all 0.15s;font-family:inherit;
+  }
+  .ex-chip:hover{border-color:var(--accent);color:var(--accent)}
+
+  /* preset button */
+  .preset-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:4px;
+  }
+  .preset-btn{
+    padding:7px 8px;background:var(--bg-3);border:1px solid var(--border);
+    color:var(--text-1);border-radius:7px;font-size:11px;cursor:pointer;
+    text-align:left;font-family:inherit;transition:all 0.15s;
+  }
+  .preset-btn:hover{border-color:var(--accent)}
+  .preset-btn .pn{display:block;color:var(--text-0);font-weight:600;margin-bottom:1px}
+  .preset-btn .pd{font-size:9px;color:var(--text-2);font-family:"JetBrains Mono",monospace}
+
+  /* buttons */
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:11px 16px;border:none;border-radius:10px;
+    font-family:inherit;font-size:13px;font-weight:600;
+    cursor:pointer;transition:all 0.15s;width:100%;
+  }
+  .btn-primary{
+    background:linear-gradient(180deg,var(--accent) 0%,var(--accent-2) 100%);
+    color:white;box-shadow:0 2px 10px var(--accent-glow);
+  }
+  .btn-primary:hover:not(:disabled){
+    transform:translateY(-1px);box-shadow:0 4px 14px var(--accent-glow);
+  }
+  .btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+  .btn-secondary{
+    background:transparent;color:var(--text-1);
+    border:1px solid var(--border);margin-top:8px;
+  }
+  .btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+
+  .btn-tiny{
+    display:inline-flex;align-items:center;gap:5px;
+    padding:5px 9px;background:var(--bg-3);border:1px solid var(--border);
+    color:var(--text-1);border-radius:6px;font-size:11px;
+    font-family:inherit;cursor:pointer;transition:all 0.15s;
+  }
+  .btn-tiny:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+  .btn-tiny:disabled{opacity:0.4;cursor:not-allowed}
+
+  /* status */
+  .status-box{
+    margin-top:12px;padding:10px 12px;
+    background:var(--bg-3);border-radius:8px;
+    font-size:12px;color:var(--text-1);
+    display:flex;align-items:center;gap:8px;min-height:38px;line-height:1.4;
+  }
+  .status-box strong{color:var(--text-0)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--text-2);flex-shrink:0}
+  .dot.training{background:var(--warn);animation:pulse 1.2s infinite}
+  .dot.ready{background:var(--accent);box-shadow:0 0 6px var(--accent)}
+  .dot.error{background:var(--error)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+  /* TOAST */
+  .toast{
+    position:fixed;bottom:24px;right:24px;
+    padding:12px 20px;background:var(--bg-2);
+    border:1px solid var(--accent);border-radius:8px;
+    font-family:"JetBrains Mono",monospace;font-size:13px;
+    color:var(--accent);
+    box-shadow:0 4px 24px var(--accent-glow);
+    transform:translateY(80px);opacity:0;
+    transition:transform 0.3s,opacity 0.3s;
+    z-index:1000;max-width:360px;
+    pointer-events:none;
+  }
+  .toast.show{transform:translateY(0);opacity:1}
+  .toast.error{border-color:var(--error);color:var(--error);box-shadow:0 4px 24px rgba(226,92,92,0.3)}
+
+  /* TABS */
+  .tabs{
+    display:flex;gap:2px;border-bottom:1px solid var(--border);
+    margin-bottom:18px;overflow-x:auto;scrollbar-width:thin;
+  }
+  .tab{
+    background:transparent;border:none;color:var(--text-1);
+    padding:10px 14px;cursor:pointer;font-size:13px;
+    font-family:inherit;font-weight:500;
+    border-bottom:2px solid transparent;margin-bottom:-1px;
+    white-space:nowrap;transition:color 0.15s,border-color 0.15s;
+    display:flex;align-items:center;gap:6px;
+  }
+  .tab:hover{color:var(--text-0)}
+  .tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+  .tab-content{display:none}
+  .tab-content.active{display:block;animation:fadeIn 0.2s}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+  /* SECTION */
+  .section-title{
+    font-size:15px;font-weight:700;color:var(--text-0);
+    margin-bottom:6px;display:flex;align-items:center;gap:8px;
+  }
+  .section-desc{
+    font-size:12px;color:var(--text-1);margin-bottom:16px;
+    line-height:1.6;max-width:780px;
+  }
+  .section-desc code{
+    background:var(--bg-2);padding:2px 6px;border-radius:4px;
+    font-size:11px;color:var(--accent);
+    font-family:"JetBrains Mono",monospace;
+  }
+  .section-desc strong{color:var(--text-0)}
+
+  /* explain box - mais discreto que section-desc */
+  .explain{
+    font-family:"JetBrains Mono",monospace;
+    font-size:11px;color:var(--text-2);line-height:1.7;
+    padding:11px 14px;background:var(--bg-1);
+    border:1px solid var(--border-soft);border-radius:8px;
+    margin-bottom:14px;
+  }
+  .explain strong{color:var(--accent)}
+  .explain .formula-inline{color:var(--accent-light);font-weight:700}
+
+  .sub-h{
+    font-size:12px;font-weight:700;color:var(--text-0);
+    margin:20px 0 10px;text-transform:uppercase;
+    letter-spacing:0.05em;display:flex;align-items:center;gap:8px;
+  }
+  .sub-h:first-child{margin-top:0}
+  .sub-h::after{content:"";flex:1;height:1px;background:var(--border-soft)}
+
+  /* result card with green accent bar */
+  .result-card{
+    background:var(--bg-1);border:1px solid var(--border-soft);
+    border-radius:12px;padding:16px;position:relative;overflow:hidden;
+    margin-bottom:14px;
+  }
+  .result-card::before{
+    content:'';position:absolute;top:0;left:0;width:100%;height:2px;
+    background:linear-gradient(90deg,var(--accent),transparent);
+  }
+
+  /* formula */
+  .formula{
+    background:var(--bg-1);border:1px solid var(--border-soft);
+    border-radius:8px;padding:12px 16px;
+    font-family:"JetBrains Mono",monospace;font-size:13px;
+    color:var(--text-0);text-align:center;margin:12px 0;
+    overflow-x:auto;white-space:nowrap;
+  }
+  .formula .op{color:var(--accent);font-weight:700}
+  .formula .var{color:var(--info)}
+
+  /* metric grid */
+  .metric-grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+    gap:10px;margin-bottom:14px;
+  }
+  .metric-card{
+    background:var(--bg-1);border:1px solid var(--border-soft);
+    border-radius:10px;padding:12px 14px;
+  }
+  .metric-card .label{
+    font-size:10px;color:var(--text-1);text-transform:uppercase;
+    letter-spacing:0.05em;margin-bottom:6px;
+  }
+  .metric-card .value{
+    font-size:22px;font-weight:700;color:var(--text-0);
+    font-variant-numeric:tabular-nums;
+    font-family:"JetBrains Mono",monospace;
+  }
+  .metric-card .value.accent{color:var(--accent)}
+  .metric-card .value.warn{color:var(--warn)}
+  .metric-card .value.info{color:var(--info)}
+  .metric-card .sublabel{
+    font-size:10px;color:var(--text-2);margin-top:2px;
+    font-family:"JetBrains Mono",monospace;
+  }
+
+  /* tokens */
+  .tk-row{
+    display:flex;flex-wrap:wrap;gap:8px;padding:14px;
+    background:var(--bg-1);border:1px solid var(--border-soft);border-radius:10px;
+  }
+  .tk{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:6px 11px;background:var(--bg-2);
+    border:1px solid var(--border);border-radius:7px;
+    font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--text-0);
+  }
+  .tk .pos{
+    font-size:10px;color:var(--text-2);background:var(--bg-3);
+    padding:2px 5px;border-radius:4px;
+  }
+
+  /* heatmap */
+  .heat-wrap{
+    background:var(--bg-1);border:1px solid var(--border-soft);
+    border-radius:10px;padding:12px;overflow-x:auto;
+  }
+  .heat{
+    border-collapse:separate;border-spacing:2px;margin:0 auto;
+    font-family:"JetBrains Mono",monospace;
+  }
+  .heat th{
+    padding:5px 6px;font-weight:500;color:var(--text-2);
+    text-align:center;white-space:nowrap;font-size:11px;
+  }
+  .heat th.row-lbl{
+    text-align:right;padding-right:8px;color:var(--text-0);font-weight:600;
+  }
+  .heat th.row-lbl small{color:var(--text-2);font-weight:400;margin-left:2px}
+  .heat td{
+    padding:0;border-radius:3px;text-align:center;
+    transition:transform 0.1s,box-shadow 0.1s;color:var(--text-0);
+    cursor:default;
+  }
+  .heat.attn-table td{cursor:pointer}
+  .heat td:hover{
+    transform:scale(1.15);z-index:5;position:relative;
+    box-shadow:0 2px 8px rgba(0,0,0,0.5);
+  }
+  .heat-zoom-1 td{width:32px;height:22px;font-size:9px}
+  .heat-zoom-2 td{width:44px;height:28px;font-size:11px}
+  .heat-zoom-3 td{width:56px;height:36px;font-size:12px}
+
+  .heat-legend{
+    display:flex;align-items:center;gap:10px;margin-top:10px;
+    padding:8px 12px;background:var(--bg-2);
+    border:1px solid var(--border-soft);border-radius:8px;
+    font-size:11px;color:var(--text-1);font-family:"JetBrains Mono",monospace;
+  }
+  .legend-bar{flex:1;height:8px;border-radius:4px;max-width:220px}
+  .legend-bar.attn{background:linear-gradient(to right,#0b0f14,#1f4429,#3F9A4B,#7dd68a)}
+  .legend-bar.div{background:linear-gradient(to right,#4ea1d3,#161e27,#e25c5c)}
+  .legend-bar.cos{background:linear-gradient(to right,#4ea1d3,#161e27,#e0a83c)}
+
+  .heat-controls{
+    display:flex;justify-content:flex-end;gap:4px;margin-bottom:8px;align-items:center;
+  }
+  .heat-controls .hint{
+    margin-right:auto;font-size:11px;color:var(--text-2);
+    font-family:"JetBrains Mono",monospace;
+  }
+
+  /* attention table specific */
+  .attn-table tr.sel-row th.row-lbl{
+    background:var(--accent-soft);border-radius:4px;color:var(--accent);
+  }
+  .attn-table td.cell-selected{
+    box-shadow:inset 0 0 0 2px var(--warn) !important;
+  }
+
+  /* drill-down panel */
+  .drill-panel{
+    background:var(--bg-2);border:1px solid var(--warn);
+    border-radius:10px;padding:16px;margin-top:14px;
+    position:relative;
+  }
+  .drill-panel::before{
+    content:'';position:absolute;top:0;left:0;width:100%;height:2px;
+    background:linear-gradient(90deg,var(--warn),transparent);
+  }
+  .drill-panel .drill-title{
+    font-size:12px;font-weight:700;color:var(--warn);
+    margin-bottom:10px;text-transform:uppercase;letter-spacing:0.05em;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .drill-panel .close-btn{
+    background:transparent;border:none;color:var(--text-2);
+    cursor:pointer;font-size:14px;padding:0 4px;
+  }
+  .drill-panel .close-btn:hover{color:var(--text-0)}
+  .drill-step{
+    background:var(--bg-1);border:1px solid var(--border-soft);
+    border-radius:8px;padding:10px 12px;margin-bottom:8px;
+  }
+  .drill-step .step-h{
+    font-size:11px;color:var(--text-1);margin-bottom:6px;
+    font-family:"JetBrains Mono",monospace;
+  }
+  .drill-step .step-h .stage{
+    color:var(--accent);font-weight:700;margin-right:8px;
+  }
+  .drill-step .step-content{
+    font-family:"JetBrains Mono",monospace;font-size:12px;
+    color:var(--text-0);line-height:1.6;
+    overflow-x:auto;white-space:nowrap;
+  }
+  .drill-step .step-content .num{color:var(--accent-light)}
+  .drill-step .step-content .neg{color:var(--error)}
+  .drill-step .step-content .ind{color:var(--info)}
+  .drill-vec{
+    display:inline-flex;gap:3px;align-items:center;
+    padding:2px 6px;background:var(--bg-2);border-radius:4px;
+    border:1px solid var(--border-soft);
+    font-family:"JetBrains Mono",monospace;font-size:11px;
+  }
+  .drill-vec span{padding:1px 3px;border-radius:3px}
+
+  /* bars */
+  .bars{
+    display:flex;flex-direction:column;gap:5px;padding:12px;
+    background:var(--bg-1);border:1px solid var(--border-soft);border-radius:10px;
+  }
+  .bar{
+    display:grid;grid-template-columns:90px 1fr 60px;
+    align-items:center;gap:10px;
+    font-family:"JetBrains Mono",monospace;font-size:12px;
+  }
+  .bar .lbl{
+    text-align:right;color:var(--text-0);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .bar .lbl small{color:var(--text-2)}
+  .bar .track{
+    height:16px;background:var(--bg-3);border-radius:3px;
+    overflow:hidden;border:1px solid var(--border-soft);
+  }
+  .bar .fill{
+    height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    border-radius:2px;transition:width 0.3s;
+  }
+  .bar .fill.neg{background:linear-gradient(90deg,#9b3838,var(--error))}
+  .bar .fill.muted{background:var(--text-2)}
+  .bar .fill.warn{background:linear-gradient(90deg,#a07a2a,var(--warn))}
+  .bar .fill.info{background:linear-gradient(90deg,#3a78a0,var(--info))}
+  .bar .v{text-align:right;color:var(--text-1);font-size:11px}
+
+  /* multi-head grid */
+  .heads-grid{display:grid;gap:12px}
+  .head-card{
+    background:var(--bg-1);border:1px solid var(--border-soft);
+    border-radius:10px;padding:12px;
+  }
+  .head-title{
+    font-size:11px;font-weight:700;color:var(--text-0);
+    margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .head-title .badge{
+    background:var(--accent-soft);color:var(--accent);
+    padding:2px 8px;border-radius:5px;
+    font-family:"JetBrains Mono",monospace;font-size:10px;text-transform:none;
+  }
+
+  /* matrix grid */
+  .mat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media (max-width:1100px){.mat-grid{grid-template-columns:1fr}}
+  .mat-card{
+    background:var(--bg-1);border:1px solid var(--border-soft);
+    border-radius:10px;padding:12px;overflow-x:auto;
+  }
+  .mat-card .t{
+    font-family:"JetBrains Mono",monospace;font-size:13px;
+    font-weight:700;color:var(--text-0);margin-bottom:2px;
+  }
+  .mat-card .t .role{
+    font-family:"Inter",sans-serif;font-weight:400;
+    font-size:10px;color:var(--text-2);margin-left:6px;
+    text-transform:uppercase;letter-spacing:0.04em;
+  }
+  .mat-card .shape{
+    font-family:"JetBrains Mono",monospace;
+    font-size:10px;color:var(--text-2);margin-bottom:8px;
+  }
+
+  /* arc viz */
+  .arc-viz{
+    background:var(--bg-1);border:1px solid var(--border-soft);
+    border-radius:10px;padding:18px 12px;margin:12px 0;
+  }
+  .arc-svg{display:block;width:100%;height:auto;user-select:none}
+  .arc-svg .tk-box rect{fill:var(--bg-2);stroke:var(--border);stroke-width:1;rx:4}
+  .arc-svg .tk-box text{font-family:"JetBrains Mono",monospace;font-size:11px;fill:var(--text-0)}
+  .arc-svg .tk-box.sel rect{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2}
+  .arc-svg .arc{fill:none;stroke:var(--accent);stroke-linecap:round;pointer-events:none}
+  .arc-svg .tk-clickable{cursor:pointer}
+  .arc-svg .tk-clickable:hover rect{stroke:var(--accent)}
+
+  /* arch */
+  .arch-canvas{
+    background:var(--bg-1);border:1px solid var(--border-soft);
+    border-radius:12px;padding:24px;
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+  }
+  .arch-block{
+    width:300px;padding:11px 14px;border-radius:8px;
+    text-align:center;font-size:13px;font-weight:500;border:1px solid;
+  }
+  .arch-block small{font-size:10px;color:var(--text-2);font-weight:400;display:block;margin-top:2px;font-family:"JetBrains Mono",monospace}
+  .arch-block.input{background:rgba(78,161,211,0.1);border-color:rgba(78,161,211,0.4);color:#7cc1e3}
+  .arch-block.attn{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700}
+  .arch-block.norm{background:rgba(224,168,60,0.1);border-color:rgba(224,168,60,0.4);color:#e8c074}
+  .arch-block.ffn{background:rgba(168,116,232,0.1);border-color:rgba(168,116,232,0.4);color:#bf9ce8}
+  .arch-block.output{background:rgba(226,92,92,0.1);border-color:rgba(226,92,92,0.4);color:#e88a8a}
+  .arch-arrow{color:var(--text-2);font-size:14px;line-height:1}
+  .arch-residual{
+    font-family:"JetBrains Mono",monospace;
+    font-size:10px;color:var(--text-2);letter-spacing:0.5px;
+  }
+  .arch-legend{
+    display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;
+    padding:10px 14px;background:var(--bg-2);
+    border:1px solid var(--border-soft);border-radius:8px;
+    font-size:11px;color:var(--text-1);font-family:"JetBrains Mono",monospace;
+  }
+  .arch-legend span{display:inline-flex;align-items:center;gap:6px}
+  .arch-legend span::before{
+    content:'';width:10px;height:10px;border-radius:3px;
+  }
+  .arch-legend .lg-input::before{background:#7cc1e3}
+  .arch-legend .lg-attn::before{background:var(--accent)}
+  .arch-legend .lg-norm::before{background:var(--warn)}
+  .arch-legend .lg-ffn::before{background:var(--purple)}
+  .arch-legend .lg-out::before{background:var(--error)}
+
+  /* note */
+  .note{
+    padding:12px 14px;background:rgba(224,168,60,0.06);
+    border:1px solid rgba(224,168,60,0.25);border-radius:8px;
+    font-size:12px;color:var(--text-1);margin:12px 0;line-height:1.6;
+  }
+  .note strong{color:var(--text-0)}
+  .note.info{background:rgba(78,161,211,0.06);border-color:rgba(78,161,211,0.25)}
+  .note.warn{background:rgba(224,168,60,0.06);border-color:rgba(224,168,60,0.25)}
+  .note ul{margin-top:6px;margin-left:18px}
+  .note ul li{margin-bottom:3px}
+  .note kbd{
+    display:inline-block;padding:1px 6px;
+    background:var(--bg-3);border:1px solid var(--border);border-radius:4px;
+    font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--text-0);
+    margin:0 2px;
+  }
+
+  /* nav bar */
+  .nav-bar{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:10px 14px;background:var(--bg-1);
+    border:1px solid var(--border-soft);border-radius:10px;margin-bottom:12px;
+  }
+  .nav-bar .nav-info{
+    flex:1;text-align:center;font-size:12px;color:var(--text-1);
+  }
+  .nav-bar .nav-info strong{
+    color:var(--accent);font-family:"JetBrains Mono",monospace;
+    background:var(--accent-soft);padding:2px 8px;border-radius:4px;
+    border:1px solid rgba(63,154,75,0.25);
+  }
+  .nav-bar .counter{
+    color:var(--text-2);font-family:"JetBrains Mono",monospace;font-size:11px;
+  }
+
+  /* steps */
+  .steps{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+  .step{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:5px 10px;background:var(--bg-2);
+    border:1px solid var(--border);border-radius:6px;
+    font-size:11px;color:var(--text-1);
+    font-family:"JetBrains Mono",monospace;
+  }
+  .step .num{
+    background:var(--accent-soft);color:var(--accent);
+    width:16px;height:16px;border-radius:50%;
+    display:inline-flex;align-items:center;justify-content:center;
+    font-size:10px;font-weight:700;
+  }
+
+  /* head picker */
+  .head-picker{
+    display:flex;gap:6px;flex-wrap:wrap;
+    margin-bottom:12px;align-items:center;
+  }
+  .head-picker .lbl{
+    font-size:11px;color:var(--text-2);text-transform:uppercase;
+    letter-spacing:0.05em;margin-right:4px;
+  }
+  .head-picker .hpill{
+    padding:5px 10px;background:var(--bg-2);
+    border:1px solid var(--border);color:var(--text-1);
+    border-radius:6px;font-size:12px;
+    font-family:"JetBrains Mono",monospace;
+    cursor:pointer;transition:all 0.15s;
+  }
+  .head-picker .hpill:hover{border-color:var(--accent)}
+  .head-picker .hpill.active{
+    background:var(--accent-soft);border-color:var(--accent);
+    color:var(--accent);font-weight:600;
+  }
+
+  /* empty state */
+  .empty-state{
+    text-align:center;padding:60px 20px;color:var(--text-2);font-size:14px;
+  }
+  .empty-state .ico{font-size:48px;margin-bottom:14px;opacity:0.4}
+  .empty-state strong{color:var(--text-1);display:block;margin-bottom:6px;font-size:14px}
+
+  /* generation tab specific */
+  .gen-controls{
+    display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;
+  }
+  .gen-step-card{
+    background:var(--bg-1);border:1px solid var(--border-soft);
+    border-radius:10px;padding:14px;margin-bottom:10px;
+    position:relative;
+  }
+  .gen-step-card::before{
+    content:'';position:absolute;top:0;left:0;width:100%;height:2px;
+    background:linear-gradient(90deg,var(--info),transparent);
+  }
+  .gen-step-card .step-num{
+    display:inline-block;padding:3px 9px;
+    background:var(--info);color:white;
+    border-radius:5px;font-size:10px;font-weight:700;
+    text-transform:uppercase;letter-spacing:0.05em;
+    margin-bottom:8px;
+  }
+  .gen-step-card .seq{
+    font-family:"JetBrains Mono",monospace;font-size:13px;
+    background:var(--bg-2);padding:8px 12px;border-radius:6px;
+    color:var(--text-0);margin-bottom:10px;
+    border:1px solid var(--border);
+  }
+  .gen-step-card .seq .new{
+    color:var(--accent);font-weight:700;
+    background:var(--accent-soft);padding:1px 5px;border-radius:3px;
+  }
+  .gen-step-card .seq .ctx{color:var(--text-1)}
+
+  /* analysis tab */
+  .head-analysis-grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:12px;
+  }
+  .head-stat-card{
+    background:var(--bg-1);border:1px solid var(--border-soft);
+    border-radius:10px;padding:14px;
+  }
+  .head-stat-card .h{
+    font-size:11px;font-weight:700;color:var(--accent);
+    margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em;
+    font-family:"JetBrains Mono",monospace;
+  }
+  .head-stat-card .stats-list{display:flex;flex-direction:column;gap:6px}
+  .head-stat-card .stat-line{
+    display:flex;justify-content:space-between;
+    font-family:"JetBrains Mono",monospace;font-size:11px;
+    padding:4px 0;border-bottom:1px dashed var(--border-soft);
+  }
+  .head-stat-card .stat-line:last-child{border-bottom:none}
+  .head-stat-card .stat-line .lbl{color:var(--text-2)}
+  .head-stat-card .stat-line .val{color:var(--text-0);font-weight:600}
+  .head-stat-card .stat-line .val.accent{color:var(--accent)}
+  .head-stat-card .stat-line .val.warn{color:var(--warn)}
+
+  /* tooltip rich */
+  .rich-tooltip{
+    position:fixed;background:var(--bg-2);
+    border:1px solid var(--accent);border-radius:8px;
+    padding:10px 12px;font-family:"JetBrains Mono",monospace;
+    font-size:11px;color:var(--text-0);
+    box-shadow:0 8px 32px rgba(0,0,0,0.5);
+    pointer-events:none;z-index:1000;
+    max-width:280px;line-height:1.6;
+    transform:translate(-50%,calc(-100% - 12px));
+    opacity:0;transition:opacity 0.15s;
+  }
+  .rich-tooltip.visible{opacity:1}
+  .rich-tooltip .rt-h{
+    color:var(--accent);font-weight:700;
+    margin-bottom:5px;text-transform:uppercase;
+    letter-spacing:0.04em;font-size:10px;
+  }
+  .rich-tooltip .rt-row{
+    display:flex;justify-content:space-between;gap:14px;
+  }
+  .rich-tooltip .rt-row .lbl{color:var(--text-2)}
+
+  /* footer */
+  footer{
+    padding:14px 28px;text-align:center;
+    border-top:1px solid var(--border);
+    color:var(--text-2);font-size:11px;background:var(--bg-1);
+  }
+  footer a{color:var(--text-1);text-decoration:none}
+  footer a:hover{color:var(--accent)}
+  footer .footer-meta{
+    display:inline-flex;gap:18px;align-items:center;
+    font-family:"JetBrains Mono",monospace;
+  }
+  footer .footer-meta .meta-item{display:inline-flex;gap:5px;align-items:center}
+
+  /* responsive */
+  @media (max-width:1100px){
+    main.layout{grid-template-columns:1fr}
+    aside.sidebar{
+      position:static;height:auto;
+      border-right:none;border-bottom:1px solid var(--border);
+    }
+    .mat-grid{grid-template-columns:1fr}
+  }
+
+  /* keyboard hint */
+  .kbd-hint{
+    font-size:10px;color:var(--text-2);
+    font-family:"JetBrains Mono",monospace;
+    margin-top:6px;text-align:center;
+  }
+  .kbd-hint kbd{
+    display:inline-block;padding:1px 5px;
+    background:var(--bg-3);border:1px solid var(--border);
+    border-radius:3px;font-size:10px;color:var(--text-1);
+    margin:0 1px;
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <div class="brand-icon">🌐</div>
+    <div>
+      <h1>Transformer<span>.lab</span></h1>
+      <p>ICD · IFSC · Prof. Ramon Mayor Martins</p>
+    </div>
+  </div>
+  <div class="header-meta">
+    <a href="#" class="help-link" id="helpLink">⌨ atalhos</a>
+    <span class="pill" id="stPill">Pronto</span>
+  </div>
+</header>
+
+<main class="layout">
+  <aside class="sidebar">
+
+    <!-- Presets -->
+    <div class="card">
+      <h3><span class="ico">⚡</span> Preset</h3>
+      <div class="preset-grid">
+        <button class="preset-btn" data-preset="vanilla"><span class="pn">Padrão</span><span class="pd">d=8 · h=2 · enc</span></button>
+        <button class="preset-btn" data-preset="bert"><span class="pn">BERT-tiny</span><span class="pd">d=16 · h=4 · enc</span></button>
+        <button class="preset-btn" data-preset="gpt"><span class="pn">GPT-mini</span><span class="pd">d=16 · h=4 · dec</span></button>
+        <button class="preset-btn" data-preset="single"><span class="pn">Single-head</span><span class="pd">d=8 · h=1 · enc</span></button>
+        <button class="preset-btn" data-preset="nope"><span class="pn">Sem PE</span><span class="pd">d=8 · h=2 · ⚠</span></button>
+        <button class="preset-btn" data-preset="big"><span class="pn">Wide</span><span class="pd">d=32 · h=8 · enc</span></button>
+      </div>
+    </div>
+
+    <!-- Entrada -->
+    <div class="card">
+      <h3><span class="ico">📝</span> Entrada</h3>
+
+      <label class="field">Sentença</label>
+      <textarea id="inputText" rows="2">o gato sentou no tapete</textarea>
+
+      <div class="ex-cat">
+        <div class="ex-cat-lbl">Básicos</div>
+        <div class="ex-chips" id="exBasic"></div>
+      </div>
+      <div class="ex-cat">
+        <div class="ex-cat-lbl">Fenômenos linguísticos</div>
+        <div class="ex-chips" id="exLing"></div>
+      </div>
+      <div class="ex-cat">
+        <div class="ex-cat-lbl">Inglês</div>
+        <div class="ex-chips" id="exEN"></div>
+      </div>
+
+      <div class="card-help">
+        Use <strong>4 a 12 tokens</strong> para visualizações mais legíveis.
+      </div>
+    </div>
+
+    <!-- Hiperparâmetros -->
+    <div class="card">
+      <h3><span class="ico">⚙️</span> Hiperparâmetros</h3>
+
+      <label class="field">d<sub>model</sub></label>
+      <div class="chips" id="dmChips">
+        <label><input type="radio" name="dm" value="4"><span>4</span></label>
+        <label><input type="radio" name="dm" value="8" checked><span>8</span></label>
+        <label><input type="radio" name="dm" value="16"><span>16</span></label>
+        <label><input type="radio" name="dm" value="32"><span>32</span></label>
+      </div>
+
+      <label class="field">h — cabeças</label>
+      <div class="chips" id="hChips">
+        <label><input type="radio" name="h" value="1"><span>1</span></label>
+        <label><input type="radio" name="h" value="2" checked><span>2</span></label>
+        <label><input type="radio" name="h" value="4"><span>4</span></label>
+        <label><input type="radio" name="h" value="8"><span>8</span></label>
+      </div>
+
+      <label class="field">Seed</label>
+      <div class="range-row">
+        <input type="range" id="seedSlider" min="1" max="100" step="1" value="42">
+        <span class="range-val" id="seedVal">42</span>
+      </div>
+
+      <label class="field">Temperatura (softmax)</label>
+      <div class="range-row">
+        <input type="range" id="tempSlider" min="0.1" max="3.0" step="0.1" value="1.0">
+        <span class="range-val" id="tempVal">1.0</span>
+      </div>
+
+      <div class="card-help" style="margin-top:14px">
+        <strong>d<sub>k</sub></strong> = d<sub>model</sub> / h. <strong>T</strong> baixo = picos; T alto = uniforme.
+      </div>
+    </div>
+
+    <!-- Opções -->
+    <div class="card">
+      <h3><span class="ico">🔧</span> Opções</h3>
+
+      <div class="toggle-row">
+        <div class="toggle-text">
+          <div class="t">Codificação posicional</div>
+          <div class="d">PE sinusoidal</div>
+        </div>
+        <label class="switch"><input type="checkbox" id="usePE" checked><span class="bg"></span></label>
+      </div>
+
+      <div class="toggle-row">
+        <div class="toggle-text">
+          <div class="t">Máscara causal</div>
+          <div class="d">decoder-mode</div>
+        </div>
+        <label class="switch"><input type="checkbox" id="useCausal"><span class="bg"></span></label>
+      </div>
+    </div>
+
+    <!-- Ação -->
+    <div class="card">
+      <h3><span class="ico">▶️</span> Ação</h3>
+      <button class="btn btn-primary" id="btnRun">🌐 Computar Atenção</button>
+      <button class="btn btn-secondary" id="btnReset">↺ Resetar</button>
+
+      <div class="status-box" id="statusBox">
+        <span class="dot ready"></span>
+        <span id="statusText">Pronto para computar</span>
+      </div>
+    </div>
+
+  </aside>
+
+  <section class="panel">
+
+    <div class="tabs">
+      <button class="tab active" data-tab="tokens">🔤 Tokens</button>
+      <button class="tab" data-tab="embed">📊 Embeddings</button>
+      <button class="tab" data-tab="qkv">🧮 Q, K, V</button>
+      <button class="tab" data-tab="attn">🎯 Atenção</button>
+      <button class="tab" data-tab="multi">🎭 Multi-Head</button>
+      <button class="tab" data-tab="analysis">📈 Análise</button>
+      <button class="tab" data-tab="gen">🎬 Geração</button>
+      <button class="tab" data-tab="output">📤 Saída</button>
+      <button class="tab" data-tab="arch">🏗️ Arquitetura</button>
+    </div>
+
+    <div class="tab-content active" id="tab-tokens">
+      <div class="empty-state" id="emptyState">
+        <div class="ico">🌐</div>
+        <strong>Configure os parâmetros e clique em Computar Atenção</strong>
+        Você verá tokens, embeddings, Q/K/V, mapas de atenção, métricas por cabeça,
+        geração autoregressiva e drill-down passo-a-passo.
+      </div>
+    </div>
+    <div class="tab-content" id="tab-embed"></div>
+    <div class="tab-content" id="tab-qkv"></div>
+    <div class="tab-content" id="tab-attn"></div>
+    <div class="tab-content" id="tab-multi"></div>
+    <div class="tab-content" id="tab-analysis"></div>
+    <div class="tab-content" id="tab-gen"></div>
+    <div class="tab-content" id="tab-output"></div>
+    <div class="tab-content" id="tab-arch"></div>
+
+  </section>
+
+</main>
+
+<footer>
+  <div class="footer-meta">
+    <span class="meta-item">Transformer.lab</span>
+    <span class="meta-item">·</span>
+    <span class="meta-item">ICD · IFSC · 2026</span>
+    <span class="meta-item">·</span>
+    <a href="https://rmayormartins.github.io">Prof. Ramon Mayor Martins</a>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+<div class="rich-tooltip" id="tooltip"></div>
+
+<script>
+/* ============================================================
+   Transformer.lab v4 — JavaScript completo
+   ============================================================ */
+
+/* ---------- Utilitários numéricos ---------- */
+function mulberry32(seed){
+  let s = seed >>> 0;
+  return function(){
+    s = (s + 0x6D2B79F5) >>> 0;
+    let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function hash32(str){
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++){
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+function randn(rng){
+  let u = 0, v = 0;
+  while (u === 0) u = rng();
+  while (v === 0) v = rng();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+function makeMat(r, c, fn){
+  const m = new Array(r);
+  for (let i = 0; i < r; i++){
+    m[i] = new Array(c);
+    for (let j = 0; j < c; j++) m[i][j] = fn(i, j);
+  }
+  return m;
+}
+function matMul(A, B){
+  const m = A.length, k = A[0].length, n = B[0].length;
+  const C = makeMat(m, n, () => 0);
+  for (let i = 0; i < m; i++){
+    for (let p = 0; p < k; p++){
+      const aip = A[i][p];
+      const Bp = B[p];
+      const Ci = C[i];
+      for (let j = 0; j < n; j++) Ci[j] += aip * Bp[j];
+    }
+  }
+  return C;
+}
+function transpose(A){
+  const r = A.length, c = A[0].length;
+  return makeMat(c, r, (i, j) => A[j][i]);
+}
+function softmaxRow(row, T){
+  T = T || 1.0;
+  let max = -Infinity;
+  for (const v of row) if (v > max && v !== -Infinity) max = v;
+  if (max === -Infinity) max = 0;
+  const exps = row.map(v => v === -Infinity ? 0 : Math.exp((v - max) / T));
+  const sum = exps.reduce((a, b) => a + b, 0) || 1;
+  return exps.map(v => v / sum);
+}
+function dotProduct(a, b){
+  let s = 0;
+  for (let i = 0; i < a.length; i++) s += a[i] * b[i];
+  return s;
+}
+function cosineSim(a, b){
+  const dot = dotProduct(a, b);
+  const na = Math.sqrt(dotProduct(a, a)) || 1;
+  const nb = Math.sqrt(dotProduct(b, b)) || 1;
+  return dot / (na * nb);
+}
+
+/* ---------- Tokenização ---------- */
+function tokenize(text){
+  const m = text.toLowerCase().match(/\p{L}+|\p{N}+|[^\s\p{L}\p{N}]/gu);
+  return m ? m.filter(t => t.trim().length > 0) : [];
+}
+
+/* ---------- Embeddings determinísticos ---------- */
+function tokenEmbedding(token, dModel, seed){
+  const rng = mulberry32((seed * 2654435761 + hash32(token)) >>> 0);
+  const v = new Array(dModel);
+  for (let i = 0; i < dModel; i++) v[i] = randn(rng) * 0.4;
+  return v;
+}
+
+/* ---------- Codificação posicional sinusoidal ---------- */
+function positionalEncoding(pos, dModel){
+  const pe = new Array(dModel);
+  for (let i = 0; i < dModel; i++){
+    const twoI = 2 * Math.floor(i / 2);
+    const div = Math.pow(10000, twoI / dModel);
+    pe[i] = (i % 2 === 0) ? Math.sin(pos / div) : Math.cos(pos / div);
+  }
+  return pe;
+}
+
+/* ---------- Pesos das projeções ---------- */
+function projectionWeights(dModel, dK, seed, role){
+  const scale = Math.sqrt(2.0 / (dModel + dK));
+  const rng = mulberry32(((seed + role) * 2246822519) >>> 0);
+  return makeMat(dModel, dK, () => randn(rng) * scale);
+}
+
+/* ---------- Self-attention ---------- */
+function singleHeadAttention(X, Wq, Wk, Wv, useCausal, T){
+  const Q = matMul(X, Wq);
+  const K = matMul(X, Wk);
+  const V = matMul(X, Wv);
+  const dK = Q[0].length;
+  const scale = Math.sqrt(dK);
+  const Kt = transpose(K);
+  const rawScores = matMul(Q, Kt);
+  const n = rawScores.length;
+  const scaledScores = makeMat(n, n, (i, j) => rawScores[i][j] / scale);
+  const scoresMasked = makeMat(n, n, (i, j) => useCausal && j > i ? -Infinity : scaledScores[i][j]);
+  const weights = scoresMasked.map(r => softmaxRow(r, T));
+  const output = matMul(weights, V);
+  return { Q, K, V, rawScores, scaledScores, scoresMasked, weights, output };
+}
+
+/* ---------- Multi-head ---------- */
+function multiHeadAttention(X, dModel, h, seed, useCausal, T){
+  if (dModel % h !== 0) throw new Error('d_model deve ser divisível por h');
+  const dK = dModel / h;
+  const heads = [];
+  for (let head = 0; head < h; head++){
+    const Wq = projectionWeights(dModel, dK, seed, head * 3 + 1);
+    const Wk = projectionWeights(dModel, dK, seed, head * 3 + 2);
+    const Wv = projectionWeights(dModel, dK, seed, head * 3 + 3);
+    heads.push(singleHeadAttention(X, Wq, Wk, Wv, useCausal, T));
+  }
+  const n = heads[0].output.length;
+  const concat = makeMat(n, dModel, () => 0);
+  for (let head = 0; head < h; head++){
+    const out = heads[head].output;
+    for (let i = 0; i < n; i++){
+      for (let j = 0; j < dK; j++) concat[i][head * dK + j] = out[i][j];
+    }
+  }
+  const Wo = projectionWeights(dModel, dModel, seed, 999);
+  const finalOut = matMul(concat, Wo);
+  return { heads, concat, Wo, finalOut, dK };
+}
+
+/* ---------- Estatísticas das cabeças ---------- */
+function headStats(weights){
+  const n = weights.length;
+  // Entropia média (em nats; máximo = log(n))
+  let entropySum = 0;
+  for (let i = 0; i < n; i++){
+    let H = 0;
+    for (let j = 0; j < n; j++){
+      const p = weights[i][j];
+      if (p > 1e-12) H -= p * Math.log(p);
+    }
+    entropySum += H;
+  }
+  const meanEntropy = entropySum / n;
+  const maxEntropy = Math.log(n);
+
+  // Diagonal score: média dos w[i][i]
+  let diag = 0;
+  for (let i = 0; i < n; i++) diag += weights[i][i];
+  diag /= n;
+
+  // Distância média de atenção: Σ w[i][j] * |i-j| / Σ w[i][j]
+  let distSum = 0;
+  let distNorm = 0;
+  for (let i = 0; i < n; i++){
+    for (let j = 0; j < n; j++){
+      distSum += weights[i][j] * Math.abs(i - j);
+      distNorm += weights[i][j];
+    }
+  }
+  const meanDist = distSum / (distNorm || 1);
+
+  // Top-1 sparsity: média do max em cada linha (quão concentrada)
+  let topSum = 0;
+  for (let i = 0; i < n; i++){
+    topSum += Math.max(...weights[i]);
+  }
+  const meanTop = topSum / n;
+
+  return { meanEntropy, maxEntropy, normalizedEntropy: meanEntropy / (maxEntropy || 1), diag, meanDist, meanTop };
+}
+
+/* ============================================================
+   Estado
+   ============================================================ */
+const state = {
+  tokens:null, X:null, embeds:null, pe:null, mha:null, config:null,
+  selectedQuery:0, selectedHead:0, zoom:2,
+  drillCell: null,    // { i, j } - célula em drill-down
+  genHistory: null,   // histórico de geração autoregressiva
+  paramsCount: 0,
+};
+
+/* ============================================================
+   Cores
+   ============================================================ */
+function attnColor(v){
+  v = Math.max(0, Math.min(1, v));
+  const stops = [
+    [11, 15, 20],
+    [31, 68, 41],
+    [63, 154, 75],
+    [125, 214, 138],
+  ];
+  const t = v * (stops.length - 1);
+  const i = Math.floor(t);
+  const f = t - i;
+  const a = stops[Math.min(i, stops.length - 1)];
+  const b = stops[Math.min(i + 1, stops.length - 1)];
+  return `rgb(${Math.round(a[0]+(b[0]-a[0])*f)},${Math.round(a[1]+(b[1]-a[1])*f)},${Math.round(a[2]+(b[2]-a[2])*f)})`;
+}
+function divColor(v, vmax){
+  if (vmax === 0) vmax = 1;
+  const t = Math.max(-1, Math.min(1, v / vmax));
+  if (t >= 0){
+    return `rgb(${Math.round(22+(226-22)*t)},${Math.round(30+(92-30)*t)},${Math.round(39+(92-39)*t)})`;
+  } else {
+    const tt = -t;
+    return `rgb(${Math.round(22+(78-22)*tt)},${Math.round(30+(161-30)*tt)},${Math.round(39+(211-39)*tt)})`;
+  }
+}
+function cosColor(v){
+  // -1 (azul) → 0 (bg2) → +1 (amarelo/warn)
+  const t = Math.max(-1, Math.min(1, v));
+  if (t >= 0){
+    return `rgb(${Math.round(22+(224-22)*t)},${Math.round(30+(168-30)*t)},${Math.round(39+(60-39)*t)})`;
+  } else {
+    const tt = -t;
+    return `rgb(${Math.round(22+(78-22)*tt)},${Math.round(30+(161-30)*tt)},${Math.round(39+(211-39)*tt)})`;
+  }
+}
+function fmt(v, d){
+  d = d == null ? 2 : d;
+  return !isFinite(v) ? '−∞' : v.toFixed(d);
+}
+function escapeHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+/* ============================================================
+   Toast
+   ============================================================ */
+let toastTimer = null;
+function showToast(msg, isError){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.toggle('error', !!isError);
+  el.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+/* ============================================================
+   Tooltip rico
+   ============================================================ */
+function showTooltip(html, x, y){
+  const t = document.getElementById('tooltip');
+  t.innerHTML = html;
+  t.style.left = x + 'px';
+  t.style.top = y + 'px';
+  t.classList.add('visible');
+}
+function hideTooltip(){
+  document.getElementById('tooltip').classList.remove('visible');
+}
+
+/* ============================================================
+   Renders
+   ============================================================ */
+
+function renderTokens(){
+  const el = document.getElementById('tab-tokens');
+  const tokens = state.tokens;
+
+  // contagem de parâmetros (estimativa do bloco)
+  const dModel = state.config.dModel;
+  const h = state.config.h;
+  const dK = state.mha.dK;
+  // por cabeça: 3 * (dModel * dK)
+  const attnParams = h * 3 * (dModel * dK);
+  // W_O
+  const woParams = dModel * dModel;
+  const totalParams = attnParams + woParams;
+
+  el.innerHTML = '<div class="section-title">🔤 Tokenização & Configuração</div>' +
+    '<div class="section-desc">' +
+      'A sentença é dividida em <strong>tokens</strong>. Cada posição recebe um índice. Em modelos reais usa-se subword (BPE, WordPiece); aqui usamos tokenização por palavra/pontuação para clareza didática.' +
+    '</div>' +
+
+    '<div class="metric-grid">' +
+      '<div class="metric-card"><div class="label">Tokens</div><div class="value accent">' + tokens.length + '</div></div>' +
+      '<div class="metric-card"><div class="label">Únicos</div><div class="value">' + new Set(tokens).size + '</div></div>' +
+      '<div class="metric-card"><div class="label">d<sub>model</sub></div><div class="value">' + dModel + '</div></div>' +
+      '<div class="metric-card"><div class="label">cabeças (h)</div><div class="value">' + h + '</div></div>' +
+      '<div class="metric-card"><div class="label">d<sub>k</sub></div><div class="value">' + dK + '</div></div>' +
+      '<div class="metric-card"><div class="label">Parâmetros</div><div class="value warn">' + totalParams.toLocaleString('pt-BR') + '</div><div class="sublabel">attn + W<sub>O</sub></div></div>' +
+      '<div class="metric-card"><div class="label">Modo</div><div class="value info" style="font-size:14px">' + (state.config.useCausal ? 'decoder' : 'encoder') + '</div></div>' +
+      '<div class="metric-card"><div class="label">Temperatura</div><div class="value">' + state.config.T.toFixed(1) + '</div></div>' +
+    '</div>' +
+
+    '<div class="sub-h">📋 Tokens da sentença</div>' +
+    '<div class="tk-row">' +
+      tokens.map((t, i) => '<div class="tk"><span class="pos">' + i + '</span><span>' + escapeHtml(t) + '</span></div>').join('') +
+    '</div>' +
+
+    '<div class="explain">' +
+      '<strong>Vocabulário deste exemplo:</strong> ' + new Set(tokens).size + ' tokens únicos. ' +
+      'Em modelos reais o vocabulário tem 30k–100k entradas e o embedding é uma <strong>linha aprendida</strong> ' +
+      'de uma matriz V × d<sub>model</sub>. Aqui geramos embeddings determinísticos por hash do token ' +
+      '(<span class="formula-inline">FNV-1a + mulberry32</span>) com a seed escolhida, para que tokens iguais tenham vetores idênticos.' +
+    '</div>' +
+
+    '<div class="note info">' +
+      '<strong>💡 Dica pedagógica:</strong> repita um token na sentença (ex.: "<em>o gato e o cachorro</em>") para ver embeddings idênticos para "o" — ' +
+      'o que demonstra por que <strong>positional encoding é essencial</strong>: sem PE, o modelo não distingue posições.' +
+    '</div>';
+}
+
+function renderEmbeddings(){
+  const el = document.getElementById('tab-embed');
+  const tokens = state.tokens;
+  const dModel = state.config.dModel;
+  const usePE = state.config.usePE;
+
+  function heatTable(matrix, vmaxOverride){
+    let vmax = 0;
+    if (vmaxOverride){ vmax = vmaxOverride; }
+    else {
+      for (const row of matrix) for (const v of row){
+        const a = Math.abs(v); if (a > vmax) vmax = a;
+      }
+    }
+    let html = '<div class="heat-wrap"><table class="heat heat-zoom-2"><thead><tr><th></th>';
+    for (let j = 0; j < dModel; j++) html += '<th>d' + j + '</th>';
+    html += '</tr></thead><tbody>';
+    for (let i = 0; i < matrix.length; i++){
+      html += '<tr><th class="row-lbl">' + escapeHtml(tokens[i]) + '<small>[' + i + ']</small></th>';
+      for (let j = 0; j < dModel; j++){
+        const v = matrix[i][j];
+        html += '<td style="background:' + divColor(v, vmax) + '" title="' + fmt(v, 3) + '">' + fmt(v, 1) + '</td>';
+      }
+      html += '</tr>';
+    }
+    html += '</tbody></table></div>' +
+      '<div class="heat-legend"><span>' + fmt(-vmax, 2) + '</span><div class="legend-bar div"></div><span>+' + fmt(vmax, 2) + '</span></div>';
+    return html;
+  }
+
+  // cosine similarity matrix
+  function cosTable(){
+    const n = tokens.length;
+    let html = '<div class="heat-wrap"><table class="heat heat-zoom-2"><thead><tr><th></th>';
+    for (let j = 0; j < n; j++) html += '<th>' + escapeHtml(tokens[j].slice(0, 5)) + '<br><small style="color:var(--text-2);font-weight:400">[' + j + ']</small></th>';
+    html += '</tr></thead><tbody>';
+    for (let i = 0; i < n; i++){
+      html += '<tr><th class="row-lbl">' + escapeHtml(tokens[i]) + '<small>[' + i + ']</small></th>';
+      for (let j = 0; j < n; j++){
+        const v = cosineSim(state.X[i], state.X[j]);
+        html += '<td style="background:' + cosColor(v) + '" title="cos(' + escapeHtml(tokens[i]) + ',' + escapeHtml(tokens[j]) + ') = ' + fmt(v, 3) + '">' + fmt(v, 2) + '</td>';
+      }
+      html += '</tr>';
+    }
+    html += '</tbody></table></div>' +
+      '<div class="heat-legend"><span>−1</span><div class="legend-bar cos"></div><span>+1</span> <span style="margin-left:auto;color:var(--text-2)">cosine similarity</span></div>';
+    return html;
+  }
+
+  el.innerHTML = '<div class="section-title">📊 Embeddings + Codificação Posicional</div>' +
+    '<div class="section-desc">' +
+      'Cada token vira um vetor de dimensão d<sub>model</sub> = ' + dModel + '. Como a atenção é <em>permutation-invariant</em>, ' +
+      'somamos uma <strong>codificação posicional</strong> sinusoidal para que o modelo saiba onde cada token está.' +
+    '</div>' +
+    '<div class="formula">x<sub>i</sub> = <span class="op">Embedding</span>(token<sub>i</sub>) + <span class="op">PE</span>(i)</div>' +
+
+    '<div class="sub-h">🔡 Embeddings dos tokens (sem PE)</div>' +
+    heatTable(state.embeds) +
+
+    (usePE ?
+      '<div class="sub-h">🌀 Codificação posicional (PE)</div>' +
+      '<div class="formula">PE(<span class="var">pos</span>, 2i) = sin(<span class="var">pos</span> / 10000<sup>2i/d</sup>) <span style="margin:0 10px">·</span> PE(<span class="var">pos</span>, 2i+1) = cos(<span class="var">pos</span> / 10000<sup>2i/d</sup>)</div>' +
+      heatTable(state.pe) +
+
+      '<div class="sub-h">➕ X = Embedding + PE</div>' +
+      heatTable(state.X)
+    :
+      '<div class="note">PE desativada. <strong>X = Embedding</strong> apenas. Sem informação de posição, a auto-atenção trata a sentença como conjunto (bag of words).</div>' +
+      '<div class="sub-h">📥 Entrada X (sem PE)</div>' +
+      heatTable(state.X)
+    ) +
+
+    '<div class="sub-h">📐 Cosine similarity entre tokens</div>' +
+    '<div class="explain">' +
+      'A <strong>similaridade do cosseno</strong> entre cada par de vetores X<sub>i</sub>, X<sub>j</sub> revela quão alinhados estão no espaço. ' +
+      'Diagonal sempre = 1 (auto-similaridade). Repetições do mesmo token ' +
+      (usePE ? 'ainda têm <strong>cos &lt; 1</strong> porque o PE diferencia posições.' : 'têm <strong>cos = 1</strong> (sem PE, ' +
+      'o modelo não diferencia ocorrências do mesmo token).') +
+    '</div>' +
+    cosTable();
+}
+
+function renderQKV(){
+  const el = document.getElementById('tab-qkv');
+  const tokens = state.tokens;
+  const head0 = state.mha.heads[0];
+  const dK = state.mha.dK;
+  const dModel = state.config.dModel;
+  const h = state.config.h;
+
+  function miniHeat(matrix, title, role, shape){
+    let vmax = 0;
+    for (const row of matrix) for (const v of row){
+      const a = Math.abs(v); if (a > vmax) vmax = a;
+    }
+    let html = '<div class="mat-card">' +
+      '<div class="t">' + title + '<span class="role">' + role + '</span></div>' +
+      '<div class="shape">shape: ' + shape + '</div>' +
+      '<div class="heat-wrap" style="padding:6px"><table class="heat heat-zoom-1">' +
+        '<thead><tr><th></th>';
+    for (let j = 0; j < matrix[0].length; j++) html += '<th>' + j + '</th>';
+    html += '</tr></thead><tbody>';
+    for (let i = 0; i < matrix.length; i++){
+      html += '<tr><th class="row-lbl">' + escapeHtml(tokens[i]) + '</th>';
+      for (let j = 0; j < matrix[0].length; j++){
+        const v = matrix[i][j];
+        html += '<td style="background:' + divColor(v, vmax) + '" title="' + fmt(v, 3) + '">' + fmt(v, 1) + '</td>';
+      }
+      html += '</tr>';
+    }
+    html += '</tbody></table></div></div>';
+    return html;
+  }
+
+  el.innerHTML = '<div class="section-title">🧮 Projeções Q, K, V</div>' +
+    '<div class="section-desc">' +
+      'A entrada X é projetada em três espaços via matrizes <code>W_Q</code>, <code>W_K</code>, <code>W_V</code>. ' +
+      'Cada token gera um vetor <strong>query</strong> (o que estou procurando), <strong>key</strong> (o que ofereço) ' +
+      'e <strong>value</strong> (o que entrego se for atendido).' +
+    '</div>' +
+    '<div class="formula">Q = X<span class="op">·</span>W<sub>Q</sub> <span style="margin:0 12px">·</span> K = X<span class="op">·</span>W<sub>K</sub> <span style="margin:0 12px">·</span> V = X<span class="op">·</span>W<sub>V</sub></div>' +
+
+    '<div class="explain">' +
+      '<strong>Inicialização:</strong> as matrizes W são inicializadas com escala Xavier ' +
+      '(<span class="formula-inline">σ = √(2/(d<sub>model</sub>+d<sub>k</sub>))</span>) e seed determinística. ' +
+      'Em treinamento real, esses pesos são ajustados via backpropagation.' +
+    '</div>' +
+
+    '<div class="note info">' +
+      'Mostrando a <strong>cabeça 0</strong> (de ' + h + '). Cada cabeça tem matrizes W próprias e dimensão ' +
+      'd<sub>k</sub> = ' + dModel + '/' + h + ' = <strong>' + dK + '</strong>. Veja a aba <strong>Multi-Head</strong> para comparar todas.' +
+    '</div>' +
+
+    '<div class="sub-h">📐 Q, K, V da cabeça 0</div>' +
+    '<div class="mat-grid">' +
+      miniHeat(head0.Q, 'Q', 'queries', '[' + tokens.length + ' × ' + dK + ']') +
+      miniHeat(head0.K, 'K', 'keys', '[' + tokens.length + ' × ' + dK + ']') +
+      miniHeat(head0.V, 'V', 'values', '[' + tokens.length + ' × ' + dK + ']') +
+    '</div>';
+}
+
+function renderAttention(){
+  const el = document.getElementById('tab-attn');
+  const tokens = state.tokens;
+  const head = state.mha.heads[state.selectedHead];
+  const n = tokens.length;
+  const headIdx = state.selectedHead;
+  const h = state.config.h;
+  const qIdx = state.selectedQuery;
+
+  // Heatmap
+  const zoomCls = 'heat-zoom-' + state.zoom;
+  let heatmapHtml = '<div class="heat-controls">' +
+    '<span class="hint">clique numa célula para drill-down</span>' +
+    '<button class="btn-tiny" id="zoomOut">🔍−</button>' +
+    '<button class="btn-tiny" id="zoomIn">🔍+</button>' +
+    '<button class="btn-tiny" id="zoomReset">↺</button>' +
+    '</div>' +
+    '<div class="heat-wrap"><table class="heat ' + zoomCls + ' attn-table"><thead><tr><th class="row-lbl">q\\k →</th>';
+  for (let j = 0; j < n; j++) heatmapHtml += '<th>' + escapeHtml(tokens[j]) + '<br><small style="color:var(--text-2);font-weight:400">[' + j + ']</small></th>';
+  heatmapHtml += '</tr></thead><tbody>';
+  for (let i = 0; i < n; i++){
+    heatmapHtml += '<tr class="' + (i === qIdx ? 'sel-row' : '') + '"><th class="row-lbl">' + escapeHtml(tokens[i]) + ' <small>[' + i + ']</small></th>';
+    for (let j = 0; j < n; j++){
+      const w = head.weights[i][j];
+      const bg = attnColor(w);
+      const txt = w >= 0.4 ? '#e6edf3' : 'var(--text-1)';
+      const isSelRow = i === qIdx;
+      const isCellSel = state.drillCell && state.drillCell.i === i && state.drillCell.j === j;
+      let style = 'background:' + bg + ';color:' + txt + ';font-weight:600;';
+      if (isSelRow) style += 'box-shadow:inset 0 0 0 2px var(--accent);';
+      heatmapHtml += '<td data-i="' + i + '" data-j="' + j + '" class="' + (isCellSel ? 'cell-selected' : '') + '" style="' + style + '">' + fmt(w, 2) + '</td>';
+    }
+    heatmapHtml += '</tr>';
+  }
+  heatmapHtml += '</tbody></table></div>' +
+    '<div class="heat-legend"><span>0</span><div class="legend-bar attn"></div><span>1</span> <span style="margin-left:auto;color:var(--text-2)">linhas somam 1 (softmax)</span></div>';
+
+  // Drill-down
+  let drillHtml = '';
+  if (state.drillCell){
+    drillHtml = renderDrillDown(state.drillCell.i, state.drillCell.j, head);
+  }
+
+  // Head selector
+  let headPicker = '';
+  if (h > 1){
+    headPicker = '<div class="head-picker"><span class="lbl">cabeça:</span>';
+    for (let i = 0; i < state.mha.heads.length; i++){
+      headPicker += '<button class="hpill ' + (i === headIdx ? 'active' : '') + '" data-head="' + i + '">head ' + i + '</button>';
+    }
+    headPicker += '</div>';
+  }
+
+  // Sample navigation
+  const navHtml = '<div class="nav-bar">' +
+    '<button class="btn-tiny" id="navPrev"' + (qIdx === 0 ? ' disabled' : '') + '>◀ Anterior</button>' +
+    '<div class="nav-info">Inspecionando query <strong>' + escapeHtml(tokens[qIdx]) + '</strong> <span class="counter">(' + (qIdx + 1) + ' de ' + n + ')</span></div>' +
+    '<button class="btn-tiny" id="navNext"' + (qIdx === n - 1 ? ' disabled' : '') + '>Próximo ▶</button>' +
+    '</div>';
+
+  // Steps
+  const stepsHtml = '<div class="steps">' +
+    '<div class="step"><span class="num">1</span> Q · K<sup>T</sup></div>' +
+    '<div class="step"><span class="num">2</span> ÷ √d<sub>k</sub></div>' +
+    (state.config.useCausal ? '<div class="step"><span class="num">3</span> máscara causal</div>' : '') +
+    '<div class="step"><span class="num">' + (state.config.useCausal ? 4 : 3) + '</span> ÷ T (' + state.config.T.toFixed(1) + ')</div>' +
+    '<div class="step"><span class="num">' + (state.config.useCausal ? 5 : 4) + '</span> softmax</div>' +
+    '<div class="step"><span class="num">' + (state.config.useCausal ? 6 : 5) + '</span> · V</div>' +
+    '</div>';
+
+  // Bars
+  const wRow = head.weights[qIdx];
+  const sRow = head.scoresMasked[qIdx];
+  const maxAbsS = Math.max(...sRow.map(v => isFinite(v) ? Math.abs(v) : 0)) || 1;
+  let scoreBars = '';
+  for (let j = 0; j < n; j++){
+    const s = sRow[j];
+    const pct = isFinite(s) ? (Math.abs(s) / maxAbsS) * 100 : 0;
+    const fillCls = !isFinite(s) ? 'muted' : (s < 0 ? 'neg' : '');
+    scoreBars += '<div class="bar">' +
+      '<div class="lbl">' + escapeHtml(tokens[j]) + '</div>' +
+      '<div class="track"><div class="fill ' + fillCls + '" style="width:' + pct.toFixed(1) + '%"></div></div>' +
+      '<div class="v">' + (isFinite(s) ? fmt(s, 2) : 'mask') + '</div>' +
+      '</div>';
+  }
+  let wBars = '';
+  for (let j = 0; j < n; j++){
+    const pct = wRow[j] * 100;
+    wBars += '<div class="bar">' +
+      '<div class="lbl">' + escapeHtml(tokens[j]) + '</div>' +
+      '<div class="track"><div class="fill" style="width:' + pct.toFixed(1) + '%"></div></div>' +
+      '<div class="v">' + fmt(wRow[j], 3) + '</div>' +
+      '</div>';
+  }
+
+  // Arc viz
+  const W = 720, H = 200;
+  const padX = 50;
+  const tokenW = (W - 2 * padX) / Math.max(n - 1, 1);
+  const yQ = 32, yK = H - 32;
+  let arcs = '';
+  for (let j = 0; j < n; j++){
+    const w = wRow[j];
+    if (w < 0.01) continue;
+    const x1 = padX + qIdx * tokenW;
+    const x2 = padX + j * tokenW;
+    const cx = (x1 + x2) / 2;
+    const cy = (yQ + yK) / 2 + (Math.abs(j - qIdx) * 4);
+    arcs += '<path class="arc" d="M ' + x1 + ' ' + (yQ + 12) + ' Q ' + cx + ' ' + cy + ' ' + x2 + ' ' + (yK - 12) + '" stroke-width="' + (1 + w * 7) + '" stroke-opacity="' + (0.25 + w * 0.75) + '"/>';
+  }
+  let arcTokens = '';
+  for (let i = 0; i < n; i++){
+    const x = padX + i * tokenW;
+    const cls = i === qIdx ? 'tk-box sel tk-clickable' : 'tk-box tk-clickable';
+    arcTokens += '<g class="' + cls + '" data-q="' + i + '" transform="translate(' + x + ',' + yQ + ')">' +
+      '<rect x="-30" y="-12" width="60" height="24"></rect>' +
+      '<text text-anchor="middle" dy="4">' + escapeHtml(tokens[i]) + '</text>' +
+      '</g>';
+  }
+  for (let j = 0; j < n; j++){
+    const x = padX + j * tokenW;
+    arcTokens += '<g class="tk-box" transform="translate(' + x + ',' + yK + ')">' +
+      '<rect x="-30" y="-12" width="60" height="24"></rect>' +
+      '<text text-anchor="middle" dy="4">' + escapeHtml(tokens[j]) + '</text>' +
+      '</g>';
+  }
+
+  el.innerHTML = '<div class="section-title">🎯 Auto-Atenção (núcleo do Transformer)</div>' +
+    '<div class="section-desc">' +
+      'Cada query consulta todas as keys, gerando scores. O <strong>softmax</strong> converte scores em pesos (cada linha soma 1). ' +
+      'A saída de cada query é a soma ponderada dos values.' +
+    '</div>' +
+    '<div class="formula">Attention(Q, K, V) = <span class="op">softmax</span>( Q<span class="op">·</span>K<sup>T</sup> / √d<sub>k</sub> ) <span class="op">·</span> V</div>' +
+    stepsHtml +
+
+    headPicker +
+
+    '<div class="sub-h">🗺️ Mapa de atenção (cabeça ' + headIdx + ')</div>' +
+    heatmapHtml +
+    drillHtml +
+
+    navHtml +
+
+    '<div class="sub-h">🎨 Conexões da query selecionada</div>' +
+    '<div class="arc-viz">' +
+      '<svg class="arc-svg" viewBox="0 0 ' + W + ' ' + H + '">' +
+        '<text x="10" y="' + (yQ - 14) + '" font-size="11" fill="var(--text-2)">queries</text>' +
+        '<text x="10" y="' + (yK + 22) + '" font-size="11" fill="var(--text-2)">keys</text>' +
+        arcs +
+        arcTokens +
+      '</svg>' +
+      '<div style="text-align:center;font-size:11px;color:var(--text-2);margin-top:4px;font-family:\'JetBrains Mono\',monospace">espessura ∝ peso α · clique numa query</div>' +
+    '</div>' +
+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px">' +
+      '<div>' +
+        '<div class="sub-h">📊 Scores Q<sub>' + qIdx + '</sub>·K<sub>j</sub>/√d<sub>k</sub></div>' +
+        '<div class="bars">' + scoreBars + '</div>' +
+      '</div>' +
+      '<div>' +
+        '<div class="sub-h">🎯 Pesos α<sub>' + qIdx + 'j</sub> = softmax</div>' +
+        '<div class="bars">' + wBars + '</div>' +
+        '<div style="font-size:11px;color:var(--text-2);text-align:right;margin-top:4px;font-family:\'JetBrains Mono\',monospace">Σ α = ' + fmt(wRow.reduce((a,b)=>a+b,0), 4) + '</div>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="kbd-hint">' +
+      '<kbd>←</kbd> <kbd>→</kbd> navegar queries · ' +
+      '<kbd>+</kbd> <kbd>−</kbd> zoom · ' +
+      '<kbd>Esc</kbd> fechar drill-down' +
+    '</div>' +
+
+    (state.config.useCausal ? '<div class="note" style="margin-top:14px"><strong>Máscara causal ativa.</strong> Tokens após a query foram mascarados (−∞), virando 0 após softmax. Esta é a configuração de decoders autoregressivos como GPT.</div>' : '');
+
+  // bindings
+  el.querySelectorAll('[data-q]').forEach(b => b.addEventListener('click', e => {
+    const i = parseInt(e.currentTarget.dataset.q, 10);
+    if (!isNaN(i) && i !== state.selectedQuery){
+      state.selectedQuery = i;
+      state.drillCell = null;
+      renderAttention();
+    }
+  }));
+  if (h > 1){
+    el.querySelectorAll('[data-head]').forEach(b => b.addEventListener('click', e => {
+      const i = parseInt(e.currentTarget.dataset.head, 10);
+      if (!isNaN(i) && i !== state.selectedHead){
+        state.selectedHead = i;
+        state.drillCell = null;
+        renderAttention();
+      }
+    }));
+  }
+  // click em célula para drill-down
+  el.querySelectorAll('.attn-table td[data-i]').forEach(td => {
+    td.addEventListener('click', e => {
+      const i = parseInt(e.currentTarget.dataset.i, 10);
+      const j = parseInt(e.currentTarget.dataset.j, 10);
+      if (state.drillCell && state.drillCell.i === i && state.drillCell.j === j){
+        state.drillCell = null;
+      } else {
+        state.drillCell = { i, j };
+        state.selectedQuery = i;
+      }
+      renderAttention();
+    });
+  });
+  document.getElementById('navPrev').addEventListener('click', () => {
+    if (state.selectedQuery > 0){ state.selectedQuery--; state.drillCell = null; renderAttention(); }
+  });
+  document.getElementById('navNext').addEventListener('click', () => {
+    if (state.selectedQuery < n - 1){ state.selectedQuery++; state.drillCell = null; renderAttention(); }
+  });
+  document.getElementById('zoomIn').addEventListener('click', () => {
+    if (state.zoom < 3){ state.zoom++; renderAttention(); }
+  });
+  document.getElementById('zoomOut').addEventListener('click', () => {
+    if (state.zoom > 1){ state.zoom--; renderAttention(); }
+  });
+  document.getElementById('zoomReset').addEventListener('click', () => {
+    state.zoom = 2; renderAttention();
+  });
+  // close drill-down
+  const closeBtn = el.querySelector('.drill-panel .close-btn');
+  if (closeBtn){
+    closeBtn.addEventListener('click', () => {
+      state.drillCell = null;
+      renderAttention();
+    });
+  }
+}
+
+function renderDrillDown(i, j, head){
+  const tokens = state.tokens;
+  const dK = state.mha.dK;
+  const T = state.config.T;
+  const Qi = head.Q[i];
+  const Kj = head.K[j];
+  const dot = dotProduct(Qi, Kj);
+  const scaled = dot / Math.sqrt(dK);
+  const rawRow = head.scaledScores[i];
+  const masked = head.scoresMasked[i];
+  const isMasked = !isFinite(masked[j]);
+  const softmaxRow_ = head.weights[i];
+
+  // mostrar denominador do softmax
+  let mx = -Infinity;
+  for (const v of masked) if (v > mx && v !== -Infinity) mx = v;
+  if (mx === -Infinity) mx = 0;
+  let sumExp = 0;
+  const expContribs = [];
+  for (let k = 0; k < masked.length; k++){
+    const v = masked[k];
+    const e = v === -Infinity ? 0 : Math.exp((v - mx) / T);
+    expContribs.push(e);
+    sumExp += e;
+  }
+  const finalAlpha = isMasked ? 0 : (Math.exp((masked[j] - mx) / T) / (sumExp || 1));
+
+  function fmtVec(v, n){
+    n = n || 6;
+    if (v.length <= n){
+      return v.map(x => '<span class="num">' + fmt(x, 2) + '</span>').join(', ');
+    }
+    return v.slice(0, n).map(x => '<span class="num">' + fmt(x, 2) + '</span>').join(', ') + ', <span style="color:var(--text-2)">…</span>';
+  }
+
+  let html = '<div class="drill-panel">' +
+    '<div class="drill-title">' +
+      '<span>🔬 Drill-down: query[' + i + ']="' + escapeHtml(tokens[i]) + '" → key[' + j + ']="' + escapeHtml(tokens[j]) + '"</span>' +
+      '<button class="close-btn" title="fechar">✕</button>' +
+    '</div>';
+
+  // step 1: vetores Q_i e K_j
+  html += '<div class="drill-step">' +
+    '<div class="step-h"><span class="stage">①</span> Vetores Q<sub>' + i + '</sub> e K<sub>' + j + '</sub> (dimensão d<sub>k</sub>=' + dK + ')</div>' +
+    '<div class="step-content">' +
+      'Q<sub>' + i + '</sub> = [' + fmtVec(Qi) + ']<br>' +
+      'K<sub>' + j + '</sub> = [' + fmtVec(Kj) + ']' +
+    '</div></div>';
+
+  // step 2: produto interno
+  html += '<div class="drill-step">' +
+    '<div class="step-h"><span class="stage">②</span> Produto interno Q<sub>' + i + '</sub> · K<sub>' + j + '</sub></div>' +
+    '<div class="step-content">';
+  let dotPieces = [];
+  for (let k = 0; k < Math.min(dK, 4); k++){
+    dotPieces.push('<span class="num">' + fmt(Qi[k], 2) + '</span>×<span class="num">' + fmt(Kj[k], 2) + '</span>');
+  }
+  html += dotPieces.join(' + ') + (dK > 4 ? ' + …' : '') + ' = <strong style="color:var(--accent-light)">' + fmt(dot, 4) + '</strong>';
+  html += '</div></div>';
+
+  // step 3: divisão por √dk
+  html += '<div class="drill-step">' +
+    '<div class="step-h"><span class="stage">③</span> Divisão por √d<sub>k</sub> = √' + dK + ' = ' + fmt(Math.sqrt(dK), 4) + '</div>' +
+    '<div class="step-content">' +
+      '<span class="num">' + fmt(dot, 4) + '</span> / <span class="num">' + fmt(Math.sqrt(dK), 4) + '</span> = <strong style="color:var(--accent-light)">' + fmt(scaled, 4) + '</strong>' +
+    '</div></div>';
+
+  // step 4: máscara (se aplicável)
+  if (state.config.useCausal && j > i){
+    html += '<div class="drill-step" style="border-color:var(--error)">' +
+      '<div class="step-h"><span class="stage" style="color:var(--error)">④</span> Máscara causal: j (' + j + ') > i (' + i + ')</div>' +
+      '<div class="step-content">' +
+        'score → <span class="neg">−∞</span> (token futuro mascarado)' +
+      '</div></div>';
+  }
+
+  // step 5: temperatura (se != 1)
+  if (Math.abs(T - 1.0) > 0.01){
+    const scaledByT = isMasked ? -Infinity : (masked[j] / T);
+    html += '<div class="drill-step">' +
+      '<div class="step-h"><span class="stage">' + (state.config.useCausal && j > i ? '⑤' : '④') + '</span> Divisão pela temperatura T = ' + T.toFixed(2) + '</div>' +
+      '<div class="step-content">' +
+        '<span class="num">' + (isMasked ? '−∞' : fmt(masked[j], 4)) + '</span> / <span class="num">' + T.toFixed(2) + '</span> = <strong style="color:var(--accent-light)">' + (isMasked ? '−∞' : fmt(scaledByT, 4)) + '</strong>' +
+      '</div></div>';
+  }
+
+  // step 6: softmax
+  const stepIdx = state.config.useCausal && j > i ?
+    (Math.abs(T-1.0) > 0.01 ? '⑥' : '⑤') :
+    (Math.abs(T-1.0) > 0.01 ? '⑤' : '④');
+
+  let denomPieces = [];
+  for (let k = 0; k < masked.length && k < 6; k++){
+    const v = masked[k];
+    if (v === -Infinity){
+      denomPieces.push('<span style="color:var(--text-2)">e<sup>−∞</sup>=0</span>');
+    } else {
+      denomPieces.push('e<sup><span class="num">' + fmt((v - mx) / T, 2) + '</span></sup>=<span class="num">' + fmt(Math.exp((v-mx)/T), 3) + '</span>');
+    }
+  }
+
+  html += '<div class="drill-step">' +
+    '<div class="step-h"><span class="stage">' + stepIdx + '</span> Softmax sobre toda a linha (com max-trick para estabilidade)</div>' +
+    '<div class="step-content">' +
+      'denominador = ' + denomPieces.join(' + ') + (masked.length > 6 ? ' + …' : '') + ' = <span class="num">' + fmt(sumExp, 4) + '</span><br>' +
+      'α<sub>' + i + ',' + j + '</sub> = ' +
+      (isMasked ?
+        '<strong class="neg">0</strong> (mascarado)' :
+        '<span class="num">' + fmt(Math.exp((masked[j] - mx) / T), 4) + '</span> / <span class="num">' + fmt(sumExp, 4) + '</span> = <strong style="color:var(--accent-light)">' + fmt(finalAlpha, 4) + '</strong>'
+      ) +
+    '</div></div>';
+
+  // confirma
+  html += '<div class="drill-step" style="border-color:var(--accent)">' +
+    '<div class="step-h"><span class="stage" style="color:var(--accent)">✓</span> Resultado final</div>' +
+    '<div class="step-content">' +
+      'α(<span class="ind">' + escapeHtml(tokens[i]) + '</span> → <span class="ind">' + escapeHtml(tokens[j]) + '</span>) = <strong style="color:var(--accent);font-size:14px">' + fmt(softmaxRow_[j], 4) + '</strong>' +
+    '</div></div>';
+
+  html += '</div>';
+  return html;
+}
+
+function renderMulti(){
+  const el = document.getElementById('tab-multi');
+  const tokens = state.tokens;
+  const heads = state.mha.heads;
+  const h = state.config.h;
+  const n = tokens.length;
+
+  if (h === 1){
+    el.innerHTML = '<div class="section-title">🎭 Multi-Head Attention</div>' +
+      '<div class="section-desc">Configurado com <strong>h = 1</strong>. Aumente o número de cabeças e recompute para comparar padrões diferentes.</div>' +
+      '<div class="empty-state"><div class="ico">🎭</div><strong>Selecione h ≥ 2 e recompute</strong>Cada cabeça desenvolve um padrão de atenção próprio.</div>';
+    return;
+  }
+
+  function miniAttn(weights, headIdx){
+    const stats = headStats(weights);
+    let html = '<div class="head-card">' +
+      '<div class="head-title">' +
+        '<span>Cabeça ' + headIdx + '</span>' +
+        '<span class="badge">head ' + headIdx + '</span>' +
+      '</div>' +
+      '<div class="heat-wrap" style="padding:4px"><table class="heat" style="border-spacing:1px">' +
+        '<thead><tr><th></th>';
+    for (let j = 0; j < n; j++) html += '<th style="font-size:9px;padding:1px 3px">' + escapeHtml(tokens[j].slice(0, 4)) + '</th>';
+    html += '</tr></thead><tbody>';
+    for (let i = 0; i < n; i++){
+      html += '<tr><th class="row-lbl" style="font-size:10px;padding:1px 5px 1px 0">' + escapeHtml(tokens[i].slice(0, 6)) + '</th>';
+      for (let j = 0; j < n; j++){
+        const w = weights[i][j];
+        const txt = w >= 0.4 ? '#e6edf3' : 'var(--text-1)';
+        html += '<td style="background:' + attnColor(w) + ';color:' + txt + ';width:30px;height:18px;font-size:9px;font-weight:600">' + fmt(w, 1) + '</td>';
+      }
+      html += '</tr>';
+    }
+    html += '</tbody></table></div>' +
+      '<div style="margin-top:8px;display:flex;gap:8px;font-family:\'JetBrains Mono\',monospace;font-size:10px;color:var(--text-2)">' +
+        '<span>H=<span style="color:var(--accent-light)">' + fmt(stats.normalizedEntropy, 2) + '</span></span>' +
+        '<span>diag=<span style="color:var(--accent-light)">' + fmt(stats.diag, 2) + '</span></span>' +
+        '<span>dist=<span style="color:var(--accent-light)">' + fmt(stats.meanDist, 1) + '</span></span>' +
+      '</div>' +
+      '</div>';
+    return html;
+  }
+
+  let cols = h <= 2 ? 2 : (h <= 4 ? 2 : 4);
+
+  el.innerHTML = '<div class="section-title">🎭 Multi-Head Attention (' + h + ' cabeças)</div>' +
+    '<div class="section-desc">' +
+      'Cada cabeça aprende padrões diferentes em paralelo. As saídas são concatenadas e projetadas por <code>W_O</code>. ' +
+      'Em modelos treinados, uma cabeça pode capturar dependências sintáticas, outra correferências, etc.' +
+    '</div>' +
+    '<div class="formula">MultiHead(Q,K,V) = <span class="op">Concat</span>(head<sub>1</sub>, ..., head<sub>h</sub>) <span class="op">·</span> W<sub>O</sub></div>' +
+
+    '<div class="explain">' +
+      '<strong>Estatísticas no canto inferior:</strong> ' +
+      '<strong>H</strong> = entropia normalizada (0=focada, 1=uniforme); ' +
+      '<strong>diag</strong> = média de auto-atenção α<sub>ii</sub>; ' +
+      '<strong>dist</strong> = distância média de atenção (long-range vs local). ' +
+      'Veja a aba <strong>📈 Análise</strong> para detalhes quantitativos.' +
+    '</div>' +
+
+    '<div class="sub-h">🗺️ Mapas das ' + h + ' cabeças</div>' +
+    '<div class="heads-grid" style="grid-template-columns:repeat(' + cols + ', 1fr)">' +
+      heads.map((hd, i) => miniAttn(hd.weights, i)).join('') +
+    '</div>' +
+
+    '<div class="note info">' +
+      '<strong>Compare:</strong> note como diferentes cabeças desenvolvem padrões distintos. Algumas tendem a atenção uniforme, ' +
+      'outras concentram em poucos tokens. Em modelos treinados (não neste exemplo determinístico), as cabeças se especializam ' +
+      'em fenômenos linguísticos diferentes.' +
+    '</div>';
+}
+
+function renderAnalysis(){
+  const el = document.getElementById('tab-analysis');
+  const heads = state.mha.heads;
+  const h = state.config.h;
+  const tokens = state.tokens;
+  const n = tokens.length;
+
+  // estatísticas globais por cabeça
+  const allStats = heads.map(hd => headStats(hd.weights));
+
+  // determinar token mais atendido (média de coluna)
+  function topAttended(weights){
+    const colMeans = new Array(n).fill(0);
+    for (let j = 0; j < n; j++){
+      let s = 0;
+      for (let i = 0; i < n; i++) s += weights[i][j];
+      colMeans[j] = s / n;
+    }
+    let best = 0, bestV = colMeans[0];
+    for (let j = 1; j < n; j++){
+      if (colMeans[j] > bestV){ bestV = colMeans[j]; best = j; }
+    }
+    return { idx: best, value: bestV };
+  }
+
+  function headPattern(stats){
+    if (stats.normalizedEntropy > 0.92) return { txt: 'quase uniforme', color: 'var(--info)' };
+    if (stats.diag > 0.5) return { txt: 'auto-focada', color: 'var(--warn)' };
+    if (stats.meanTop > 0.7) return { txt: 'pico concentrado', color: 'var(--accent)' };
+    if (stats.meanDist < 1.5) return { txt: 'local', color: 'var(--purple)' };
+    if (stats.meanDist > n / 2.5) return { txt: 'long-range', color: 'var(--pink)' };
+    return { txt: 'mista', color: 'var(--text-1)' };
+  }
+
+  let cardsHtml = '';
+  for (let hi = 0; hi < h; hi++){
+    const s = allStats[hi];
+    const top = topAttended(heads[hi].weights);
+    const pattern = headPattern(s);
+    cardsHtml += '<div class="head-stat-card">' +
+      '<div class="h">Cabeça ' + hi + ' · padrão: <span style="color:' + pattern.color + '">' + pattern.txt + '</span></div>' +
+      '<div class="stats-list">' +
+        '<div class="stat-line"><span class="lbl">Entropia normalizada</span><span class="val accent">' + fmt(s.normalizedEntropy, 3) + '</span></div>' +
+        '<div class="stat-line"><span class="lbl">Auto-atenção (diag)</span><span class="val">' + fmt(s.diag, 3) + '</span></div>' +
+        '<div class="stat-line"><span class="lbl">Pico médio (max)</span><span class="val">' + fmt(s.meanTop, 3) + '</span></div>' +
+        '<div class="stat-line"><span class="lbl">Distância média</span><span class="val">' + fmt(s.meanDist, 2) + ' tokens</span></div>' +
+        '<div class="stat-line"><span class="lbl">Token mais atendido</span><span class="val warn">"' + escapeHtml(tokens[top.idx]) + '" [' + top.idx + ']</span></div>' +
+      '</div>' +
+      '</div>';
+  }
+
+  // visão agregada (média sobre cabeças)
+  let avgWeights = makeMat(n, n, () => 0);
+  for (const hd of heads){
+    for (let i = 0; i < n; i++){
+      for (let j = 0; j < n; j++){
+        avgWeights[i][j] += hd.weights[i][j] / h;
+      }
+    }
+  }
+  // rendered as small heatmap
+  let avgHtml = '<div class="heat-wrap"><table class="heat heat-zoom-2"><thead><tr><th></th>';
+  for (let j = 0; j < n; j++) avgHtml += '<th>' + escapeHtml(tokens[j]) + '<br><small style="color:var(--text-2);font-weight:400">[' + j + ']</small></th>';
+  avgHtml += '</tr></thead><tbody>';
+  for (let i = 0; i < n; i++){
+    avgHtml += '<tr><th class="row-lbl">' + escapeHtml(tokens[i]) + ' <small>[' + i + ']</small></th>';
+    for (let j = 0; j < n; j++){
+      const w = avgWeights[i][j];
+      const txt = w >= 0.4 ? '#e6edf3' : 'var(--text-1)';
+      avgHtml += '<td style="background:' + attnColor(w) + ';color:' + txt + ';font-weight:600" title="média sobre cabeças = ' + fmt(w, 3) + '">' + fmt(w, 2) + '</td>';
+    }
+    avgHtml += '</tr>';
+  }
+  avgHtml += '</tbody></table></div>' +
+    '<div class="heat-legend"><span>0</span><div class="legend-bar attn"></div><span>1</span></div>';
+
+  el.innerHTML = '<div class="section-title">📈 Análise Quantitativa das Cabeças</div>' +
+    '<div class="section-desc">' +
+      'Métricas que revelam o <strong>comportamento de cada cabeça</strong>. Em modelos treinados, cabeças tendem a se especializar — ' +
+      'algumas se tornam quase-uniformes (atenção dispersa), outras desenvolvem padrões locais ou long-range, e algumas focam ' +
+      'fortemente em tokens específicos.' +
+    '</div>' +
+
+    '<div class="explain">' +
+      '<strong>Métricas:</strong> ' +
+      '<strong>Entropia H</strong> = −Σ p log(p), normalizada por log(n) ∈ [0,1]; baixa = focada, alta = uniforme. ' +
+      '<strong>Auto-atenção diag</strong> = média de α<sub>ii</sub>; alta = token atende a si mesmo. ' +
+      '<strong>Pico médio</strong> = média de max(α<sub>i,·</sub>); alto = distribuição com pico claro. ' +
+      '<strong>Distância média</strong> = Σ α<sub>ij</sub>·|i−j|; baixa = local, alta = long-range.' +
+    '</div>' +
+
+    '<div class="sub-h">🎯 Estatísticas por cabeça</div>' +
+    '<div class="head-analysis-grid">' + cardsHtml + '</div>' +
+
+    '<div class="sub-h">📊 Atenção média (todas as cabeças)</div>' +
+    '<div class="explain">A média sobre cabeças mostra o padrão de atenção do <strong>bloco como um todo</strong>. Em modelos pretreinados isto frequentemente revela alinhamentos linguísticos que nenhuma cabeça individual mostra completamente.</div>' +
+    avgHtml;
+}
+
+function renderGen(){
+  const el = document.getElementById('tab-gen');
+  const tokens = state.tokens;
+  const n = tokens.length;
+  const heads = state.mha.heads;
+
+  el.innerHTML = '<div class="section-title">🎬 Geração Autoregressiva</div>' +
+    '<div class="section-desc">' +
+      'Em modelos como GPT, o decoder gera tokens <strong>um por vez</strong>, condicionado nos tokens anteriores. ' +
+      'Aqui simulamos esse processo: a cada passo, calculamos a saída do último token e ' +
+      '<strong>amostramos um próximo token do vocabulário</strong>. ' +
+    '</div>' +
+
+    '<div class="formula">' +
+      'p(x<sub>t+1</sub> | x<sub>1</sub>, ..., x<sub>t</sub>) = <span class="op">softmax</span>(LM_head(y<sub>t</sub>) / T)' +
+    '</div>' +
+
+    '<div class="note ' + (state.config.useCausal ? 'info' : 'warn') + '">' +
+      (state.config.useCausal
+        ? '<strong>✓ Máscara causal ativa</strong> — esta é a configuração correta para geração autoregressiva.'
+        : '<strong>⚠️ Máscara causal desativada</strong> — em geração real, sempre se usa atenção causal. Os resultados aqui são ilustrativos: a sentença foi processada como encoder, mas geramos a partir dela mesmo assim.') +
+    '</div>' +
+
+    '<div class="gen-controls">' +
+      '<button class="btn-tiny" id="genStart">▶ Iniciar geração</button>' +
+      '<button class="btn-tiny" id="genStep" disabled>↳ Próximo token</button>' +
+      '<button class="btn-tiny" id="genReset" disabled>↺ Reiniciar</button>' +
+      '<span style="margin-left:auto;font-size:11px;color:var(--text-2);font-family:\'JetBrains Mono\',monospace">' +
+      'sampler: <span style="color:var(--accent)">temperatura T=' + state.config.T.toFixed(1) + '</span></span>' +
+    '</div>' +
+
+    '<div class="explain">' +
+      '<strong>Como funciona aqui:</strong> usamos o <strong>vetor de saída y<sub>t</sub></strong> do último token (após multi-head + W<sub>O</sub>) e projetamos no vocabulário (tokens únicos da sentença). ' +
+      'O <strong>LM head</strong> é simulado por similaridade do cosseno entre y<sub>t</sub> e cada embedding do vocabulário, ' +
+      'depois softmax com temperatura. Em modelos reais, é uma matriz aprendida d<sub>model</sub>×V.' +
+    '</div>' +
+
+    '<div id="genHistory">' +
+      '<div class="empty-state" style="padding:30px"><div class="ico">🎬</div><strong>Clique em "Iniciar geração"</strong>Cada passo mostra a sentença atual, distribuição de probabilidades sobre o vocabulário e o token amostrado.</div>' +
+    '</div>';
+
+  document.getElementById('genStart').addEventListener('click', genStart);
+  document.getElementById('genStep').addEventListener('click', genStep);
+  document.getElementById('genReset').addEventListener('click', genReset);
+
+  // se já tem histórico, redesenhar
+  if (state.genHistory && state.genHistory.length > 0){
+    redrawGenHistory();
+  }
+}
+
+function genStart(){
+  state.genHistory = [{
+    type: 'init',
+    seq: state.tokens.slice(),
+  }];
+  document.getElementById('genStep').disabled = false;
+  document.getElementById('genReset').disabled = false;
+  redrawGenHistory();
+  showToast('🎬 Geração iniciada com a sentença base');
+}
+
+function genStep(){
+  if (!state.genHistory) return;
+  if (state.genHistory.length > 12){
+    showToast('⚠️ Limite de 12 passos para visualização', true);
+    return;
+  }
+  // construir sequência atual
+  const last = state.genHistory[state.genHistory.length - 1];
+  const currentSeq = last.type === 'init' ? last.seq.slice() : last.newSeq.slice();
+  const cfg = state.config;
+
+  // recomputar com a sequência atual
+  const embeds = currentSeq.map(t => tokenEmbedding(t, cfg.dModel, cfg.seed));
+  const pe = currentSeq.map((_, i) => positionalEncoding(i, cfg.dModel));
+  const X = embeds.map((emb, i) => cfg.usePE ? emb.map((v, k) => v + pe[i][k]) : emb.slice());
+  const mha = multiHeadAttention(X, cfg.dModel, cfg.h, cfg.seed, true, cfg.T); // sempre causal em geração
+
+  // pegar último vetor de saída
+  const yLast = mha.finalOut[mha.finalOut.length - 1];
+
+  // vocabulário: tokens únicos da sentença original
+  const vocab = Array.from(new Set(state.tokens));
+  const vocabEmbeds = vocab.map(t => tokenEmbedding(t, cfg.dModel, cfg.seed));
+  // projeção: cosine similarity
+  const logits = vocabEmbeds.map(e => cosineSim(yLast, e) * 5); // escala ×5 para diferenciar
+
+  // softmax com temperatura
+  const probs = softmaxRow(logits, cfg.T);
+
+  // amostragem (greedy ou temperatura via random)
+  let sampledIdx;
+  if (cfg.T < 0.15){
+    // greedy
+    sampledIdx = 0;
+    for (let k = 1; k < probs.length; k++) if (probs[k] > probs[sampledIdx]) sampledIdx = k;
+  } else {
+    // amostrar
+    const r = Math.random();
+    let cum = 0;
+    sampledIdx = probs.length - 1;
+    for (let k = 0; k < probs.length; k++){
+      cum += probs[k];
+      if (r <= cum){ sampledIdx = k; break; }
+    }
+  }
+  const newToken = vocab[sampledIdx];
+  const newSeq = currentSeq.concat([newToken]);
+
+  state.genHistory.push({
+    type: 'step',
+    stepNum: state.genHistory.length,
+    seq: currentSeq,
+    newSeq: newSeq,
+    newToken: newToken,
+    sampledIdx: sampledIdx,
+    vocab: vocab,
+    probs: probs,
+    logits: logits,
+  });
+  redrawGenHistory();
+}
+
+function genReset(){
+  state.genHistory = null;
+  document.getElementById('genStep').disabled = true;
+  document.getElementById('genReset').disabled = true;
+  document.getElementById('genHistory').innerHTML =
+    '<div class="empty-state" style="padding:30px"><div class="ico">🎬</div><strong>Clique em "Iniciar geração"</strong>Cada passo mostra a sentença atual, distribuição de probabilidades sobre o vocabulário e o token amostrado.</div>';
+}
+
+function redrawGenHistory(){
+  const wrap = document.getElementById('genHistory');
+  if (!state.genHistory || state.genHistory.length === 0){
+    wrap.innerHTML = '<div class="empty-state" style="padding:30px"><div class="ico">🎬</div><strong>Clique em "Iniciar geração"</strong></div>';
+    return;
+  }
+  let html = '';
+  for (const h of state.genHistory){
+    if (h.type === 'init'){
+      html += '<div class="gen-step-card">' +
+        '<span class="step-num">passo 0 · contexto</span>' +
+        '<div class="seq">' +
+          h.seq.map(t => '<span class="ctx">' + escapeHtml(t) + '</span>').join(' ') +
+        '</div>' +
+        '<div style="font-size:11px;color:var(--text-2);font-family:\'JetBrains Mono\',monospace">sentença base como contexto inicial</div>' +
+        '</div>';
+    } else {
+      // bar chart das probabilidades
+      let bars = '';
+      for (let k = 0; k < h.vocab.length; k++){
+        const isSel = k === h.sampledIdx;
+        const pct = h.probs[k] * 100;
+        bars += '<div class="bar">' +
+          '<div class="lbl">' + escapeHtml(h.vocab[k]) + (isSel ? ' <span style="color:var(--accent)">←</span>' : '') + '</div>' +
+          '<div class="track"><div class="fill ' + (isSel ? '' : 'muted') + '" style="width:' + pct.toFixed(1) + '%"></div></div>' +
+          '<div class="v">' + fmt(h.probs[k], 3) + '</div>' +
+          '</div>';
+      }
+
+      // sequência com novo token destacado
+      let seqHtml = h.seq.map(t => '<span class="ctx">' + escapeHtml(t) + '</span>').join(' ') +
+        ' <span class="new">' + escapeHtml(h.newToken) + '</span>';
+
+      html += '<div class="gen-step-card">' +
+        '<span class="step-num">passo ' + h.stepNum + ' · gerou "' + escapeHtml(h.newToken) + '"</span>' +
+        '<div class="seq">' + seqHtml + '</div>' +
+        '<details style="margin-top:8px"><summary style="cursor:pointer;font-size:11px;color:var(--text-2);font-family:\'JetBrains Mono\',monospace">▸ ver distribuição sobre vocabulário (V=' + h.vocab.length + ')</summary>' +
+        '<div class="bars" style="margin-top:8px">' + bars + '</div>' +
+        '</details>' +
+        '</div>';
+    }
+  }
+  wrap.innerHTML = html;
+}
+
+function renderOutput(){
+  const el = document.getElementById('tab-output');
+  const tokens = state.tokens;
+  const out = state.mha.finalOut;
+  const dModel = state.config.dModel;
+
+  let vmax = 0;
+  for (const row of out) for (const v of row){
+    const a = Math.abs(v); if (a > vmax) vmax = a;
+  }
+
+  let html = '<div class="section-title">📤 Saída final do bloco de atenção</div>' +
+    '<div class="section-desc">' +
+      'Após multi-head attention e projeção W<sub>O</sub>, cada token tem um novo vetor de dimensão d<sub>model</sub> = ' + dModel + ', ' +
+      'agora <strong>contextualizado</strong> com informação dos demais tokens. Essa saída alimenta as camadas seguintes ' +
+      '(FFN, LayerNorm, próximo bloco).' +
+    '</div>' +
+    '<div class="formula">Y = MultiHead(X, X, X) <span class="op">·</span> W<sub>O</sub></div>' +
+
+    '<div class="sub-h">📐 Y (saída por token)</div>' +
+    '<div class="heat-wrap"><table class="heat heat-zoom-2"><thead><tr><th></th>';
+  for (let j = 0; j < dModel; j++) html += '<th>d' + j + '</th>';
+  html += '</tr></thead><tbody>';
+  for (let i = 0; i < tokens.length; i++){
+    html += '<tr><th class="row-lbl">' + escapeHtml(tokens[i]) + ' <small>[' + i + ']</small></th>';
+    for (let j = 0; j < dModel; j++){
+      const v = out[i][j];
+      html += '<td style="background:' + divColor(v, vmax) + '" title="' + fmt(v, 3) + '">' + fmt(v, 1) + '</td>';
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table></div>' +
+    '<div class="heat-legend"><span>' + fmt(-vmax, 2) + '</span><div class="legend-bar div"></div><span>+' + fmt(vmax, 2) + '</span></div>';
+
+  // norma + cosine similarity entre saídas
+  const norms = out.map(row => Math.sqrt(row.reduce((a, b) => a + b * b, 0)));
+  const maxNorm = Math.max(...norms);
+  let normBars = '';
+  for (let i = 0; i < tokens.length; i++){
+    const pct = (norms[i] / maxNorm) * 100;
+    normBars += '<div class="bar">' +
+      '<div class="lbl">' + escapeHtml(tokens[i]) + '</div>' +
+      '<div class="track"><div class="fill" style="width:' + pct.toFixed(1) + '%"></div></div>' +
+      '<div class="v">' + fmt(norms[i], 2) + '</div>' +
+      '</div>';
+  }
+
+  // contextualização: cosine similarity entre y_i e x_i (input vs output)
+  let contextBars = '';
+  for (let i = 0; i < tokens.length; i++){
+    const cos = cosineSim(state.X[i], out[i]);
+    const pct = Math.max(0, cos) * 100;
+    contextBars += '<div class="bar">' +
+      '<div class="lbl">' + escapeHtml(tokens[i]) + '</div>' +
+      '<div class="track"><div class="fill ' + (cos < 0 ? 'neg' : 'info') + '" style="width:' + Math.abs(pct).toFixed(1) + '%"></div></div>' +
+      '<div class="v">' + fmt(cos, 3) + '</div>' +
+      '</div>';
+  }
+
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">' +
+    '<div>' +
+      '<div class="sub-h">📏 Norma ‖y<sub>i</sub>‖₂</div>' +
+      '<div class="bars">' + normBars + '</div>' +
+    '</div>' +
+    '<div>' +
+      '<div class="sub-h">🔄 cos(x<sub>i</sub>, y<sub>i</sub>) — quanto cada token mudou</div>' +
+      '<div class="bars">' + contextBars + '</div>' +
+      '<div style="font-size:11px;color:var(--text-2);font-family:\'JetBrains Mono\',monospace;margin-top:4px">cos≈1: pouco mudou · cos baixo: muito contextualizado</div>' +
+    '</div>' +
+  '</div>' +
+
+  '<div class="note info">' +
+    '<strong>Próximos passos no transformer real:</strong> esta saída passa por <em>residual + LayerNorm + Feed-Forward + LayerNorm</em>, ' +
+    'formando um bloco completo. Vários blocos empilhados (BERT base = 12, GPT-2 medium = 24) constituem o modelo final.' +
+  '</div>';
+
+  el.innerHTML = html;
+}
+
+function renderArch(){
+  const el = document.getElementById('tab-arch');
+  el.innerHTML = '<div class="section-title">🏗️ Arquitetura do bloco Transformer</div>' +
+    '<div class="section-desc">' +
+      'Visão simplificada de um bloco encoder. O fluxo passa pela auto-atenção, é somado à entrada original (residual) ' +
+      'e normalizado, antes de ir para a rede feed-forward.' +
+    '</div>' +
+
+    '<div class="arch-canvas">' +
+      '<div class="arch-block input">Entrada: tokens → Embeddings + Positional Encoding</div>' +
+      '<div class="arch-arrow">↓</div>' +
+      '<div class="arch-residual">┄ residual ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄</div>' +
+      '<div class="arch-block attn">🎯 Multi-Head Self-Attention</div>' +
+      '<div class="arch-arrow">↓ ⊕</div>' +
+      '<div class="arch-block norm">LayerNorm</div>' +
+      '<div class="arch-arrow">↓</div>' +
+      '<div class="arch-residual">┄ residual ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄</div>' +
+      '<div class="arch-block ffn">Feed-Forward (MLP)<small>Linear → ReLU/GELU → Linear</small></div>' +
+      '<div class="arch-arrow">↓ ⊕</div>' +
+      '<div class="arch-block norm">LayerNorm</div>' +
+      '<div class="arch-arrow">↓</div>' +
+      '<div class="arch-block output">Saída do bloco (próximo bloco ou cabeça final)</div>' +
+    '</div>' +
+
+    '<div class="arch-legend">' +
+      '<span class="lg-input">Entrada/embedding</span>' +
+      '<span class="lg-attn">Self-attention</span>' +
+      '<span class="lg-norm">LayerNorm</span>' +
+      '<span class="lg-ffn">Feed-forward</span>' +
+      '<span class="lg-out">Saída</span>' +
+    '</div>' +
+
+    '<div class="note info">' +
+      '<strong>Variantes:</strong>' +
+      '<ul>' +
+        '<li><strong>Encoder-only</strong> (BERT, RoBERTa): atenção bidirecional, foco em compreensão.</li>' +
+        '<li><strong>Decoder-only</strong> (GPT, Llama): atenção causal mascarada, geração autoregressiva.</li>' +
+        '<li><strong>Encoder-Decoder</strong> (T5, BART, transformer original): tradução, sumarização.</li>' +
+        '<li><strong>Pre-LN vs Post-LN:</strong> ordem do LayerNorm afeta estabilidade do treinamento.</li>' +
+      '</ul>' +
+    '</div>' +
+
+    '<div class="note">' +
+      '<strong>📚 Referência:</strong> Vaswani et al. (2017), <em>Attention Is All You Need</em>, NeurIPS 2017. ' +
+      'Demonstrou que atenção sozinha (sem RNN/CNN) é suficiente para modelar sequências, abrindo caminho para BERT, GPT e LLMs modernos.' +
+    '</div>';
+}
+
+/* ============================================================
+   Pipeline + UI
+   ============================================================ */
+function setStatus(text, kind){
+  kind = kind || 'ready';
+  const dot = document.querySelector('#statusBox .dot');
+  dot.classList.remove('ready','training','error');
+  dot.classList.add(kind);
+  document.getElementById('statusText').innerHTML = text;
+  const pill = document.getElementById('stPill');
+  pill.classList.remove('busy','error');
+  if (kind === 'training'){ pill.textContent = 'Computando…'; pill.classList.add('busy'); }
+  else if (kind === 'error'){ pill.textContent = 'Erro'; pill.classList.add('error'); }
+  else if (state.tokens){ pill.textContent = 'Concluído'; }
+  else { pill.textContent = 'Pronto'; }
+}
+
+function runComputation(){
+  const text = document.getElementById('inputText').value.trim();
+  if (!text){ setStatus('<strong>Erro:</strong> insira uma sentença.', 'error'); showToast('❌ Insira uma sentença', true); return; }
+  const tokens = tokenize(text);
+  if (tokens.length === 0){ setStatus('<strong>Erro:</strong> não foi possível tokenizar.', 'error'); showToast('❌ Não foi possível tokenizar', true); return; }
+  if (tokens.length > 16 && !confirm('Você tem ' + tokens.length + ' tokens. Visualizações ficam mais legíveis com até 12. Continuar?')) return;
+
+  const dModel = parseInt(document.querySelector('input[name="dm"]:checked').value, 10);
+  const h = parseInt(document.querySelector('input[name="h"]:checked').value, 10);
+  const seed = parseInt(document.getElementById('seedSlider').value, 10);
+  const T = parseFloat(document.getElementById('tempSlider').value);
+  const usePE = document.getElementById('usePE').checked;
+  const useCausal = document.getElementById('useCausal').checked;
+
+  if (dModel % h !== 0){
+    setStatus('<strong>Erro:</strong> d<sub>model</sub> (' + dModel + ') não é divisível por h (' + h + ').', 'error');
+    showToast('❌ d_model deve ser divisível por h', true);
+    return;
+  }
+
+  setStatus('Computando atenção…', 'training');
+  const btn = document.getElementById('btnRun');
+  btn.disabled = true;
+
+  setTimeout(() => {
+    try {
+      const embeds = tokens.map(t => tokenEmbedding(t, dModel, seed));
+      const pe = tokens.map((_, i) => positionalEncoding(i, dModel));
+      const X = embeds.map((emb, i) => usePE ? emb.map((v, k) => v + pe[i][k]) : emb.slice());
+      const mha = multiHeadAttention(X, dModel, h, seed, useCausal, T);
+
+      state.tokens = tokens; state.embeds = embeds; state.pe = pe; state.X = X; state.mha = mha;
+      state.config = { dModel, h, seed, usePE, useCausal, T };
+      state.selectedQuery = 0; state.selectedHead = 0; state.zoom = 2;
+      state.drillCell = null; state.genHistory = null;
+
+      const modeStr = useCausal ? 'decoder' : 'encoder';
+      setStatus('<strong>Concluído.</strong> ' + tokens.length + ' tokens · d<sub>model</sub>=' + dModel + ' · h=' + h + ' · ' + modeStr + (T !== 1.0 ? ' · T=' + T.toFixed(1) : '') + (!usePE ? ' · sem PE' : ''), 'ready');
+      showToast('✅ Computação concluída — ' + tokens.length + ' tokens · h=' + h);
+
+      document.getElementById('emptyState').style.display = 'none';
+      showActiveTab();
+    } finally {
+      btn.disabled = false;
+    }
+  }, 80);
+}
+
+function showActiveTab(){
+  if (!state.tokens) return;
+  const active = document.querySelector('.tab.active').dataset.tab;
+  document.querySelectorAll('.tab-content').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + active).classList.add('active');
+  switch (active){
+    case 'tokens': renderTokens(); break;
+    case 'embed': renderEmbeddings(); break;
+    case 'qkv': renderQKV(); break;
+    case 'attn': renderAttention(); break;
+    case 'multi': renderMulti(); break;
+    case 'analysis': renderAnalysis(); break;
+    case 'gen': renderGen(); break;
+    case 'output': renderOutput(); break;
+    case 'arch': renderArch(); break;
+  }
+}
+
+function reset(){
+  state.tokens = state.X = state.embeds = state.pe = state.mha = state.config = null;
+  state.selectedQuery = state.selectedHead = 0;
+  state.zoom = 2;
+  state.drillCell = null;
+  state.genHistory = null;
+
+  document.getElementById('inputText').value = 'o gato sentou no tapete';
+  document.querySelector('input[name="dm"][value="8"]').checked = true;
+  document.querySelector('input[name="h"][value="2"]').checked = true;
+  document.getElementById('seedSlider').value = 42;
+  document.getElementById('seedVal').textContent = '42';
+  document.getElementById('tempSlider').value = 1.0;
+  document.getElementById('tempVal').textContent = '1.0';
+  document.getElementById('usePE').checked = true;
+  document.getElementById('useCausal').checked = false;
+
+  document.querySelectorAll('.tab-content').forEach(p => {
+    if (p.id !== 'tab-tokens') p.innerHTML = '';
+  });
+  document.getElementById('tab-tokens').innerHTML =
+    '<div class="empty-state" id="emptyState">' +
+      '<div class="ico">🌐</div>' +
+      '<strong>Configure os parâmetros e clique em Computar Atenção</strong>' +
+      'Você verá tokens, embeddings, Q/K/V, mapas de atenção, métricas por cabeça, geração autoregressiva e drill-down passo-a-passo.' +
+    '</div>';
+
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelector('.tab[data-tab="tokens"]').classList.add('active');
+  document.querySelectorAll('.tab-content').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-tokens').classList.add('active');
+
+  setStatus('Pronto para computar', 'ready');
+  showToast('↺ Resetado para configuração padrão');
+}
+
+/* ---------- Presets ---------- */
+const presets = {
+  vanilla: { dm: 8, h: 2, seed: 42, T: 1.0, pe: true, causal: false, label: 'Padrão' },
+  bert:    { dm: 16, h: 4, seed: 7, T: 1.0, pe: true, causal: false, label: 'BERT-tiny' },
+  gpt:     { dm: 16, h: 4, seed: 7, T: 1.0, pe: true, causal: true, label: 'GPT-mini' },
+  single:  { dm: 8, h: 1, seed: 42, T: 1.0, pe: true, causal: false, label: 'Single-head' },
+  nope:    { dm: 8, h: 2, seed: 42, T: 1.0, pe: false, causal: false, label: 'Sem PE' },
+  big:     { dm: 32, h: 8, seed: 13, T: 1.0, pe: true, causal: false, label: 'Wide' },
+};
+function applyPreset(name){
+  const p = presets[name];
+  if (!p) return;
+  document.querySelector('input[name="dm"][value="' + p.dm + '"]').checked = true;
+  document.querySelector('input[name="h"][value="' + p.h + '"]').checked = true;
+  document.getElementById('seedSlider').value = p.seed;
+  document.getElementById('seedVal').textContent = p.seed;
+  document.getElementById('tempSlider').value = p.T;
+  document.getElementById('tempVal').textContent = p.T.toFixed(1);
+  document.getElementById('usePE').checked = p.pe;
+  document.getElementById('useCausal').checked = p.causal;
+  showToast('⚡ Preset "' + p.label + '" aplicado');
+}
+
+/* ---------- Exemplos categorizados ---------- */
+const examples = {
+  basic: [
+    { lab: 'gato', txt: 'o gato sentou no tapete' },
+    { lab: 'IA', txt: 'a inteligência artificial transforma a educação' },
+    { lab: 'curta', txt: 'maria viu joão' },
+    { lab: 'ifsc', txt: 'professores ensinam alunos no campus são josé' },
+  ],
+  ling: [
+    { lab: 'pronome', txt: 'a aluna leu o livro porque ela gostou' },
+    { lab: 'ambígua', txt: 'vi o homem com o telescópio' },
+    { lab: 'longa', txt: 'a casa que joão construiu no morro caiu' },
+    { lab: 'repetição', txt: 'o gato e o gato brincaram' },
+    { lab: 'concordância', txt: 'os meninos correm rápido' },
+  ],
+  en: [
+    { lab: 'cat', txt: 'the cat sat on the mat' },
+    { lab: 'long', txt: 'the book that mary read was great' },
+    { lab: 'attention', txt: 'attention is all you need' },
+  ],
+};
+function buildExamples(){
+  function makeChips(arr, containerId){
+    const wrap = document.getElementById(containerId);
+    wrap.innerHTML = arr.map(ex =>
+      '<button class="ex-chip" data-txt="' + escapeHtml(ex.txt) + '">' + escapeHtml(ex.lab) + '</button>'
+    ).join('');
+    wrap.querySelectorAll('.ex-chip').forEach(b => {
+      b.addEventListener('click', e => {
+        document.getElementById('inputText').value = e.currentTarget.dataset.txt;
+      });
+    });
+  }
+  makeChips(examples.basic, 'exBasic');
+  makeChips(examples.ling, 'exLing');
+  makeChips(examples.en, 'exEN');
+}
+
+/* ---------- Help modal ---------- */
+function showHelp(){
+  showToast('⌨ ←/→ navegar queries · +/− zoom · Esc fechar drill-down · clique célula = drill-down');
+}
+
+/* ---------- Eventos ---------- */
+document.getElementById('btnRun').addEventListener('click', runComputation);
+document.getElementById('btnReset').addEventListener('click', reset);
+document.getElementById('seedSlider').addEventListener('input', e => {
+  document.getElementById('seedVal').textContent = e.target.value;
+});
+document.getElementById('tempSlider').addEventListener('input', e => {
+  document.getElementById('tempVal').textContent = parseFloat(e.target.value).toFixed(1);
+});
+document.querySelectorAll('.preset-btn').forEach(b => {
+  b.addEventListener('click', e => applyPreset(e.currentTarget.dataset.preset));
+});
+document.getElementById('helpLink').addEventListener('click', e => { e.preventDefault(); showHelp(); });
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', e => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    e.currentTarget.classList.add('active');
+    if (state.tokens){ showActiveTab(); }
+    else {
+      document.querySelectorAll('.tab-content').forEach(p => p.classList.remove('active'));
+      document.getElementById('tab-tokens').classList.add('active');
+    }
+  });
+});
+
+document.addEventListener('keydown', e => {
+  if (!state.tokens) return;
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  const active = document.querySelector('.tab.active').dataset.tab;
+  if (e.key === 'Escape' && state.drillCell){
+    state.drillCell = null;
+    if (active === 'attn') renderAttention();
+    return;
+  }
+  if (active !== 'attn') return;
+  if (e.key === 'ArrowLeft' && state.selectedQuery > 0){ state.selectedQuery--; state.drillCell = null; renderAttention(); }
+  else if (e.key === 'ArrowRight' && state.selectedQuery < state.tokens.length - 1){ state.selectedQuery++; state.drillCell = null; renderAttention(); }
+  else if (e.key === '+' || e.key === '='){ if (state.zoom < 3){ state.zoom++; renderAttention(); } }
+  else if (e.key === '-' || e.key === '_'){ if (state.zoom > 1){ state.zoom--; renderAttention(); } }
+});
+
+buildExamples();
+
+</script>
+
+</body>
+</html>
