@@ -1,0 +1,2149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CNN.lab — ICD/IFSC</title>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg-0:#0b0f14;
+    --bg-1:#10161d;
+    --bg-2:#161e27;
+    --bg-3:#1c2631;
+    --border:#243140;
+    --border-soft:#1d2734;
+    --text-0:#e6edf3;
+    --text-1:#9aa6b2;
+    --text-2:#6b7785;
+    --accent:#3F9A4B;
+    --accent-2:#32A041;
+    --accent-soft:rgba(63,154,75,0.12);
+    --accent-glow:rgba(63,154,75,0.35);
+    --warn:#e0a83c;
+    --error:#e25c5c;
+    --info:#4ea1d3;
+    --purple:#a874e8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg-0);
+    color:var(--text-0);
+    font-family:"Inter","Segoe UI",system-ui,sans-serif;
+    font-size:14px;
+    line-height:1.5;
+    overflow-x:hidden;
+  }
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-track{background:var(--bg-1)}
+  ::-webkit-scrollbar-thumb{background:var(--bg-3);border-radius:6px}
+  ::-webkit-scrollbar-thumb:hover{background:#2d3a48}
+
+  /* ---------- HEADER ---------- */
+  header.top{
+    background:linear-gradient(180deg,var(--bg-1) 0%,var(--bg-0) 100%);
+    border-bottom:1px solid var(--border);
+    padding:18px 28px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:24px;
+  }
+  .brand{display:flex;align-items:center;gap:16px}
+  .brand-icon{
+    width:54px;height:54px;
+    border-radius:14px;
+    background:linear-gradient(135deg,var(--accent) 0%,var(--accent-2) 100%);
+    display:flex;align-items:center;justify-content:center;
+    font-size:28px;
+    box-shadow:0 4px 18px var(--accent-glow);
+  }
+  .brand h1{
+    font-size:22px;
+    font-weight:700;
+    letter-spacing:-0.02em;
+    color:var(--text-0);
+  }
+  .brand h1 span{color:var(--accent)}
+  .brand p{font-size:12px;color:var(--text-1);margin-top:2px;letter-spacing:0.04em}
+  .header-meta{display:flex;align-items:center;gap:14px;font-size:12px;color:var(--text-1)}
+  .pill{
+    padding:5px 12px;
+    border-radius:999px;
+    background:var(--accent-soft);
+    color:var(--accent);
+    font-weight:600;
+    font-size:11px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    border:1px solid rgba(63,154,75,0.25);
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .pill::before{
+    content:"";width:6px;height:6px;border-radius:50%;
+    background:var(--accent);box-shadow:0 0 8px var(--accent);
+  }
+
+  /* ---------- LAYOUT ---------- */
+  main.layout{
+    display:grid;
+    grid-template-columns:340px 1fr;
+    min-height:calc(100vh - 90px);
+  }
+  aside.sidebar{
+    background:var(--bg-1);
+    border-right:1px solid var(--border);
+    padding:18px;
+    overflow-y:auto;
+    height:calc(100vh - 90px);
+    position:sticky;top:0;
+  }
+  section.panel{
+    padding:22px 28px;
+    overflow-x:hidden;
+  }
+
+  /* ---------- CARDS ---------- */
+  .card{
+    background:var(--bg-2);
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    padding:16px;
+    margin-bottom:14px;
+  }
+  .card h3{
+    font-size:13px;
+    font-weight:700;
+    color:var(--text-0);
+    margin-bottom:12px;
+    display:flex;align-items:center;gap:8px;
+    letter-spacing:0.02em;
+  }
+  .card h3 .ico{font-size:16px}
+  .card-help{
+    font-size:11px;color:var(--text-2);
+    margin-top:8px;line-height:1.5;
+  }
+
+  /* ---------- INPUTS ---------- */
+  label.field{
+    display:block;
+    font-size:11px;
+    color:var(--text-1);
+    margin-bottom:5px;
+    margin-top:10px;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    font-weight:600;
+  }
+  label.field:first-child{margin-top:0}
+  select,input[type="text"],input[type="number"]{
+    width:100%;
+    background:var(--bg-3);
+    border:1px solid var(--border);
+    color:var(--text-0);
+    padding:8px 10px;
+    border-radius:8px;
+    font-size:13px;
+    font-family:inherit;
+    outline:none;
+    transition:border-color 0.15s;
+  }
+  select:focus,input[type="text"]:focus,input[type="number"]:focus{
+    border-color:var(--accent);
+  }
+  .range-row{display:flex;align-items:center;gap:8px}
+  .range-row input[type="range"]{flex:1;accent-color:var(--accent)}
+  .range-val{
+    min-width:48px;
+    text-align:right;
+    font-variant-numeric:tabular-nums;
+    font-weight:600;
+    color:var(--accent);
+    font-size:12px;
+  }
+
+  /* radio chip group */
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+  .chips label{
+    cursor:pointer;flex:1;
+    background:var(--bg-3);
+    border:1px solid var(--border);
+    color:var(--text-1);
+    padding:6px 10px;border-radius:8px;
+    font-size:12px;text-align:center;
+    transition:all 0.15s;
+    user-select:none;
+    min-width:48px;
+  }
+  .chips label:hover{border-color:var(--accent)}
+  .chips input{display:none}
+  .chips input:checked + span{color:var(--accent)}
+  .chips label:has(input:checked){
+    background:var(--accent-soft);
+    border-color:var(--accent);
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  /* dataset preview */
+  .ds-preview{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:4px;
+    margin-top:10px;
+    padding:8px;
+    background:var(--bg-3);
+    border-radius:8px;
+  }
+  .ds-thumb{
+    aspect-ratio:1;
+    background:#0a0d12;
+    border-radius:4px;
+    position:relative;
+    overflow:hidden;
+  }
+  .ds-thumb canvas{
+    width:100%;height:100%;
+    image-rendering:pixelated;
+  }
+  .ds-thumb-label{
+    position:absolute;
+    bottom:2px;left:0;right:0;
+    text-align:center;
+    font-size:8px;
+    color:var(--text-2);
+    background:rgba(0,0,0,0.5);
+    padding:1px 0;
+  }
+
+  /* buttons */
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:11px 16px;
+    border:none;
+    border-radius:10px;
+    font-family:inherit;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    transition:all 0.15s;
+    width:100%;
+  }
+  .btn-primary{
+    background:linear-gradient(180deg,var(--accent) 0%,var(--accent-2) 100%);
+    color:white;
+    box-shadow:0 2px 10px var(--accent-glow);
+  }
+  .btn-primary:hover:not(:disabled){
+    transform:translateY(-1px);
+    box-shadow:0 4px 14px var(--accent-glow);
+  }
+  .btn-primary:disabled{
+    opacity:0.5;cursor:not-allowed;
+  }
+  .btn-secondary{
+    background:transparent;
+    color:var(--text-1);
+    border:1px solid var(--border);
+    margin-top:8px;
+  }
+  .btn-secondary:hover{
+    border-color:var(--accent);
+    color:var(--accent);
+  }
+
+  /* status */
+  .status-box{
+    margin-top:12px;
+    padding:10px 12px;
+    background:var(--bg-3);
+    border-radius:8px;
+    font-size:12px;
+    color:var(--text-1);
+    display:flex;align-items:center;gap:8px;
+    min-height:38px;
+  }
+  .dot{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--text-2);
+    flex-shrink:0;
+  }
+  .dot.training{background:var(--warn);animation:pulse 1.2s infinite}
+  .dot.ready{background:var(--accent);box-shadow:0 0 6px var(--accent)}
+  .dot.error{background:var(--error)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+  /* ---------- TABS ---------- */
+  .tabs{
+    display:flex;gap:2px;
+    border-bottom:1px solid var(--border);
+    margin-bottom:18px;
+    overflow-x:auto;
+    scrollbar-width:thin;
+  }
+  .tab{
+    background:transparent;
+    border:none;
+    color:var(--text-1);
+    padding:10px 14px;
+    cursor:pointer;
+    font-size:13px;
+    font-family:inherit;
+    font-weight:500;
+    border-bottom:2px solid transparent;
+    margin-bottom:-1px;
+    white-space:nowrap;
+    transition:color 0.15s,border-color 0.15s;
+    display:flex;align-items:center;gap:6px;
+  }
+  .tab:hover{color:var(--text-0)}
+  .tab.active{
+    color:var(--accent);
+    border-bottom-color:var(--accent);
+    font-weight:600;
+  }
+  .tab-content{display:none}
+  .tab-content.active{display:block;animation:fadeIn 0.2s}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+  /* ---------- TAB SECTIONS ---------- */
+  .section-title{
+    font-size:15px;
+    font-weight:700;
+    color:var(--text-0);
+    margin-bottom:6px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .section-desc{
+    font-size:12px;
+    color:var(--text-1);
+    margin-bottom:16px;
+    line-height:1.6;
+    max-width:780px;
+  }
+  .section-desc code{
+    background:var(--bg-2);
+    padding:2px 6px;border-radius:4px;
+    font-size:11px;color:var(--accent);
+  }
+
+  /* arquitetura */
+  .arch-canvas-wrap{
+    background:var(--bg-1);
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    padding:24px;
+    overflow-x:auto;
+  }
+  .arch-canvas-wrap svg{display:block;margin:0 auto;min-width:760px}
+  .arch-legend{
+    display:flex;flex-wrap:wrap;gap:14px;
+    margin-top:14px;
+    padding:12px 16px;
+    background:var(--bg-2);
+    border-radius:8px;
+    font-size:11px;
+    color:var(--text-1);
+  }
+  .arch-legend span{display:inline-flex;align-items:center;gap:6px}
+  .arch-legend span::before{
+    content:"";width:12px;height:12px;border-radius:3px;
+  }
+  .arch-legend .lg-input::before{background:#4ea1d3}
+  .arch-legend .lg-conv::before{background:var(--accent)}
+  .arch-legend .lg-pool::before{background:var(--warn)}
+  .arch-legend .lg-flat::before{background:#a874e8}
+  .arch-legend .lg-dense::before{background:#e25c5c}
+  .arch-legend .lg-out::before{background:#666;border:2px solid var(--accent)}
+
+  /* charts */
+  .chart-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+  .chart-card{
+    background:var(--bg-1);
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    padding:16px;
+  }
+  .chart-card h4{
+    font-size:12px;
+    font-weight:700;
+    color:var(--text-0);
+    margin-bottom:10px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+  }
+  .chart-wrap{height:260px;position:relative}
+
+  /* filters and feature maps */
+  .grid-tiles{
+    display:grid;
+    gap:8px;
+    margin-top:8px;
+  }
+  .tile{
+    background:var(--bg-1);
+    border:1px solid var(--border-soft);
+    border-radius:8px;
+    padding:8px;
+    text-align:center;
+  }
+  .tile canvas{
+    width:100%;
+    image-rendering:pixelated;
+    display:block;
+    border-radius:4px;
+  }
+  .tile-label{
+    font-size:10px;
+    color:var(--text-2);
+    margin-top:4px;
+    font-variant-numeric:tabular-nums;
+  }
+  .layer-block{
+    background:var(--bg-1);
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    padding:18px;
+    margin-bottom:14px;
+  }
+  .layer-block h4{
+    font-size:13px;
+    color:var(--text-0);
+    margin-bottom:10px;
+    display:flex;align-items:center;gap:10px;
+  }
+  .layer-block h4 .layer-tag{
+    font-size:10px;
+    padding:3px 8px;
+    background:var(--accent-soft);
+    color:var(--accent);
+    border-radius:6px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+  }
+  .layer-block .meta{font-size:11px;color:var(--text-2);margin-bottom:10px;font-family:"JetBrains Mono",monospace}
+
+  /* metrics */
+  .metric-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+    gap:12px;
+    margin-bottom:18px;
+  }
+  .metric-card{
+    background:var(--bg-1);
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    padding:14px 16px;
+  }
+  .metric-card .label{
+    font-size:11px;
+    color:var(--text-1);
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    margin-bottom:6px;
+  }
+  .metric-card .value{
+    font-size:24px;
+    font-weight:700;
+    color:var(--text-0);
+    font-variant-numeric:tabular-nums;
+  }
+  .metric-card .value.accent{color:var(--accent)}
+
+  /* confusion matrix */
+  .cm-table{
+    border-collapse:collapse;
+    margin:0 auto;
+  }
+  .cm-table th,.cm-table td{
+    padding:8px 10px;
+    text-align:center;
+    font-size:12px;
+    border:1px solid var(--border);
+    min-width:42px;
+  }
+  .cm-table th{
+    background:var(--bg-2);
+    color:var(--text-1);
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    font-size:10px;
+  }
+  .cm-table td{
+    font-variant-numeric:tabular-nums;
+    font-weight:600;
+    background:var(--bg-1);
+  }
+  .cm-table .cm-axis{
+    background:transparent;
+    border:none;
+    color:var(--text-2);
+    font-style:italic;
+  }
+  .cm-cell-bg{position:relative;color:var(--text-0)}
+
+  /* report table */
+  .report-table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:12px;
+  }
+  .report-table th,.report-table td{
+    padding:8px 12px;
+    text-align:left;
+    border-bottom:1px solid var(--border-soft);
+  }
+  .report-table th{
+    background:var(--bg-2);
+    color:var(--text-1);
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    font-size:10px;
+  }
+  .report-table td{
+    background:var(--bg-1);
+    font-variant-numeric:tabular-nums;
+  }
+  .report-table tr:hover td{background:var(--bg-2)}
+
+  /* drawing */
+  .draw-area{
+    display:grid;
+    grid-template-columns:auto 1fr;
+    gap:24px;
+    align-items:flex-start;
+  }
+  .draw-canvas-wrap{
+    background:var(--bg-1);
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    padding:16px;
+  }
+  .draw-canvas{
+    background:#000;
+    cursor:crosshair;
+    border-radius:6px;
+    display:block;
+    touch-action:none;
+  }
+  .draw-controls{
+    margin-top:12px;
+    display:flex;gap:8px;
+  }
+  .draw-controls button{
+    flex:1;
+    padding:8px;
+    background:var(--bg-3);
+    border:1px solid var(--border);
+    color:var(--text-1);
+    border-radius:6px;
+    cursor:pointer;
+    font-family:inherit;
+    font-size:12px;
+    transition:all 0.15s;
+  }
+  .draw-controls button:hover{
+    border-color:var(--accent);
+    color:var(--accent);
+  }
+  .pred-panel{
+    background:var(--bg-1);
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    padding:18px;
+  }
+  .pred-bars{display:flex;flex-direction:column;gap:8px}
+  .pred-bar{
+    display:grid;
+    grid-template-columns:90px 1fr 50px;
+    align-items:center;
+    gap:10px;
+  }
+  .pred-bar .pred-label{font-size:12px;color:var(--text-1);font-weight:500}
+  .pred-bar .pred-track{
+    height:18px;
+    background:var(--bg-3);
+    border-radius:4px;
+    overflow:hidden;
+    position:relative;
+  }
+  .pred-bar .pred-fill{
+    height:100%;
+    background:linear-gradient(90deg,var(--accent-2),var(--accent));
+    border-radius:4px;
+    transition:width 0.3s;
+  }
+  .pred-bar .pred-pct{
+    font-size:11px;
+    color:var(--text-1);
+    font-variant-numeric:tabular-nums;
+    text-align:right;
+    font-weight:600;
+  }
+  .pred-bar.winner .pred-label{color:var(--accent);font-weight:700}
+  .pred-bar.winner .pred-pct{color:var(--accent)}
+
+  /* samples grid */
+  .samples-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(86px,1fr));
+    gap:10px;
+  }
+  .sample-tile{
+    background:var(--bg-1);
+    border:1px solid var(--border-soft);
+    border-radius:8px;
+    padding:8px;
+    text-align:center;
+    transition:transform 0.15s;
+  }
+  .sample-tile.correct{border-color:rgba(63,154,75,0.4)}
+  .sample-tile.wrong{border-color:rgba(226,92,92,0.4)}
+  .sample-tile canvas{
+    width:100%;
+    image-rendering:pixelated;
+    border-radius:4px;
+    margin-bottom:6px;
+  }
+  .sample-tile .true-label{
+    font-size:10px;
+    color:var(--text-1);
+    font-weight:600;
+  }
+  .sample-tile .pred-label{
+    font-size:10px;
+    margin-top:2px;
+  }
+  .sample-tile.correct .pred-label{color:var(--accent)}
+  .sample-tile.wrong .pred-label{color:var(--error)}
+
+  /* placeholder when empty */
+  .empty-state{
+    text-align:center;
+    padding:60px 20px;
+    color:var(--text-2);
+    font-size:14px;
+  }
+  .empty-state .ico{font-size:48px;margin-bottom:14px;opacity:0.4}
+  .empty-state strong{color:var(--text-1);display:block;margin-bottom:6px;font-size:14px}
+
+  /* loading bar */
+  .training-progress{
+    margin-top:10px;
+    height:4px;
+    background:var(--bg-3);
+    border-radius:2px;
+    overflow:hidden;
+    display:none;
+  }
+  .training-progress.active{display:block}
+  .training-progress-fill{
+    height:100%;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    transition:width 0.3s;
+    width:0;
+  }
+
+  /* footer */
+  footer{
+    padding:14px 28px;
+    text-align:center;
+    border-top:1px solid var(--border);
+    color:var(--text-2);
+    font-size:11px;
+    background:var(--bg-1);
+  }
+  footer a{color:var(--text-1);text-decoration:none}
+  footer a:hover{color:var(--accent)}
+
+  /* responsive */
+  @media (max-width:1100px){
+    main.layout{grid-template-columns:1fr}
+    aside.sidebar{
+      position:static;
+      height:auto;
+      border-right:none;
+      border-bottom:1px solid var(--border);
+    }
+    .chart-grid{grid-template-columns:1fr}
+    .draw-area{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <div class="brand-icon">🖼️</div>
+    <div>
+      <h1>CNN<span>.lab</span></h1>
+      <p>ICD · IFSC · Prof. Ramon Mayor Martins</p>
+    </div>
+  </div>
+  <div class="header-meta">
+    <span class="pill" id="tfStatus">Carregando TF.js</span>
+  </div>
+</header>
+
+<main class="layout">
+  <aside class="sidebar">
+
+    <div class="card">
+      <h3><span class="ico">📊</span> Dataset</h3>
+
+      <label class="field">Conjunto sintético</label>
+      <select id="dsName">
+        <option value="shapes5">Formas geométricas (5 classes)</option>
+        <option value="shapes3">Formas básicas (3 classes)</option>
+      </select>
+
+      <label class="field">Amostras por classe</label>
+      <div class="range-row">
+        <input type="range" id="samplesPerClass" min="50" max="400" step="50" value="200">
+        <span class="range-val" id="samplesPerClassVal">200</span>
+      </div>
+
+      <label class="field">Ruído (intensidade)</label>
+      <div class="range-row">
+        <input type="range" id="noiseLevel" min="0" max="40" step="5" value="15">
+        <span class="range-val" id="noiseLevelVal">15%</span>
+      </div>
+
+      <button class="btn btn-secondary" id="btnRegen">↻ Gerar amostras</button>
+
+      <div class="ds-preview" id="dsPreview"></div>
+
+      <div class="card-help">
+        Imagens <strong>24×24</strong> em escala de cinza. Cada classe tem variações de posição, tamanho, espessura e ruído.
+      </div>
+    </div>
+
+    <div class="card">
+      <h3><span class="ico">🏗️</span> Arquitetura</h3>
+
+      <label class="field">Conv1 — número de filtros</label>
+      <div class="chips" id="conv1Filters">
+        <label><input type="radio" name="c1f" value="4"><span>4</span></label>
+        <label><input type="radio" name="c1f" value="8" checked><span>8</span></label>
+        <label><input type="radio" name="c1f" value="16"><span>16</span></label>
+        <label><input type="radio" name="c1f" value="32"><span>32</span></label>
+      </div>
+
+      <label class="field">Conv1 — kernel</label>
+      <div class="chips" id="conv1Kernel">
+        <label><input type="radio" name="c1k" value="3" checked><span>3×3</span></label>
+        <label><input type="radio" name="c1k" value="5"><span>5×5</span></label>
+      </div>
+
+      <label class="field">Conv2 — número de filtros</label>
+      <div class="chips" id="conv2Filters">
+        <label><input type="radio" name="c2f" value="0"><span>off</span></label>
+        <label><input type="radio" name="c2f" value="8"><span>8</span></label>
+        <label><input type="radio" name="c2f" value="16" checked><span>16</span></label>
+        <label><input type="radio" name="c2f" value="32"><span>32</span></label>
+      </div>
+
+      <label class="field">Conv2 — kernel</label>
+      <div class="chips" id="conv2Kernel">
+        <label><input type="radio" name="c2k" value="3" checked><span>3×3</span></label>
+        <label><input type="radio" name="c2k" value="5"><span>5×5</span></label>
+      </div>
+
+      <label class="field">Pooling</label>
+      <div class="chips" id="poolType">
+        <label><input type="radio" name="pt" value="max" checked><span>Max</span></label>
+        <label><input type="radio" name="pt" value="avg"><span>Avg</span></label>
+      </div>
+
+      <label class="field">Camada densa (neurônios)</label>
+      <div class="chips" id="denseUnits">
+        <label><input type="radio" name="du" value="16"><span>16</span></label>
+        <label><input type="radio" name="du" value="32" checked><span>32</span></label>
+        <label><input type="radio" name="du" value="64"><span>64</span></label>
+        <label><input type="radio" name="du" value="128"><span>128</span></label>
+      </div>
+
+      <label class="field">Função de ativação (oculta)</label>
+      <div class="chips" id="actFn">
+        <label><input type="radio" name="af" value="relu" checked><span>ReLU</span></label>
+        <label><input type="radio" name="af" value="tanh"><span>Tanh</span></label>
+        <label><input type="radio" name="af" value="sigmoid"><span>Sigmoid</span></label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3><span class="ico">⚙️</span> Hiperparâmetros</h3>
+
+      <label class="field">Learning rate (η)</label>
+      <div class="range-row">
+        <input type="range" id="lr" min="-4" max="-1" step="1" value="-2">
+        <span class="range-val" id="lrVal">0.01</span>
+      </div>
+
+      <label class="field">Épocas</label>
+      <div class="range-row">
+        <input type="range" id="epochs" min="3" max="30" step="1" value="10">
+        <span class="range-val" id="epochsVal">10</span>
+      </div>
+
+      <label class="field">Batch size</label>
+      <div class="range-row">
+        <input type="range" id="batchSize" min="8" max="64" step="8" value="32">
+        <span class="range-val" id="batchSizeVal">32</span>
+      </div>
+
+      <label class="field">Proporção treino (%)</label>
+      <div class="range-row">
+        <input type="range" id="trainSplit" min="50" max="90" step="5" value="80">
+        <span class="range-val" id="trainSplitVal">80%</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3><span class="ico">▶️</span> Ação</h3>
+      <button class="btn btn-primary" id="btnTrain" disabled>🧠 Treinar Rede</button>
+      <button class="btn btn-secondary" id="btnReset">↺ Resetar</button>
+
+      <div class="status-box" id="statusBox">
+        <span class="dot"></span>
+        <span id="statusText">Aguardando inicialização</span>
+      </div>
+      <div class="training-progress" id="progBar">
+        <div class="training-progress-fill" id="progFill"></div>
+      </div>
+    </div>
+
+  </aside>
+
+  <section class="panel">
+    <div class="tabs">
+      <button class="tab active" data-tab="arch">🏗️ Arquitetura</button>
+      <button class="tab" data-tab="train">📉 Treinamento</button>
+      <button class="tab" data-tab="filters">🎨 Filtros</button>
+      <button class="tab" data-tab="fmaps">🔍 Feature Maps</button>
+      <button class="tab" data-tab="metrics">📊 Métricas</button>
+      <button class="tab" data-tab="draw">✏️ Desenhar</button>
+      <button class="tab" data-tab="samples">📋 Amostras</button>
+    </div>
+
+    <!-- Arquitetura -->
+    <div class="tab-content active" id="tab-arch">
+      <div class="section-title">🏗️ Arquitetura da Rede Convolucional</div>
+      <div class="section-desc">
+        A CNN aplica <code>convoluções</code> que detectam padrões locais (bordas, cantos), seguidas de <code>pooling</code> que reduz dimensionalidade preservando características importantes. As camadas finais <code>densas</code> combinam essas features para classificar.
+      </div>
+      <div class="arch-canvas-wrap">
+        <svg id="archSvg" viewBox="0 0 900 320" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <div class="arch-legend">
+        <span class="lg-input">Entrada (24×24×1)</span>
+        <span class="lg-conv">Conv2D + ativação</span>
+        <span class="lg-pool">Pooling</span>
+        <span class="lg-flat">Flatten</span>
+        <span class="lg-dense">Dense (oculta)</span>
+        <span class="lg-out">Saída (softmax)</span>
+      </div>
+    </div>
+
+    <!-- Treinamento -->
+    <div class="tab-content" id="tab-train">
+      <div class="section-title">📉 Curvas de Treinamento</div>
+      <div class="section-desc">
+        Acompanhe a evolução do erro (<code>loss</code>) e da acurácia em cada época, no conjunto de treino e validação. Curvas afastadas indicam <strong>overfitting</strong>.
+      </div>
+      <div class="chart-grid">
+        <div class="chart-card">
+          <h4>Loss × Época</h4>
+          <div class="chart-wrap"><canvas id="lossChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h4>Acurácia × Época</h4>
+          <div class="chart-wrap"><canvas id="accChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="tab-content" id="tab-filters">
+      <div class="section-title">🎨 Filtros Aprendidos</div>
+      <div class="section-desc">
+        Os filtros são os <strong>kernels</strong> que a rede aprendeu durante o treinamento. Cada filtro detecta um padrão específico — bordas verticais, diagonais, cantos. Valores claros = ativação positiva, escuros = negativa.
+      </div>
+      <div id="filtersContent">
+        <div class="empty-state">
+          <div class="ico">🎨</div>
+          <strong>Treine a rede para visualizar os filtros aprendidos</strong>
+          Cada filtro 3×3 ou 5×5 será mostrado como uma pequena imagem.
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature Maps -->
+    <div class="tab-content" id="tab-fmaps">
+      <div class="section-title">🔍 Feature Maps (mapas de ativação)</div>
+      <div class="section-desc">
+        Aqui você vê o que cada filtro <strong>"vê"</strong> ao processar uma imagem de entrada. Note como filtros diferentes destacam aspectos distintos da imagem (ex.: bordas horizontais, diagonais, manchas).
+      </div>
+      <div id="fmapsContent">
+        <div class="empty-state">
+          <div class="ico">🔍</div>
+          <strong>Treine a rede para visualizar os feature maps</strong>
+          Uma imagem de teste será propagada por cada camada convolucional.
+        </div>
+      </div>
+    </div>
+
+    <!-- Métricas -->
+    <div class="tab-content" id="tab-metrics">
+      <div class="section-title">📊 Métricas de Avaliação</div>
+      <div class="section-desc">
+        Resultados no conjunto de teste: precisão, recall e F1-score por classe, além da matriz de confusão.
+      </div>
+      <div class="metric-grid" id="metricGrid">
+        <div class="metric-card">
+          <div class="label">Acurácia</div>
+          <div class="value" id="mAcc">—</div>
+        </div>
+        <div class="metric-card">
+          <div class="label">Loss (teste)</div>
+          <div class="value" id="mLoss">—</div>
+        </div>
+        <div class="metric-card">
+          <div class="label">Macro F1</div>
+          <div class="value" id="mF1">—</div>
+        </div>
+        <div class="metric-card">
+          <div class="label">Parâmetros treináveis</div>
+          <div class="value" id="mParams">—</div>
+        </div>
+      </div>
+
+      <div class="chart-card" style="margin-bottom:14px">
+        <h4>Matriz de Confusão</h4>
+        <div id="confMatWrap" style="display:flex;justify-content:center;padding:8px 0">
+          <div class="empty-state" style="padding:20px"><strong>Treine a rede primeiro</strong></div>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <h4>Relatório de Classificação</h4>
+        <div id="classReportWrap">
+          <div class="empty-state" style="padding:20px"><strong>Treine a rede primeiro</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Desenhar -->
+    <div class="tab-content" id="tab-draw">
+      <div class="section-title">✏️ Desenhar e Prever</div>
+      <div class="section-desc">
+        Desenhe uma forma à mão e veja a rede classificando em tempo real. Após treinar, qualquer rabisco será reduzido a 24×24 e propagado pela CNN.
+      </div>
+      <div class="draw-area">
+        <div class="draw-canvas-wrap">
+          <canvas id="drawCanvas" class="draw-canvas" width="240" height="240"></canvas>
+          <div class="draw-controls">
+            <button id="btnClearDraw">Limpar</button>
+            <button id="btnPredictDraw">Prever</button>
+          </div>
+          <div style="margin-top:10px;font-size:11px;color:var(--text-2);text-align:center">
+            Visualização 24×24 (entrada da rede):
+          </div>
+          <canvas id="drawPreview" width="96" height="96" style="display:block;margin:8px auto 0;border-radius:4px;background:#000;image-rendering:pixelated"></canvas>
+        </div>
+        <div class="pred-panel">
+          <h4 style="font-size:12px;color:var(--text-1);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:14px">Predição da rede</h4>
+          <div id="predBars">
+            <div class="empty-state" style="padding:30px 10px"><strong>Treine a rede e desenhe algo</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Amostras -->
+    <div class="tab-content" id="tab-samples">
+      <div class="section-title">📋 Amostras do Conjunto de Teste</div>
+      <div class="section-desc">
+        Predições reais sobre amostras de teste. Borda <strong style="color:var(--accent)">verde</strong> = correto, <strong style="color:var(--error)">vermelha</strong> = erro.
+      </div>
+      <div class="samples-grid" id="samplesGrid">
+        <div class="empty-state" style="grid-column:1/-1">
+          <div class="ico">📋</div>
+          <strong>Treine a rede para ver predições</strong>
+        </div>
+      </div>
+    </div>
+
+  </section>
+</main>
+
+<footer>
+  CNN.lab · ICD · IFSC · 2026 · <a href="https://rmayormartins.github.io" target="_blank">Prof. Ramon Mayor Martins</a> · Construído com TensorFlow.js
+</footer>
+
+<script>
+/* ============================================================
+   CNN.lab — implementação completa
+   Datasets sintéticos + CNN treinada com TF.js + visualizações
+   ============================================================ */
+
+const IMG = 24;                 // dimensão das imagens (24x24)
+const CLASSES_5 = ['círculo','quadrado','triângulo','X','cruz'];
+const CLASSES_3 = ['círculo','quadrado','triângulo'];
+
+let state = {
+  X: null,         // tensor das imagens [N, 24, 24, 1]
+  y: null,         // tensor labels one-hot [N, K]
+  Xtest: null,
+  ytest: null,
+  rawTest: null,   // arrays brutos de teste (para visualização)
+  classes: CLASSES_5,
+  model: null,
+  history: { loss:[], val_loss:[], acc:[], val_acc:[] },
+  trained: false,
+  testPreds: null,
+};
+
+/* ---------------- Geradores de formas ---------------- */
+function drawShapeOnCanvas(ctx, label, opts){
+  const {size, cx, cy, thickness, rot, noise} = opts;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0,0,IMG,IMG);
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(rot);
+  ctx.strokeStyle = '#fff';
+  ctx.fillStyle = '#fff';
+  ctx.lineWidth = thickness;
+  ctx.lineCap='round';
+  ctx.lineJoin='round';
+
+  const s = size/2;
+
+  switch(label){
+    case 'círculo':
+      ctx.beginPath();
+      ctx.arc(0,0,s,0,Math.PI*2);
+      ctx.stroke();
+      break;
+    case 'quadrado':
+      ctx.beginPath();
+      ctx.rect(-s,-s,size,size);
+      ctx.stroke();
+      break;
+    case 'triângulo':
+      ctx.beginPath();
+      ctx.moveTo(0,-s);
+      ctx.lineTo(s,s*0.8);
+      ctx.lineTo(-s,s*0.8);
+      ctx.closePath();
+      ctx.stroke();
+      break;
+    case 'X':
+      ctx.beginPath();
+      ctx.moveTo(-s,-s);
+      ctx.lineTo(s,s);
+      ctx.moveTo(s,-s);
+      ctx.lineTo(-s,s);
+      ctx.stroke();
+      break;
+    case 'cruz':
+      ctx.beginPath();
+      ctx.moveTo(0,-s);
+      ctx.lineTo(0,s);
+      ctx.moveTo(-s,0);
+      ctx.lineTo(s,0);
+      ctx.stroke();
+      break;
+  }
+  ctx.restore();
+
+  // adicionar ruído (sal e pimenta)
+  if (noise > 0){
+    const imgData = ctx.getImageData(0,0,IMG,IMG);
+    const data = imgData.data;
+    const np = Math.floor(IMG*IMG*noise/100);
+    for (let i=0;i<np;i++){
+      const px = Math.floor(Math.random()*IMG*IMG);
+      const idx = px*4;
+      const v = Math.random()<0.5 ? 0 : 255;
+      data[idx]=data[idx+1]=data[idx+2]=v;
+    }
+    ctx.putImageData(imgData,0,0);
+  }
+}
+
+function generateSample(label, noisePct){
+  const c = document.createElement('canvas');
+  c.width = IMG; c.height = IMG;
+  const ctx = c.getContext('2d');
+
+  // parâmetros aleatórios
+  const size = 10 + Math.random()*10;     // 10..20
+  const margin = size/2 + 1;
+  const cx = margin + Math.random()*(IMG-2*margin);
+  const cy = margin + Math.random()*(IMG-2*margin);
+  const thickness = 1 + Math.random()*1.5; // 1..2.5
+  const rot = (Math.random()-0.5)*0.6;     // ±0.3 rad
+
+  drawShapeOnCanvas(ctx, label, {size,cx,cy,thickness,rot,noise:noisePct});
+
+  // extrair pixels normalizados
+  const imgData = ctx.getImageData(0,0,IMG,IMG).data;
+  const pixels = new Float32Array(IMG*IMG);
+  for (let i=0;i<IMG*IMG;i++){
+    pixels[i] = imgData[i*4]/255;  // canal R basta (greyscale)
+  }
+  return pixels;
+}
+
+/* ---------------- Construção do dataset ---------------- */
+function generateDataset(classes, perClass, noisePct){
+  const X = [], y = [];
+  for (let ci=0; ci<classes.length; ci++){
+    for (let i=0; i<perClass; i++){
+      X.push(generateSample(classes[ci], noisePct));
+      y.push(ci);
+    }
+  }
+  return {X, y};
+}
+
+function shuffleInPlace(X, y){
+  for (let i=X.length-1; i>0; i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [X[i],X[j]]=[X[j],X[i]];
+    [y[i],y[j]]=[y[j],y[i]];
+  }
+}
+
+/* ---------------- Renderiza imagens em mini-canvas ---------------- */
+function pixelsToCanvas(pixels, canvas, scale=1){
+  const w = canvas.width, h = canvas.height;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  // criar imagem 24x24 e escalar
+  const tmp = document.createElement('canvas');
+  tmp.width = IMG; tmp.height = IMG;
+  const tctx = tmp.getContext('2d');
+  const id = tctx.createImageData(IMG,IMG);
+  for (let i=0;i<IMG*IMG;i++){
+    const v = Math.round(Math.max(0,Math.min(1,pixels[i]))*255);
+    id.data[i*4]=id.data[i*4+1]=id.data[i*4+2]=v;
+    id.data[i*4+3]=255;
+  }
+  tctx.putImageData(id,0,0);
+  ctx.clearRect(0,0,w,h);
+  ctx.drawImage(tmp,0,0,w,h);
+}
+
+function arrayToCanvasGray(arr, canvas, w, h, normalize=true){
+  // arr: tipados ou normais com valores quaisquer
+  let mn = Infinity, mx = -Infinity;
+  if (normalize){
+    for (let i=0;i<arr.length;i++){
+      if (arr[i]<mn) mn=arr[i];
+      if (arr[i]>mx) mx=arr[i];
+    }
+  } else {
+    mn=0; mx=1;
+  }
+  const range = (mx-mn) || 1;
+  const tmp = document.createElement('canvas');
+  tmp.width = w; tmp.height = h;
+  const tctx = tmp.getContext('2d');
+  const id = tctx.createImageData(w,h);
+  for (let i=0;i<arr.length;i++){
+    const v = Math.round(((arr[i]-mn)/range)*255);
+    id.data[i*4]=id.data[i*4+1]=id.data[i*4+2]=v;
+    id.data[i*4+3]=255;
+  }
+  tctx.putImageData(id,0,0);
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(tmp,0,0,canvas.width,canvas.height);
+}
+
+/* ---------------- Preview do dataset (5 thumbnails) ---------------- */
+function renderDatasetPreview(){
+  const wrap = document.getElementById('dsPreview');
+  wrap.innerHTML='';
+  const classes = state.classes;
+  for (const cls of classes){
+    const div = document.createElement('div');
+    div.className='ds-thumb';
+    const c = document.createElement('canvas');
+    c.width=64;c.height=64;
+    const px = generateSample(cls, parseInt(document.getElementById('noiseLevel').value));
+    pixelsToCanvas(px, c);
+    div.appendChild(c);
+    const lbl = document.createElement('div');
+    lbl.className='ds-thumb-label';
+    lbl.textContent=cls;
+    div.appendChild(lbl);
+    wrap.appendChild(div);
+  }
+}
+
+/* ---------------- Preparar tensores ---------------- */
+function prepareTensors(){
+  const dsName = document.getElementById('dsName').value;
+  state.classes = (dsName === 'shapes3') ? CLASSES_3 : CLASSES_5;
+  const perClass = parseInt(document.getElementById('samplesPerClass').value);
+  const noisePct = parseInt(document.getElementById('noiseLevel').value);
+
+  const {X, y} = generateDataset(state.classes, perClass, noisePct);
+  shuffleInPlace(X, y);
+
+  const split = parseInt(document.getElementById('trainSplit').value)/100;
+  const N = X.length;
+  const Ntr = Math.floor(N*split);
+
+  const Xtr = X.slice(0, Ntr);
+  const ytr = y.slice(0, Ntr);
+  const Xte = X.slice(Ntr);
+  const yte = y.slice(Ntr);
+
+  const K = state.classes.length;
+  // converter para tensores
+  const flatTr = new Float32Array(Xtr.length*IMG*IMG);
+  Xtr.forEach((px,i)=>flatTr.set(px, i*IMG*IMG));
+  const flatTe = new Float32Array(Xte.length*IMG*IMG);
+  Xte.forEach((px,i)=>flatTe.set(px, i*IMG*IMG));
+
+  // dispose anteriores
+  if (state.X) state.X.dispose();
+  if (state.y) state.y.dispose();
+  if (state.Xtest) state.Xtest.dispose();
+  if (state.ytest) state.ytest.dispose();
+
+  state.X = tf.tensor4d(flatTr, [Xtr.length, IMG, IMG, 1]);
+  state.y = tf.oneHot(tf.tensor1d(ytr,'int32'), K);
+  state.Xtest = tf.tensor4d(flatTe, [Xte.length, IMG, IMG, 1]);
+  state.ytest = tf.oneHot(tf.tensor1d(yte,'int32'), K);
+  state.rawTest = {X: Xte, y: yte};
+}
+
+/* ---------------- Construção do modelo ---------------- */
+function getCfg(){
+  return {
+    c1f: parseInt(document.querySelector('input[name="c1f"]:checked').value),
+    c1k: parseInt(document.querySelector('input[name="c1k"]:checked').value),
+    c2f: parseInt(document.querySelector('input[name="c2f"]:checked').value),
+    c2k: parseInt(document.querySelector('input[name="c2k"]:checked').value),
+    pt: document.querySelector('input[name="pt"]:checked').value,
+    du: parseInt(document.querySelector('input[name="du"]:checked').value),
+    af: document.querySelector('input[name="af"]:checked').value,
+    lr: parseFloat(document.getElementById('lrVal').textContent),
+    epochs: parseInt(document.getElementById('epochs').value),
+    batch: parseInt(document.getElementById('batchSize').value),
+  };
+}
+
+function buildModel(cfg, K){
+  const m = tf.sequential();
+
+  // Conv1
+  m.add(tf.layers.conv2d({
+    inputShape:[IMG,IMG,1],
+    filters: cfg.c1f,
+    kernelSize: cfg.c1k,
+    activation: cfg.af,
+    padding:'same',
+    kernelInitializer:'glorotUniform',
+    name:'conv1'
+  }));
+  if (cfg.pt==='max'){
+    m.add(tf.layers.maxPooling2d({poolSize:2,name:'pool1'}));
+  } else {
+    m.add(tf.layers.averagePooling2d({poolSize:2,name:'pool1'}));
+  }
+
+  // Conv2 (opcional)
+  if (cfg.c2f > 0){
+    m.add(tf.layers.conv2d({
+      filters: cfg.c2f,
+      kernelSize: cfg.c2k,
+      activation: cfg.af,
+      padding:'same',
+      kernelInitializer:'glorotUniform',
+      name:'conv2'
+    }));
+    if (cfg.pt==='max'){
+      m.add(tf.layers.maxPooling2d({poolSize:2,name:'pool2'}));
+    } else {
+      m.add(tf.layers.averagePooling2d({poolSize:2,name:'pool2'}));
+    }
+  }
+
+  m.add(tf.layers.flatten({name:'flat'}));
+  m.add(tf.layers.dense({units:cfg.du, activation:cfg.af, name:'dense1'}));
+  m.add(tf.layers.dense({units:K, activation:'softmax', name:'output'}));
+
+  m.compile({
+    optimizer: tf.train.adam(cfg.lr),
+    loss:'categoricalCrossentropy',
+    metrics:['accuracy']
+  });
+
+  return m;
+}
+
+/* ---------------- Charts ---------------- */
+let lossChart, accChart;
+function initCharts(){
+  const baseOpts = {
+    responsive:true,maintainAspectRatio:false,
+    animation:false,
+    interaction:{mode:'index',intersect:false},
+    scales:{
+      x:{
+        grid:{color:'rgba(255,255,255,0.05)'},
+        ticks:{color:'#9aa6b2',font:{size:10}}
+      },
+      y:{
+        grid:{color:'rgba(255,255,255,0.05)'},
+        ticks:{color:'#9aa6b2',font:{size:10}}
+      }
+    },
+    plugins:{
+      legend:{
+        labels:{color:'#9aa6b2',font:{size:11}}
+      }
+    }
+  };
+  lossChart = new Chart(document.getElementById('lossChart'),{
+    type:'line',
+    data:{labels:[],datasets:[
+      {label:'treino',data:[],borderColor:'#3F9A4B',backgroundColor:'rgba(63,154,75,0.12)',tension:0.3,borderWidth:2,pointRadius:2},
+      {label:'validação',data:[],borderColor:'#e0a83c',backgroundColor:'rgba(224,168,60,0.12)',tension:0.3,borderWidth:2,pointRadius:2,borderDash:[4,4]},
+    ]},
+    options:baseOpts
+  });
+  accChart = new Chart(document.getElementById('accChart'),{
+    type:'line',
+    data:{labels:[],datasets:[
+      {label:'treino',data:[],borderColor:'#4ea1d3',backgroundColor:'rgba(78,161,211,0.12)',tension:0.3,borderWidth:2,pointRadius:2},
+      {label:'validação',data:[],borderColor:'#a874e8',backgroundColor:'rgba(168,116,232,0.12)',tension:0.3,borderWidth:2,pointRadius:2,borderDash:[4,4]},
+    ]},
+    options:{...baseOpts, scales:{...baseOpts.scales, y:{...baseOpts.scales.y, min:0, max:1}}}
+  });
+}
+
+function resetCharts(){
+  lossChart.data.labels=[];
+  lossChart.data.datasets[0].data=[];
+  lossChart.data.datasets[1].data=[];
+  lossChart.update();
+  accChart.data.labels=[];
+  accChart.data.datasets[0].data=[];
+  accChart.data.datasets[1].data=[];
+  accChart.update();
+}
+
+function pushEpoch(epoch, logs){
+  state.history.loss.push(logs.loss);
+  state.history.val_loss.push(logs.val_loss);
+  state.history.acc.push(logs.acc);
+  state.history.val_acc.push(logs.val_acc);
+
+  lossChart.data.labels.push(epoch+1);
+  lossChart.data.datasets[0].data.push(logs.loss);
+  lossChart.data.datasets[1].data.push(logs.val_loss);
+  lossChart.update();
+
+  accChart.data.labels.push(epoch+1);
+  accChart.data.datasets[0].data.push(logs.acc);
+  accChart.data.datasets[1].data.push(logs.val_acc);
+  accChart.update();
+}
+
+/* ---------------- Diagrama de arquitetura (SVG) ---------------- */
+function renderArchitecture(){
+  const cfg = getCfg();
+  const K = state.classes.length;
+  const svg = document.getElementById('archSvg');
+  svg.innerHTML='';
+  const NS = 'http://www.w3.org/2000/svg';
+
+  // dimensões do SVG
+  const W = 900, H = 320;
+  // calcula dim de cada camada
+  // input 24x24x1
+  // conv1 24x24xc1f
+  // pool1 12x12xc1f
+  // conv2 12x12xc2f (se ativo)
+  // pool2 6x6xc2f (se ativo)
+  // flat
+  // dense
+  // output
+
+  const blocks = [];
+  blocks.push({type:'input',w:24,h:24,d:1,label:'Input',sub:'24×24×1',color:'#4ea1d3'});
+  blocks.push({type:'conv',w:24,h:24,d:cfg.c1f,label:'Conv1',sub:`24×24×${cfg.c1f}\n${cfg.c1k}×${cfg.c1k} ${cfg.af}`,color:'#3F9A4B'});
+  blocks.push({type:'pool',w:12,h:12,d:cfg.c1f,label:'Pool1',sub:`12×12×${cfg.c1f}\n${cfg.pt} 2×2`,color:'#e0a83c'});
+  if (cfg.c2f > 0){
+    blocks.push({type:'conv',w:12,h:12,d:cfg.c2f,label:'Conv2',sub:`12×12×${cfg.c2f}\n${cfg.c2k}×${cfg.c2k} ${cfg.af}`,color:'#3F9A4B'});
+    blocks.push({type:'pool',w:6,h:6,d:cfg.c2f,label:'Pool2',sub:`6×6×${cfg.c2f}\n${cfg.pt} 2×2`,color:'#e0a83c'});
+  }
+  // flatten
+  const lastBlk = blocks[blocks.length-1];
+  const flatSize = lastBlk.w*lastBlk.h*lastBlk.d;
+  blocks.push({type:'flat',label:'Flatten',sub:`${flatSize}`,color:'#a874e8',units:flatSize});
+  blocks.push({type:'dense',label:'Dense',sub:`${cfg.du} ${cfg.af}`,color:'#e25c5c',units:cfg.du});
+  blocks.push({type:'out',label:'Output',sub:`${K} softmax`,color:'#3F9A4B',units:K,isOut:true});
+
+  const margin = 30;
+  const slot = (W-2*margin)/blocks.length;
+  const cy = H/2;
+
+  blocks.forEach((b,i)=>{
+    const cx = margin + slot*i + slot/2;
+    if (b.type==='input' || b.type==='conv' || b.type==='pool'){
+      // representação 3D simplificada (caixas empilhadas)
+      const baseW = Math.max(20, b.w*2);
+      const baseH = Math.max(20, b.h*2);
+      const depth = Math.min(12, b.d);
+      const offset = 3;
+      for (let z=depth-1; z>=0; z--){
+        const r = document.createElementNS(NS,'rect');
+        r.setAttribute('x', cx - baseW/2 + z*offset);
+        r.setAttribute('y', cy - baseH/2 - z*offset);
+        r.setAttribute('width', baseW);
+        r.setAttribute('height', baseH);
+        r.setAttribute('fill', b.color);
+        r.setAttribute('fill-opacity', 0.6 - z*0.04);
+        r.setAttribute('stroke', b.color);
+        r.setAttribute('stroke-width', 1);
+        r.setAttribute('rx', 2);
+        svg.appendChild(r);
+      }
+    } else if (b.type==='flat' || b.type==='dense' || b.type==='out'){
+      // representação como barra vertical
+      const barW = 16;
+      const barH = Math.min(140, 30 + Math.log2(Math.max(2,b.units))*14);
+      const r = document.createElementNS(NS,'rect');
+      r.setAttribute('x', cx - barW/2);
+      r.setAttribute('y', cy - barH/2);
+      r.setAttribute('width', barW);
+      r.setAttribute('height', barH);
+      r.setAttribute('fill', b.color);
+      r.setAttribute('fill-opacity', b.isOut ? 0.25 : 0.7);
+      r.setAttribute('stroke', b.color);
+      r.setAttribute('stroke-width', b.isOut ? 2.5 : 1);
+      r.setAttribute('rx', 4);
+      svg.appendChild(r);
+      // pontinhos de neurônios (exemplo)
+      const dots = Math.min(b.units, 8);
+      for (let k=0;k<dots;k++){
+        const yk = cy - barH/2 + (barH/(dots+1))*(k+1);
+        const c = document.createElementNS(NS,'circle');
+        c.setAttribute('cx', cx);
+        c.setAttribute('cy', yk);
+        c.setAttribute('r', 1.6);
+        c.setAttribute('fill', '#fff');
+        c.setAttribute('fill-opacity', 0.8);
+        svg.appendChild(c);
+      }
+    }
+
+    // label
+    const t = document.createElementNS(NS,'text');
+    t.setAttribute('x', cx);
+    t.setAttribute('y', cy + 110);
+    t.setAttribute('text-anchor','middle');
+    t.setAttribute('fill','#e6edf3');
+    t.setAttribute('font-size','12');
+    t.setAttribute('font-weight','700');
+    t.textContent=b.label;
+    svg.appendChild(t);
+
+    const subLines = b.sub.split('\n');
+    subLines.forEach((line,k)=>{
+      const ts = document.createElementNS(NS,'text');
+      ts.setAttribute('x', cx);
+      ts.setAttribute('y', cy + 126 + k*13);
+      ts.setAttribute('text-anchor','middle');
+      ts.setAttribute('fill','#9aa6b2');
+      ts.setAttribute('font-size','10');
+      ts.textContent=line;
+      svg.appendChild(ts);
+    });
+
+    // setas conectoras
+    if (i<blocks.length-1){
+      const x1 = cx + 30;
+      const x2 = margin + slot*(i+1) + slot/2 - 30;
+      const path = document.createElementNS(NS,'line');
+      path.setAttribute('x1', x1);
+      path.setAttribute('y1', cy);
+      path.setAttribute('x2', x2);
+      path.setAttribute('y2', cy);
+      path.setAttribute('stroke', '#3a4a5e');
+      path.setAttribute('stroke-width', 1.4);
+      path.setAttribute('marker-end','url(#arrowhead)');
+      svg.appendChild(path);
+    }
+  });
+
+  // marker definition
+  const defs = document.createElementNS(NS,'defs');
+  defs.innerHTML = `<marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#3a4a5e"/></marker>`;
+  svg.insertBefore(defs, svg.firstChild);
+}
+
+/* ---------------- Treinamento ---------------- */
+async function train(){
+  const btnTrain = document.getElementById('btnTrain');
+  const btnReset = document.getElementById('btnReset');
+  const status = document.getElementById('statusText');
+  const dot = document.querySelector('#statusBox .dot');
+  const prog = document.getElementById('progBar');
+  const progFill = document.getElementById('progFill');
+
+  try {
+    btnTrain.disabled=true; btnReset.disabled=true;
+    dot.className='dot training';
+    status.textContent='Preparando dados...';
+
+    prepareTensors();
+
+    const cfg = getCfg();
+    const K = state.classes.length;
+
+    if (state.model){ state.model.dispose(); state.model=null; }
+    state.model = buildModel(cfg, K);
+    state.history = { loss:[], val_loss:[], acc:[], val_acc:[] };
+    resetCharts();
+    renderArchitecture();
+
+    // mostrar parâmetros treináveis
+    let totalParams = 0;
+    state.model.layers.forEach(l=>{
+      l.getWeights().forEach(w=>{
+        totalParams += w.size;
+      });
+    });
+    document.getElementById('mParams').textContent = totalParams.toLocaleString('pt-BR');
+
+    status.textContent=`Treinando (0/${cfg.epochs})...`;
+    prog.classList.add('active');
+    progFill.style.width='0%';
+
+    await state.model.fit(state.X, state.y, {
+      epochs: cfg.epochs,
+      batchSize: cfg.batch,
+      validationData: [state.Xtest, state.ytest],
+      shuffle: true,
+      callbacks: {
+        onEpochEnd: async (epoch, logs)=>{
+          pushEpoch(epoch, logs);
+          status.textContent = `Treinando (${epoch+1}/${cfg.epochs}) — loss=${logs.loss.toFixed(3)} acc=${(logs.acc*100).toFixed(1)}%`;
+          progFill.style.width = `${((epoch+1)/cfg.epochs)*100}%`;
+          await tf.nextFrame();
+        }
+      }
+    });
+
+    state.trained = true;
+    status.textContent = `Treino concluído — val_acc=${(state.history.val_acc.slice(-1)[0]*100).toFixed(2)}%`;
+    dot.className='dot ready';
+
+    // avaliação completa
+    await evaluateAndRender();
+
+    setTimeout(()=>prog.classList.remove('active'), 800);
+  } catch (e){
+    console.error(e);
+    status.textContent='Erro: '+e.message;
+    dot.className='dot error';
+    prog.classList.remove('active');
+  } finally {
+    btnTrain.disabled=false;
+    btnReset.disabled=false;
+  }
+}
+
+async function evaluateAndRender(){
+  const cfg = getCfg();
+  const K = state.classes.length;
+
+  // predições no teste
+  const probs = state.model.predict(state.Xtest);
+  const preds = probs.argMax(-1);
+  const trues = state.ytest.argMax(-1);
+  const predsArr = await preds.array();
+  const truesArr = await trues.array();
+  const probsArr = await probs.array();
+  state.testPreds = {preds:predsArr, trues:truesArr, probs:probsArr};
+
+  // métricas
+  const evalRes = state.model.evaluate(state.Xtest, state.ytest);
+  const lossVal = (await evalRes[0].data())[0];
+  const accVal = (await evalRes[1].data())[0];
+  document.getElementById('mLoss').textContent = lossVal.toFixed(4);
+  document.getElementById('mAcc').textContent = (accVal*100).toFixed(2)+'%';
+  document.getElementById('mAcc').classList.add('accent');
+
+  // matriz de confusão
+  const cm = Array.from({length:K},()=>Array(K).fill(0));
+  for (let i=0;i<predsArr.length;i++){
+    cm[truesArr[i]][predsArr[i]]++;
+  }
+  renderConfusionMatrix(cm);
+
+  // classification report
+  const report = classificationReport(cm);
+  renderClassReport(report);
+  document.getElementById('mF1').textContent = report.macroF1.toFixed(3);
+
+  // filtros
+  renderFilters();
+
+  // feature maps
+  await renderFeatureMaps();
+
+  // amostras
+  renderSamples();
+
+  // limpar tensores temporários
+  probs.dispose(); preds.dispose(); trues.dispose();
+  evalRes[0].dispose(); evalRes[1].dispose();
+}
+
+/* ---------------- Confusion Matrix ---------------- */
+function renderConfusionMatrix(cm){
+  const wrap = document.getElementById('confMatWrap');
+  wrap.innerHTML='';
+  const K = cm.length;
+  // achar max para escala
+  let mx = 0;
+  for (let i=0;i<K;i++) for (let j=0;j<K;j++) if (cm[i][j]>mx) mx=cm[i][j];
+
+  const tbl = document.createElement('table');
+  tbl.className='cm-table';
+  // header
+  const trh = document.createElement('tr');
+  trh.innerHTML = `<td class="cm-axis">true ↓ / pred →</td>` + state.classes.map(c=>`<th>${c}</th>`).join('');
+  tbl.appendChild(trh);
+
+  for (let i=0;i<K;i++){
+    const tr = document.createElement('tr');
+    const th = document.createElement('th');
+    th.textContent = state.classes[i];
+    tr.appendChild(th);
+    for (let j=0;j<K;j++){
+      const td = document.createElement('td');
+      td.className='cm-cell-bg';
+      const v = cm[i][j];
+      const intensity = v/Math.max(1,mx);
+      // diagonal verde, fora-diagonal vermelho
+      if (i===j){
+        td.style.background = `rgba(63,154,75,${0.15+intensity*0.6})`;
+      } else {
+        td.style.background = `rgba(226,92,92,${intensity*0.55})`;
+      }
+      td.textContent = v;
+      tr.appendChild(td);
+    }
+    tbl.appendChild(tr);
+  }
+  wrap.appendChild(tbl);
+}
+
+/* ---------------- Classification Report ---------------- */
+function classificationReport(cm){
+  const K = cm.length;
+  const rows = [];
+  let macroP=0, macroR=0, macroF=0;
+  let support=0;
+  for (let i=0;i<K;i++){
+    let tp=cm[i][i];
+    let fp=0; for (let r=0;r<K;r++) if (r!==i) fp+=cm[r][i];
+    let fn=0; for (let c=0;c<K;c++) if (c!==i) fn+=cm[i][c];
+    let p = (tp+fp)>0 ? tp/(tp+fp) : 0;
+    let r = (tp+fn)>0 ? tp/(tp+fn) : 0;
+    let f = (p+r)>0 ? 2*p*r/(p+r) : 0;
+    let supp = 0; for (let c=0;c<K;c++) supp+=cm[i][c];
+    rows.push({cls:state.classes[i], p,r,f,supp});
+    macroP+=p; macroR+=r; macroF+=f;
+    support+=supp;
+  }
+  return {rows, macroP:macroP/K, macroR:macroR/K, macroF1:macroF/K, support};
+}
+
+function renderClassReport(report){
+  const wrap = document.getElementById('classReportWrap');
+  wrap.innerHTML='';
+  const tbl = document.createElement('table');
+  tbl.className='report-table';
+  tbl.innerHTML = `
+    <thead><tr><th>Classe</th><th>Precisão</th><th>Recall</th><th>F1</th><th>Suporte</th></tr></thead>
+    <tbody>
+      ${report.rows.map(r=>`
+        <tr>
+          <td><strong>${r.cls}</strong></td>
+          <td>${r.p.toFixed(3)}</td>
+          <td>${r.r.toFixed(3)}</td>
+          <td>${r.f.toFixed(3)}</td>
+          <td>${r.supp}</td>
+        </tr>
+      `).join('')}
+      <tr style="border-top:2px solid var(--border)">
+        <td><em>macro avg</em></td>
+        <td>${report.macroP.toFixed(3)}</td>
+        <td>${report.macroR.toFixed(3)}</td>
+        <td><strong style="color:var(--accent)">${report.macroF1.toFixed(3)}</strong></td>
+        <td>${report.support}</td>
+      </tr>
+    </tbody>
+  `;
+  wrap.appendChild(tbl);
+}
+
+/* ---------------- Filtros aprendidos ---------------- */
+function renderFilters(){
+  const wrap = document.getElementById('filtersContent');
+  wrap.innerHTML='';
+
+  const layerNames = ['conv1','conv2'];
+  for (const lname of layerNames){
+    let layer;
+    try { layer = state.model.getLayer(lname); } catch(e){ continue; }
+    if (!layer) continue;
+
+    const block = document.createElement('div');
+    block.className='layer-block';
+    const w = layer.getWeights()[0]; // [kH, kW, inC, outC]
+    const shape = w.shape;
+    block.innerHTML = `<h4><span class="layer-tag">${lname}</span> kernels aprendidos</h4>
+      <div class="meta">shape: [${shape.join(', ')}]  →  ${shape[3]} filtros de tamanho ${shape[0]}×${shape[1]}, com ${shape[2]} canal${shape[2]>1?'es':''} de entrada</div>`;
+
+    const grid = document.createElement('div');
+    grid.className='grid-tiles';
+    // dimensionar grid
+    const numFilters = shape[3];
+    const cols = Math.min(8, Math.max(4, Math.ceil(Math.sqrt(numFilters))));
+    grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+    const arr = w.arraySync(); // [kH][kW][inC][outC]
+    const inC = shape[2];
+    for (let f=0; f<numFilters; f++){
+      const tile = document.createElement('div');
+      tile.className='tile';
+      const c = document.createElement('canvas');
+      c.width = 56; c.height = 56;
+      // se inC>1, fazer média pelos canais de entrada
+      const flat = [];
+      for (let i=0;i<shape[0];i++){
+        for (let j=0;j<shape[1];j++){
+          let s = 0;
+          for (let k=0;k<inC;k++) s += arr[i][j][k][f];
+          flat.push(s/inC);
+        }
+      }
+      arrayToCanvasGray(flat, c, shape[0], shape[1], true);
+      tile.appendChild(c);
+      const lbl = document.createElement('div');
+      lbl.className='tile-label';
+      lbl.textContent = `f${f+1}`;
+      tile.appendChild(lbl);
+      grid.appendChild(tile);
+    }
+    block.appendChild(grid);
+    wrap.appendChild(block);
+  }
+}
+
+/* ---------------- Feature Maps ---------------- */
+async function renderFeatureMaps(){
+  const wrap = document.getElementById('fmapsContent');
+  wrap.innerHTML='';
+
+  // pegar uma amostra de teste de cada classe
+  const samplesByClass = {};
+  for (let i=0;i<state.rawTest.X.length;i++){
+    const lbl = state.rawTest.y[i];
+    if (!samplesByClass[lbl]){
+      samplesByClass[lbl] = state.rawTest.X[i];
+    }
+  }
+
+  // controles para escolher amostra
+  const controls = document.createElement('div');
+  controls.style.cssText='margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center';
+  controls.innerHTML = `<span style="font-size:12px;color:var(--text-1)">Imagem de entrada:</span>`;
+  Object.keys(samplesByClass).forEach(k=>{
+    const btn = document.createElement('button');
+    btn.style.cssText='padding:6px 10px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-1);border-radius:6px;cursor:pointer;font-family:inherit;font-size:11px';
+    btn.textContent = state.classes[k];
+    btn.onclick = ()=>showFeatureMaps(samplesByClass[k]);
+    controls.appendChild(btn);
+  });
+  wrap.appendChild(controls);
+
+  const container = document.createElement('div');
+  container.id = 'fmapsDisplay';
+  wrap.appendChild(container);
+
+  // mostrar primeira por default
+  const firstLbl = Object.keys(samplesByClass)[0];
+  await showFeatureMaps(samplesByClass[firstLbl]);
+}
+
+async function showFeatureMaps(pixels){
+  const container = document.getElementById('fmapsDisplay');
+  container.innerHTML = '';
+
+  // mostrar imagem de entrada
+  const inputBlock = document.createElement('div');
+  inputBlock.className='layer-block';
+  inputBlock.innerHTML = `<h4><span class="layer-tag">input</span> Imagem de entrada (24×24)</h4>`;
+  const inGrid = document.createElement('div');
+  inGrid.className='grid-tiles';
+  inGrid.style.gridTemplateColumns = `repeat(8, 1fr)`;
+  const inputTile = document.createElement('div');
+  inputTile.className='tile';
+  const inCv = document.createElement('canvas');
+  inCv.width=72; inCv.height=72;
+  pixelsToCanvas(pixels, inCv);
+  inputTile.appendChild(inCv);
+  inGrid.appendChild(inputTile);
+  inputBlock.appendChild(inGrid);
+  container.appendChild(inputBlock);
+
+  // criar tensor de entrada
+  const x = tf.tensor4d(pixels, [1, IMG, IMG, 1]);
+
+  const layerNames = ['conv1','pool1','conv2','pool2'];
+  for (const lname of layerNames){
+    let layer;
+    try { layer = state.model.getLayer(lname); } catch(e){ continue; }
+    if (!layer) continue;
+
+    // criar modelo até essa camada
+    const subModel = tf.model({inputs: state.model.input, outputs: layer.output});
+    const out = subModel.predict(x); // shape [1, h, w, c]
+    const arr = await out.array();
+    const [, H, W, C] = out.shape;
+
+    const block = document.createElement('div');
+    block.className='layer-block';
+    block.innerHTML = `<h4><span class="layer-tag">${lname}</span> ativações</h4>
+      <div class="meta">shape: [${H}, ${W}, ${C}]  →  ${C} mapa${C>1?'s':''} de ${H}×${W}</div>`;
+
+    const grid = document.createElement('div');
+    grid.className='grid-tiles';
+    const cols = Math.min(8, Math.max(4, Math.ceil(Math.sqrt(C))));
+    grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+    for (let c=0; c<C; c++){
+      const flat = [];
+      for (let i=0;i<H;i++){
+        for (let j=0;j<W;j++){
+          flat.push(arr[0][i][j][c]);
+        }
+      }
+      const tile = document.createElement('div');
+      tile.className='tile';
+      const cv = document.createElement('canvas');
+      cv.width = 56; cv.height = 56;
+      arrayToCanvasGray(flat, cv, W, H, true);
+      tile.appendChild(cv);
+      const lbl = document.createElement('div');
+      lbl.className='tile-label';
+      lbl.textContent = `m${c+1}`;
+      tile.appendChild(lbl);
+      grid.appendChild(tile);
+    }
+
+    block.appendChild(grid);
+    container.appendChild(block);
+    out.dispose();
+    subModel.dispose();
+  }
+  x.dispose();
+}
+
+/* ---------------- Amostras de teste ---------------- */
+function renderSamples(){
+  const grid = document.getElementById('samplesGrid');
+  grid.innerHTML = '';
+  const N = Math.min(40, state.rawTest.X.length);
+  // escolher mistura: 20 corretas, 20 erradas (se houver)
+  const correctIdx = [];
+  const wrongIdx = [];
+  for (let i=0;i<state.rawTest.X.length;i++){
+    if (state.testPreds.preds[i]===state.testPreds.trues[i]) correctIdx.push(i);
+    else wrongIdx.push(i);
+  }
+  // amostragem
+  const pick = [];
+  for (let i=0;i<Math.min(20, correctIdx.length); i++){
+    pick.push(correctIdx[Math.floor(Math.random()*correctIdx.length)]);
+  }
+  for (let i=0;i<Math.min(20, wrongIdx.length); i++){
+    pick.push(wrongIdx[Math.floor(Math.random()*wrongIdx.length)]);
+  }
+  const seen = new Set();
+  for (const idx of pick){
+    if (seen.has(idx)) continue;
+    seen.add(idx);
+    const tile = document.createElement('div');
+    const correct = state.testPreds.preds[idx]===state.testPreds.trues[idx];
+    tile.className = `sample-tile ${correct?'correct':'wrong'}`;
+    const cv = document.createElement('canvas');
+    cv.width=72; cv.height=72;
+    pixelsToCanvas(state.rawTest.X[idx], cv);
+    tile.appendChild(cv);
+    const tl = document.createElement('div');
+    tl.className='true-label';
+    tl.textContent = state.classes[state.testPreds.trues[idx]];
+    tile.appendChild(tl);
+    const pl = document.createElement('div');
+    pl.className='pred-label';
+    pl.textContent = (correct?'✓ ':'✗ ') + state.classes[state.testPreds.preds[idx]];
+    tile.appendChild(pl);
+    grid.appendChild(tile);
+  }
+}
+
+/* ---------------- Drawing canvas ---------------- */
+function setupDrawing(){
+  const cv = document.getElementById('drawCanvas');
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle='#000';
+  ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.strokeStyle='#fff';
+  ctx.lineWidth=14;
+  ctx.lineCap='round';
+  ctx.lineJoin='round';
+
+  let drawing=false;
+  let lastX=0, lastY=0;
+
+  const getPos = (e)=>{
+    const rect = cv.getBoundingClientRect();
+    const sx = cv.width/rect.width;
+    const sy = cv.height/rect.height;
+    const x = ((e.touches?e.touches[0].clientX:e.clientX) - rect.left)*sx;
+    const y = ((e.touches?e.touches[0].clientY:e.clientY) - rect.top)*sy;
+    return {x,y};
+  };
+
+  const start = (e)=>{
+    e.preventDefault();
+    drawing=true;
+    const p = getPos(e);
+    lastX=p.x; lastY=p.y;
+    ctx.beginPath();
+    ctx.moveTo(p.x,p.y);
+    ctx.lineTo(p.x,p.y);
+    ctx.stroke();
+  };
+  const move = (e)=>{
+    if (!drawing) return;
+    e.preventDefault();
+    const p = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(lastX,lastY);
+    ctx.lineTo(p.x,p.y);
+    ctx.stroke();
+    lastX=p.x; lastY=p.y;
+    updateDrawPreview();
+    if (state.trained) predictDrawing();
+  };
+  const end = ()=>{drawing=false};
+
+  cv.addEventListener('mousedown', start);
+  cv.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', end);
+  cv.addEventListener('touchstart', start);
+  cv.addEventListener('touchmove', move);
+  cv.addEventListener('touchend', end);
+
+  document.getElementById('btnClearDraw').onclick=()=>{
+    ctx.fillStyle='#000';
+    ctx.fillRect(0,0,cv.width,cv.height);
+    updateDrawPreview();
+    document.getElementById('predBars').innerHTML = `<div class="empty-state" style="padding:30px 10px"><strong>Desenhe algo</strong></div>`;
+  };
+  document.getElementById('btnPredictDraw').onclick=()=>{
+    if (state.trained) predictDrawing();
+  };
+}
+
+function getDrawingPixels(){
+  const cv = document.getElementById('drawCanvas');
+  // reduzir para 24x24
+  const tmp = document.createElement('canvas');
+  tmp.width=IMG; tmp.height=IMG;
+  const tctx = tmp.getContext('2d');
+  tctx.imageSmoothingEnabled = true;
+  tctx.imageSmoothingQuality = 'high';
+  tctx.drawImage(cv, 0, 0, IMG, IMG);
+  const id = tctx.getImageData(0,0,IMG,IMG).data;
+  const px = new Float32Array(IMG*IMG);
+  for (let i=0;i<IMG*IMG;i++){
+    px[i] = id[i*4]/255;
+  }
+  return px;
+}
+
+function updateDrawPreview(){
+  const px = getDrawingPixels();
+  const cv = document.getElementById('drawPreview');
+  pixelsToCanvas(px, cv);
+}
+
+function predictDrawing(){
+  if (!state.model) return;
+  const px = getDrawingPixels();
+  // verificar se há algo desenhado
+  let sum=0; for (let i=0;i<px.length;i++) sum+=px[i];
+  if (sum < 5){
+    document.getElementById('predBars').innerHTML = `<div class="empty-state" style="padding:30px 10px"><strong>Desenhe algo</strong></div>`;
+    return;
+  }
+
+  tf.tidy(()=>{
+    const x = tf.tensor4d(px, [1, IMG, IMG, 1]);
+    const probs = state.model.predict(x);
+    const pArr = probs.dataSync();
+    renderPredBars(Array.from(pArr));
+  });
+}
+
+function renderPredBars(probs){
+  const wrap = document.getElementById('predBars');
+  wrap.className='pred-bars';
+  wrap.innerHTML='';
+  const maxIdx = probs.indexOf(Math.max(...probs));
+  state.classes.forEach((cls,i)=>{
+    const bar = document.createElement('div');
+    bar.className = `pred-bar ${i===maxIdx?'winner':''}`;
+    bar.innerHTML = `
+      <div class="pred-label">${cls}</div>
+      <div class="pred-track"><div class="pred-fill" style="width:${probs[i]*100}%"></div></div>
+      <div class="pred-pct">${(probs[i]*100).toFixed(1)}%</div>
+    `;
+    wrap.appendChild(bar);
+  });
+}
+
+/* ---------------- Tabs ---------------- */
+function setupTabs(){
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.onclick=()=>{
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      document.getElementById('tab-'+t.dataset.tab).classList.add('active');
+    };
+  });
+}
+
+/* ---------------- Sidebar inputs ---------------- */
+function setupInputs(){
+  // ranges com display
+  const linkRange = (id, valId, fmt)=>{
+    const inp = document.getElementById(id);
+    const val = document.getElementById(valId);
+    const update = ()=>{ val.textContent = fmt(inp.value); };
+    inp.addEventListener('input', update);
+    update();
+  };
+  linkRange('samplesPerClass','samplesPerClassVal',v=>v);
+  linkRange('noiseLevel','noiseLevelVal',v=>v+'%');
+  linkRange('lr','lrVal',v=>{
+    const map = {'-1':'0.1','-2':'0.01','-3':'0.001','-4':'0.0001'};
+    return map[v];
+  });
+  linkRange('epochs','epochsVal',v=>v);
+  linkRange('batchSize','batchSizeVal',v=>v);
+  linkRange('trainSplit','trainSplitVal',v=>v+'%');
+
+  // re-render arch ao mudar
+  document.querySelectorAll('input[type="radio"]').forEach(r=>{
+    r.addEventListener('change', ()=>{
+      renderArchitecture();
+    });
+  });
+
+  // dataset name change
+  document.getElementById('dsName').addEventListener('change', ()=>{
+    const dsName = document.getElementById('dsName').value;
+    state.classes = (dsName === 'shapes3') ? CLASSES_3 : CLASSES_5;
+    renderDatasetPreview();
+    renderArchitecture();
+  });
+
+  // regen preview
+  document.getElementById('btnRegen').onclick = ()=>renderDatasetPreview();
+  document.getElementById('noiseLevel').addEventListener('change', ()=>renderDatasetPreview());
+
+  // train / reset
+  document.getElementById('btnTrain').onclick = train;
+  document.getElementById('btnReset').onclick = ()=>{
+    if (state.model){ state.model.dispose(); state.model=null; }
+    if (state.X){ state.X.dispose(); state.X=null; }
+    if (state.y){ state.y.dispose(); state.y=null; }
+    if (state.Xtest){ state.Xtest.dispose(); state.Xtest=null; }
+    if (state.ytest){ state.ytest.dispose(); state.ytest=null; }
+    state.trained = false;
+    state.history = { loss:[], val_loss:[], acc:[], val_acc:[] };
+    state.testPreds = null;
+    resetCharts();
+    document.getElementById('mAcc').textContent='—';
+    document.getElementById('mLoss').textContent='—';
+    document.getElementById('mF1').textContent='—';
+    document.getElementById('mParams').textContent='—';
+    document.getElementById('mAcc').classList.remove('accent');
+    document.getElementById('confMatWrap').innerHTML = `<div class="empty-state" style="padding:20px"><strong>Treine a rede primeiro</strong></div>`;
+    document.getElementById('classReportWrap').innerHTML = `<div class="empty-state" style="padding:20px"><strong>Treine a rede primeiro</strong></div>`;
+    document.getElementById('filtersContent').innerHTML = `<div class="empty-state"><div class="ico">🎨</div><strong>Treine a rede para visualizar os filtros aprendidos</strong></div>`;
+    document.getElementById('fmapsContent').innerHTML = `<div class="empty-state"><div class="ico">🔍</div><strong>Treine a rede para visualizar os feature maps</strong></div>`;
+    document.getElementById('samplesGrid').innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="ico">📋</div><strong>Treine a rede para ver predições</strong></div>`;
+    document.getElementById('predBars').innerHTML = `<div class="empty-state" style="padding:30px 10px"><strong>Treine a rede e desenhe algo</strong></div>`;
+    document.getElementById('statusText').textContent='Modelo resetado';
+    document.querySelector('#statusBox .dot').className='dot';
+  };
+}
+
+/* ---------------- Init ---------------- */
+async function init(){
+  setupTabs();
+  setupInputs();
+  initCharts();
+  setupDrawing();
+
+  // aguardar tf.js
+  document.getElementById('tfStatus').innerHTML = 'Inicializando TF.js';
+  await tf.ready();
+  document.getElementById('tfStatus').innerHTML = 'TF.js · ' + tf.getBackend();
+
+  renderDatasetPreview();
+  renderArchitecture();
+
+  document.getElementById('btnTrain').disabled = false;
+  document.getElementById('statusText').textContent = 'Pronto. Configure e treine.';
+  document.querySelector('#statusBox .dot').className='dot ready';
+}
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>
