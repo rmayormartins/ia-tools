@@ -1,0 +1,2079 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CNN.flow — ICD/IFSC</title>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+<style>
+  :root{
+    --bg-0:#0b0f14;
+    --bg-1:#10161d;
+    --bg-2:#161e27;
+    --bg-3:#1c2631;
+    --border:#243140;
+    --border-soft:#1d2734;
+    --text-0:#e6edf3;
+    --text-1:#9aa6b2;
+    --text-2:#6b7785;
+    --accent:#3F9A4B;
+    --accent-2:#32A041;
+    --accent-soft:rgba(63,154,75,0.12);
+    --accent-glow:rgba(63,154,75,0.35);
+    --warn:#e0a83c;
+    --error:#e25c5c;
+    --info:#4ea1d3;
+    --purple:#a874e8;
+    --conv:#3F9A4B;
+    --pool:#e0a83c;
+    --flat:#a874e8;
+    --dense:#e25c5c;
+    --input:#4ea1d3;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg-0);
+    color:var(--text-0);
+    font-family:"Inter","Segoe UI",system-ui,sans-serif;
+    font-size:14px;
+    line-height:1.5;
+  }
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-track{background:var(--bg-1)}
+  ::-webkit-scrollbar-thumb{background:var(--bg-3);border-radius:6px}
+  ::-webkit-scrollbar-thumb:hover{background:#2d3a48}
+
+  /* ---------- HEADER ---------- */
+  header.top{
+    background:linear-gradient(180deg,var(--bg-1) 0%,var(--bg-0) 100%);
+    border-bottom:1px solid var(--border);
+    padding:18px 28px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:24px;
+  }
+  .brand{display:flex;align-items:center;gap:16px}
+  .brand-icon{
+    width:54px;height:54px;
+    border-radius:14px;
+    background:linear-gradient(135deg,var(--accent) 0%,var(--accent-2) 100%);
+    display:flex;align-items:center;justify-content:center;
+    font-size:28px;
+    box-shadow:0 4px 18px var(--accent-glow);
+  }
+  .brand h1{font-size:22px;font-weight:700;letter-spacing:-0.02em;color:var(--text-0)}
+  .brand h1 span{color:var(--accent)}
+  .brand p{font-size:12px;color:var(--text-1);margin-top:2px;letter-spacing:0.04em}
+  .header-meta{display:flex;align-items:center;gap:14px;font-size:12px;color:var(--text-1)}
+  .pill{
+    padding:5px 12px;
+    border-radius:999px;
+    background:var(--accent-soft);
+    color:var(--accent);
+    font-weight:600;
+    font-size:11px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    border:1px solid rgba(63,154,75,0.25);
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .pill::before{
+    content:"";width:6px;height:6px;border-radius:50%;
+    background:var(--accent);box-shadow:0 0 8px var(--accent);
+  }
+
+  /* ---------- LAYOUT ---------- */
+  main.layout{
+    display:grid;
+    grid-template-columns:340px 1fr;
+    min-height:calc(100vh - 90px);
+  }
+  aside.sidebar{
+    background:var(--bg-1);
+    border-right:1px solid var(--border);
+    padding:18px;
+    overflow-y:auto;
+    height:calc(100vh - 90px);
+    position:sticky;top:0;
+  }
+  section.panel{
+    padding:22px 28px;
+    overflow-x:hidden;
+  }
+
+  /* ---------- CARDS ---------- */
+  .card{
+    background:var(--bg-2);
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    padding:16px;
+    margin-bottom:14px;
+  }
+  .card h3{
+    font-size:13px;
+    font-weight:700;
+    color:var(--text-0);
+    margin-bottom:12px;
+    display:flex;align-items:center;gap:8px;
+    letter-spacing:0.02em;
+  }
+  .card h3 .ico{font-size:16px}
+  .card-help{
+    font-size:11px;color:var(--text-2);
+    margin-top:8px;line-height:1.5;
+  }
+
+  /* ---------- INPUTS ---------- */
+  label.field{
+    display:block;
+    font-size:11px;
+    color:var(--text-1);
+    margin-bottom:5px;
+    margin-top:10px;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    font-weight:600;
+  }
+  label.field:first-child{margin-top:0}
+  select,input[type="text"],input[type="number"]{
+    width:100%;
+    background:var(--bg-3);
+    border:1px solid var(--border);
+    color:var(--text-0);
+    padding:8px 10px;
+    border-radius:8px;
+    font-size:13px;
+    font-family:inherit;
+    outline:none;
+    transition:border-color 0.15s;
+  }
+  select:focus,input[type="text"]:focus,input[type="number"]:focus{border-color:var(--accent)}
+  .range-row{display:flex;align-items:center;gap:8px}
+  .range-row input[type="range"]{flex:1;accent-color:var(--accent)}
+  .range-val{
+    min-width:48px;
+    text-align:right;
+    font-variant-numeric:tabular-nums;
+    font-weight:600;
+    color:var(--accent);
+    font-size:12px;
+  }
+
+  /* chips */
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+  .chips label{
+    cursor:pointer;flex:1;
+    background:var(--bg-3);
+    border:1px solid var(--border);
+    color:var(--text-1);
+    padding:6px 10px;border-radius:8px;
+    font-size:12px;text-align:center;
+    transition:all 0.15s;
+    user-select:none;
+    min-width:48px;
+  }
+  .chips label:hover{border-color:var(--accent)}
+  .chips input{display:none}
+  .chips label:has(input:checked){
+    background:var(--accent-soft);
+    border-color:var(--accent);
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  /* ---------- LAYER BUILDER ---------- */
+  .layer-list{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+  .layer-item{
+    background:var(--bg-3);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:10px 10px 10px 12px;
+    position:relative;
+    border-left:3px solid var(--text-2);
+  }
+  .layer-item.t-conv{border-left-color:var(--conv)}
+  .layer-item.t-pool{border-left-color:var(--pool)}
+  .layer-item.t-dense{border-left-color:var(--dense)}
+  .layer-item.t-dropout{border-left-color:var(--info)}
+  .layer-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:6px;
+  }
+  .layer-head .l-name{
+    font-size:12px;
+    font-weight:700;
+    color:var(--text-0);
+    display:flex;align-items:center;gap:6px;
+  }
+  .layer-head .l-num{
+    font-size:10px;
+    color:var(--text-2);
+    background:var(--bg-1);
+    padding:2px 6px;
+    border-radius:4px;
+    font-weight:600;
+  }
+  .layer-head .l-actions{display:flex;gap:4px}
+  .layer-head button{
+    background:transparent;
+    border:none;
+    color:var(--text-2);
+    cursor:pointer;
+    padding:2px 4px;
+    border-radius:4px;
+    font-size:14px;
+    transition:all 0.15s;
+    width:22px;height:22px;
+    display:inline-flex;align-items:center;justify-content:center;
+  }
+  .layer-head button:hover{
+    background:var(--bg-1);
+    color:var(--text-0);
+  }
+  .layer-head button.del:hover{color:var(--error)}
+  .layer-params{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:6px;
+    margin-top:4px;
+  }
+  .layer-params.full{grid-template-columns:1fr}
+  .layer-params .pf{display:flex;flex-direction:column;gap:2px}
+  .layer-params .pf label{
+    font-size:9px;
+    color:var(--text-2);
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    font-weight:600;
+  }
+  .layer-params .pf select{
+    padding:4px 6px;
+    font-size:11px;
+    background:var(--bg-2);
+  }
+
+  .layer-add-wrap{margin-top:8px;position:relative}
+  .layer-add-btn{
+    width:100%;
+    padding:8px;
+    background:transparent;
+    border:1px dashed var(--border);
+    color:var(--text-1);
+    border-radius:8px;
+    cursor:pointer;
+    font-family:inherit;
+    font-size:12px;
+    font-weight:600;
+    transition:all 0.15s;
+  }
+  .layer-add-btn:hover{
+    border-color:var(--accent);
+    color:var(--accent);
+    background:var(--accent-soft);
+  }
+  .layer-add-menu{
+    display:none;
+    position:absolute;
+    top:100%;
+    left:0;right:0;
+    margin-top:4px;
+    background:var(--bg-3);
+    border:1px solid var(--border);
+    border-radius:8px;
+    overflow:hidden;
+    z-index:10;
+    box-shadow:0 8px 24px rgba(0,0,0,0.4);
+  }
+  .layer-add-menu.open{display:block}
+  .layer-add-menu button{
+    display:block;
+    width:100%;
+    text-align:left;
+    background:transparent;
+    border:none;
+    color:var(--text-1);
+    padding:10px 12px;
+    font-size:12px;
+    cursor:pointer;
+    font-family:inherit;
+    border-bottom:1px solid var(--border-soft);
+    transition:all 0.15s;
+  }
+  .layer-add-menu button:last-child{border-bottom:none}
+  .layer-add-menu button:hover{
+    background:var(--bg-2);
+    color:var(--text-0);
+    padding-left:16px;
+  }
+  .layer-add-menu .lt-tag{
+    display:inline-block;
+    width:8px;height:8px;
+    border-radius:2px;
+    margin-right:8px;
+    vertical-align:middle;
+  }
+
+  .empty-layers{
+    text-align:center;
+    padding:18px 8px;
+    color:var(--text-2);
+    font-size:11px;
+    font-style:italic;
+    background:var(--bg-3);
+    border-radius:8px;
+    border:1px dashed var(--border);
+  }
+
+  /* output layer indicator */
+  .output-indicator{
+    margin-top:8px;
+    padding:8px 12px;
+    background:rgba(63,154,75,0.08);
+    border:1px solid rgba(63,154,75,0.3);
+    border-radius:8px;
+    font-size:11px;
+    color:var(--text-1);
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .output-indicator::before{
+    content:"⤓";
+    color:var(--accent);
+    font-weight:700;
+  }
+
+  /* buttons */
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:11px 16px;
+    border:none;
+    border-radius:10px;
+    font-family:inherit;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    transition:all 0.15s;
+    width:100%;
+  }
+  .btn-primary{
+    background:linear-gradient(180deg,var(--accent) 0%,var(--accent-2) 100%);
+    color:white;
+    box-shadow:0 2px 10px var(--accent-glow);
+  }
+  .btn-primary:hover:not(:disabled){
+    transform:translateY(-1px);
+    box-shadow:0 4px 14px var(--accent-glow);
+  }
+  .btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+  .btn-secondary{
+    background:transparent;
+    color:var(--text-1);
+    border:1px solid var(--border);
+    margin-top:8px;
+  }
+  .btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+
+  /* status */
+  .status-box{
+    margin-top:12px;
+    padding:10px 12px;
+    background:var(--bg-3);
+    border-radius:8px;
+    font-size:12px;
+    color:var(--text-1);
+    display:flex;align-items:center;gap:8px;
+    min-height:38px;
+  }
+  .dot{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--text-2);
+    flex-shrink:0;
+  }
+  .dot.training{background:var(--warn);animation:pulse 1.2s infinite}
+  .dot.ready{background:var(--accent);box-shadow:0 0 6px var(--accent)}
+  .dot.error{background:var(--error)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+  .training-progress{
+    margin-top:10px;
+    height:4px;
+    background:var(--bg-3);
+    border-radius:2px;
+    overflow:hidden;
+    display:none;
+  }
+  .training-progress.active{display:block}
+  .training-progress-fill{
+    height:100%;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    transition:width 0.3s;
+    width:0;
+  }
+
+  /* ---------- MAIN PANEL CONTENT ---------- */
+  .panel-section-title{
+    font-size:15px;
+    font-weight:700;
+    color:var(--text-0);
+    margin-bottom:6px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .panel-section-desc{
+    font-size:12px;
+    color:var(--text-1);
+    margin-bottom:16px;
+    line-height:1.6;
+    max-width:780px;
+  }
+  .panel-section-desc code{
+    background:var(--bg-2);
+    padding:2px 6px;border-radius:4px;
+    font-size:11px;color:var(--accent);
+  }
+
+  /* drawing area */
+  .draw-section{
+    background:var(--bg-1);
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    padding:18px;
+    margin-bottom:18px;
+  }
+  .draw-row{
+    display:flex;
+    gap:18px;
+    align-items:flex-start;
+    flex-wrap:wrap;
+  }
+  .draw-canvas-block{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .draw-canvas{
+    background:#000;
+    cursor:crosshair;
+    border-radius:6px;
+    display:block;
+    touch-action:none;
+    border:1px solid var(--border);
+  }
+  .draw-mini-label{
+    font-size:10px;
+    color:var(--text-2);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    font-weight:600;
+  }
+  .draw-controls{
+    display:flex;flex-direction:column;gap:8px;
+    flex:1;
+    min-width:200px;
+    max-width:340px;
+  }
+  .draw-controls .btn-row{display:flex;gap:6px;flex-wrap:wrap}
+  .draw-controls .btn-row button{
+    flex:1;
+    min-width:80px;
+    padding:8px 10px;
+    background:var(--bg-3);
+    border:1px solid var(--border);
+    color:var(--text-1);
+    border-radius:6px;
+    cursor:pointer;
+    font-family:inherit;
+    font-size:11px;
+    font-weight:500;
+    transition:all 0.15s;
+  }
+  .draw-controls .btn-row button:hover:not(:disabled){
+    border-color:var(--accent);
+    color:var(--accent);
+  }
+  .draw-controls .btn-row button:disabled{opacity:0.4;cursor:not-allowed}
+  .draw-help{
+    font-size:11px;
+    color:var(--text-2);
+    line-height:1.5;
+    background:var(--bg-2);
+    padding:10px 12px;
+    border-radius:6px;
+    border-left:2px solid var(--accent);
+  }
+
+  /* preset buttons */
+  .preset-row{display:flex;gap:6px;flex-wrap:wrap}
+  .preset-btn{
+    flex:1;
+    min-width:60px;
+    padding:8px 6px;
+    background:var(--bg-3);
+    border:1px solid var(--border);
+    color:var(--text-1);
+    border-radius:6px;
+    cursor:pointer;
+    font-family:inherit;
+    font-size:10px;
+    transition:all 0.15s;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+  }
+  .preset-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .preset-btn .pi{font-size:18px;line-height:1}
+
+  /* ---------- ARCHITECTURE FLOW ---------- */
+  .flow-section{
+    background:var(--bg-1);
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    padding:18px;
+  }
+  .flow-scroll{
+    overflow-x:auto;
+    padding-bottom:12px;
+  }
+  .flow-stages{
+    display:flex;
+    align-items:flex-start;
+    gap:0;
+    min-width:max-content;
+    padding:8px 4px;
+  }
+  .flow-stage{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    min-width:140px;
+    padding:0 4px;
+  }
+  .flow-arrow{
+    color:#3a4a5e;
+    font-size:22px;
+    margin-top:64px;
+    flex-shrink:0;
+    user-select:none;
+  }
+
+  /* layer block visual (matching architecture diagram style) */
+  .stage-visual{
+    height:160px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:8px;
+  }
+  .stage-block-input{
+    width:60px;height:60px;
+    background:var(--input);
+    opacity:0.85;
+    border-radius:6px;
+    border:1px solid var(--input);
+  }
+  .stage-block-stack{
+    position:relative;
+    width:80px;
+    height:90px;
+  }
+  .stage-block-stack .layer-rect{
+    position:absolute;
+    border-radius:4px;
+    border:1px solid;
+  }
+
+  .stage-bar{
+    width:18px;
+    background:var(--dense);
+    border-radius:4px;
+    border:1px solid var(--dense);
+    opacity:0.85;
+    position:relative;
+  }
+  .stage-bar .neuron{
+    position:absolute;
+    width:4px;height:4px;
+    background:white;
+    border-radius:50%;
+    left:50%;
+    transform:translateX(-50%);
+    opacity:0.8;
+  }
+  .stage-bar.flat-bar{background:var(--flat);border-color:var(--flat)}
+  .stage-bar.dense-bar{background:var(--dense);border-color:var(--dense)}
+  .stage-bar.out-bar{
+    background:transparent;
+    border:2px solid var(--accent);
+    width:22px;
+  }
+  .stage-bar.out-bar .neuron{background:var(--accent);width:6px;height:6px}
+
+  .stage-label{
+    font-size:12px;
+    font-weight:700;
+    color:var(--text-0);
+    text-align:center;
+    margin-bottom:2px;
+  }
+  .stage-sub{
+    font-size:10px;
+    color:var(--text-1);
+    text-align:center;
+    line-height:1.4;
+    font-family:"JetBrains Mono","Consolas",monospace;
+  }
+  .stage-sub small{color:var(--text-2);display:block}
+
+  /* activations panel below each stage */
+  .stage-activations{
+    width:100%;
+    margin-top:14px;
+    padding:8px;
+    background:var(--bg-2);
+    border:1px solid var(--border-soft);
+    border-radius:8px;
+    min-height:90px;
+  }
+  .stage-activations.empty{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--text-2);
+    font-size:10px;
+    font-style:italic;
+    min-height:90px;
+  }
+  .activations-grid{
+    display:grid;
+    gap:3px;
+  }
+  .act-tile{
+    background:#000;
+    border-radius:2px;
+    aspect-ratio:1;
+    overflow:hidden;
+  }
+  .act-tile canvas{
+    width:100%;
+    height:100%;
+    image-rendering:pixelated;
+    display:block;
+  }
+  .act-meta{
+    font-size:9px;
+    color:var(--text-2);
+    text-align:center;
+    margin-top:6px;
+    font-family:"JetBrains Mono",monospace;
+  }
+
+  /* dense activations: vertical bar */
+  .act-dense{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    align-items:center;
+    padding:4px 0;
+  }
+  .act-dense-bar{
+    width:80%;
+    background:var(--bg-3);
+    border-radius:2px;
+    overflow:hidden;
+    height:6px;
+    position:relative;
+  }
+  .act-dense-fill{
+    height:100%;
+    background:linear-gradient(90deg,var(--accent-2),var(--accent));
+    transition:width 0.2s;
+  }
+
+  /* output / classification */
+  .output-section{
+    background:var(--bg-1);
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    padding:20px;
+    margin-top:18px;
+  }
+  .pred-bars{display:flex;flex-direction:column;gap:10px}
+  .pred-bar{
+    display:grid;
+    grid-template-columns:120px 1fr 60px;
+    align-items:center;
+    gap:12px;
+  }
+  .pred-bar .pred-label{
+    font-size:13px;
+    color:var(--text-1);
+    font-weight:500;
+  }
+  .pred-bar .pred-track{
+    height:22px;
+    background:var(--bg-3);
+    border-radius:5px;
+    overflow:hidden;
+    position:relative;
+    border:1px solid var(--border-soft);
+  }
+  .pred-bar .pred-fill{
+    height:100%;
+    background:linear-gradient(90deg,var(--accent-2),var(--accent));
+    border-radius:4px;
+    transition:width 0.3s;
+  }
+  .pred-bar .pred-pct{
+    font-size:12px;
+    color:var(--text-1);
+    font-variant-numeric:tabular-nums;
+    text-align:right;
+    font-weight:600;
+  }
+  .pred-bar.winner .pred-label{color:var(--accent);font-weight:700}
+  .pred-bar.winner .pred-pct{color:var(--accent)}
+  .pred-bar.winner .pred-track{border-color:var(--accent)}
+
+  /* placeholder when not trained */
+  .needs-train{
+    text-align:center;
+    padding:50px 20px;
+    color:var(--text-2);
+  }
+  .needs-train .ico{font-size:42px;margin-bottom:12px;opacity:0.5}
+  .needs-train strong{
+    color:var(--text-1);
+    font-size:14px;
+    display:block;
+    margin-bottom:6px;
+  }
+
+  /* footer */
+  footer{
+    padding:14px 28px;
+    text-align:center;
+    border-top:1px solid var(--border);
+    color:var(--text-2);
+    font-size:11px;
+    background:var(--bg-1);
+  }
+  footer a{color:var(--text-1);text-decoration:none}
+  footer a:hover{color:var(--accent)}
+
+  /* responsive */
+  @media (max-width:1100px){
+    main.layout{grid-template-columns:1fr}
+    aside.sidebar{
+      position:static;
+      height:auto;
+      border-right:none;
+      border-bottom:1px solid var(--border);
+    }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <div class="brand-icon">🔬</div>
+    <div>
+      <h1>CNN<span>.flow</span></h1>
+      <p>ICD · IFSC · Prof. Ramon Mayor Martins</p>
+    </div>
+  </div>
+  <div class="header-meta">
+    <span class="pill" id="tfStatus">Carregando TF.js</span>
+  </div>
+</header>
+
+<main class="layout">
+  <aside class="sidebar">
+
+    <div class="card">
+      <h3><span class="ico">📊</span> Dataset</h3>
+      <label class="field">Conjunto sintético</label>
+      <select id="dsName">
+        <option value="shapes5">Formas geométricas (5 classes)</option>
+        <option value="shapes3">Formas básicas (3 classes)</option>
+      </select>
+      <label class="field">Amostras por classe</label>
+      <div class="range-row">
+        <input type="range" id="samplesPerClass" min="50" max="300" step="50" value="150">
+        <span class="range-val" id="samplesPerClassVal">150</span>
+      </div>
+      <div class="card-help">
+        Imagens <strong>24×24</strong> em escala de cinza com posição, tamanho, rotação e ruído aleatórios.
+      </div>
+    </div>
+
+    <div class="card">
+      <h3><span class="ico">🏗️</span> Construtor de Camadas</h3>
+      <div class="card-help" style="margin-top:0;margin-bottom:10px">
+        Adicione e remova camadas para construir sua arquitetura. A camada de entrada (24×24×1) e a saída (softmax) são automáticas.
+      </div>
+
+      <div id="layerList" class="layer-list"></div>
+
+      <div class="layer-add-wrap">
+        <button class="layer-add-btn" id="addLayerBtn">+ Adicionar camada</button>
+        <div class="layer-add-menu" id="addLayerMenu">
+          <button data-type="conv2d"><span class="lt-tag" style="background:var(--conv)"></span>Conv2D</button>
+          <button data-type="maxpool"><span class="lt-tag" style="background:var(--pool)"></span>MaxPooling2D</button>
+          <button data-type="avgpool"><span class="lt-tag" style="background:var(--pool)"></span>AveragePooling2D</button>
+          <button data-type="dropout"><span class="lt-tag" style="background:var(--info)"></span>Dropout</button>
+          <button data-type="dense"><span class="lt-tag" style="background:var(--dense)"></span>Dense</button>
+        </div>
+      </div>
+
+      <div class="output-indicator">
+        Saída automática: Dense softmax (<span id="outClasses">5</span> classes)
+      </div>
+    </div>
+
+    <div class="card">
+      <h3><span class="ico">⚙️</span> Treinamento</h3>
+      <label class="field">Learning rate (η)</label>
+      <div class="range-row">
+        <input type="range" id="lr" min="-4" max="-1" step="1" value="-2">
+        <span class="range-val" id="lrVal">0.01</span>
+      </div>
+      <label class="field">Épocas</label>
+      <div class="range-row">
+        <input type="range" id="epochs" min="3" max="20" step="1" value="8">
+        <span class="range-val" id="epochsVal">8</span>
+      </div>
+      <label class="field">Batch size</label>
+      <div class="range-row">
+        <input type="range" id="batchSize" min="8" max="64" step="8" value="32">
+        <span class="range-val" id="batchSizeVal">32</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3><span class="ico">▶️</span> Ação</h3>
+      <button class="btn btn-primary" id="btnTrain" disabled>🧠 Treinar Rede</button>
+      <button class="btn btn-secondary" id="btnReset">↺ Resetar arquitetura</button>
+      <div class="status-box" id="statusBox">
+        <span class="dot"></span>
+        <span id="statusText">Aguardando inicialização</span>
+      </div>
+      <div class="training-progress" id="progBar">
+        <div class="training-progress-fill" id="progFill"></div>
+      </div>
+    </div>
+
+  </aside>
+
+  <section class="panel">
+
+    <!-- Drawing input -->
+    <div class="panel-section-title">✏️ 1. Desenhe a entrada</div>
+    <div class="panel-section-desc">
+      Desenhe uma forma simples no canvas <code>240×240</code>. Ela será reduzida para <code>24×24</code> e propagada por toda a arquitetura. Cada camada exibirá ao vivo o que <strong>"vê"</strong>.
+    </div>
+
+    <div class="draw-section">
+      <div class="draw-row">
+
+        <div class="draw-canvas-block">
+          <span class="draw-mini-label">Canvas de entrada</span>
+          <canvas id="drawCanvas" class="draw-canvas" width="240" height="240"></canvas>
+        </div>
+
+        <div class="draw-canvas-block">
+          <span class="draw-mini-label">Visão da rede (24×24)</span>
+          <canvas id="drawPreview" width="120" height="120" class="draw-canvas" style="cursor:default;image-rendering:pixelated"></canvas>
+        </div>
+
+        <div class="draw-controls">
+          <div class="btn-row">
+            <button id="btnClearDraw">🗑️ Limpar</button>
+            <button id="btnPredictDraw" disabled>🚀 Propagar</button>
+          </div>
+          <div>
+            <label class="field" style="margin-top:0">Formas pré-definidas</label>
+            <div class="preset-row">
+              <button class="preset-btn" data-preset="círculo"><span class="pi">⭕</span>Círculo</button>
+              <button class="preset-btn" data-preset="quadrado"><span class="pi">◻️</span>Quadrado</button>
+              <button class="preset-btn" data-preset="triângulo"><span class="pi">🔺</span>Triângulo</button>
+              <button class="preset-btn" data-preset="X"><span class="pi">✖️</span>X</button>
+              <button class="preset-btn" data-preset="cruz"><span class="pi">➕</span>Cruz</button>
+            </div>
+          </div>
+          <div class="draw-help">
+            💡 Dica: depois de treinar, qualquer alteração no desenho propaga em tempo real por todas as camadas.
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Architecture flow with activations -->
+    <div class="panel-section-title">🌊 2. Fluxo pela arquitetura — ativações por camada</div>
+    <div class="panel-section-desc">
+      Abaixo de cada bloco da arquitetura está o <strong>painel de ativações</strong> — o que aquela camada produziu para a entrada atual. Para camadas convolucionais e de pooling, mostramos os mapas (um por filtro). Para camadas densas, a intensidade de ativação dos neurônios.
+    </div>
+
+    <div class="flow-section">
+      <div class="flow-scroll">
+        <div class="flow-stages" id="flowStages">
+          <!-- preenchido dinamicamente -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Classification output -->
+    <div class="panel-section-title" style="margin-top:22px">🎯 3. Classificação final</div>
+    <div class="panel-section-desc">
+      Probabilidades atribuídas pela camada softmax. A classe vencedora é destacada em verde.
+    </div>
+
+    <div class="output-section" id="outputSection">
+      <div class="needs-train">
+        <div class="ico">🎯</div>
+        <strong>Treine a rede para ver as predições</strong>
+        Configure as camadas no menu lateral e clique em <em>Treinar Rede</em>.
+      </div>
+    </div>
+
+  </section>
+</main>
+
+<footer>
+  CNN.flow · ICD · IFSC · 2026 · <a href="https://rmayormartins.github.io" target="_blank">Prof. Ramon Mayor Martins</a> · Construído com TensorFlow.js
+</footer>
+
+<script>
+/* ============================================================
+   CNN.flow — Visualizador camada-a-camada com construtor
+   ============================================================ */
+
+const IMG = 24;
+const CLASSES_5 = ['círculo','quadrado','triângulo','X','cruz'];
+const CLASSES_3 = ['círculo','quadrado','triângulo'];
+
+let state = {
+  layers: [
+    {type:'conv2d', filters:8, kernelSize:3, activation:'relu'},
+    {type:'maxpool', poolSize:2},
+    {type:'conv2d', filters:16, kernelSize:3, activation:'relu'},
+    {type:'maxpool', poolSize:2},
+    {type:'dense', units:32, activation:'relu'},
+  ],
+  classes: CLASSES_5,
+  X: null, y: null, Xtest: null, ytest: null,
+  model: null,
+  trained: false,
+  currentInput: null,    // pixels do desenho atual
+  layerNames: [],        // nomes TF gerados em buildModel
+};
+
+/* ---------------- Geradores de formas ---------------- */
+function drawShapeOnCanvas(ctx, label, opts){
+  const {size, cx, cy, thickness, rot, noise} = opts;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0,0,IMG,IMG);
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(rot);
+  ctx.strokeStyle = '#fff';
+  ctx.fillStyle = '#fff';
+  ctx.lineWidth = thickness;
+  ctx.lineCap='round';
+  ctx.lineJoin='round';
+  const s = size/2;
+  switch(label){
+    case 'círculo':
+      ctx.beginPath(); ctx.arc(0,0,s,0,Math.PI*2); ctx.stroke(); break;
+    case 'quadrado':
+      ctx.beginPath(); ctx.rect(-s,-s,size,size); ctx.stroke(); break;
+    case 'triângulo':
+      ctx.beginPath();
+      ctx.moveTo(0,-s); ctx.lineTo(s,s*0.8); ctx.lineTo(-s,s*0.8); ctx.closePath();
+      ctx.stroke(); break;
+    case 'X':
+      ctx.beginPath();
+      ctx.moveTo(-s,-s); ctx.lineTo(s,s);
+      ctx.moveTo(s,-s); ctx.lineTo(-s,s);
+      ctx.stroke(); break;
+    case 'cruz':
+      ctx.beginPath();
+      ctx.moveTo(0,-s); ctx.lineTo(0,s);
+      ctx.moveTo(-s,0); ctx.lineTo(s,0);
+      ctx.stroke(); break;
+  }
+  ctx.restore();
+
+  if (noise > 0){
+    const imgData = ctx.getImageData(0,0,IMG,IMG);
+    const data = imgData.data;
+    const np = Math.floor(IMG*IMG*noise/100);
+    for (let i=0;i<np;i++){
+      const px = Math.floor(Math.random()*IMG*IMG);
+      const idx = px*4;
+      const v = Math.random()<0.5 ? 0 : 255;
+      data[idx]=data[idx+1]=data[idx+2]=v;
+    }
+    ctx.putImageData(imgData,0,0);
+  }
+}
+
+function generateSample(label, noisePct){
+  const c = document.createElement('canvas');
+  c.width = IMG; c.height = IMG;
+  const ctx = c.getContext('2d');
+  const size = 10 + Math.random()*10;
+  const margin = size/2 + 1;
+  const cx = margin + Math.random()*(IMG-2*margin);
+  const cy = margin + Math.random()*(IMG-2*margin);
+  const thickness = 1 + Math.random()*1.5;
+  const rot = (Math.random()-0.5)*0.6;
+  drawShapeOnCanvas(ctx, label, {size,cx,cy,thickness,rot,noise:noisePct});
+  const imgData = ctx.getImageData(0,0,IMG,IMG).data;
+  const pixels = new Float32Array(IMG*IMG);
+  for (let i=0;i<IMG*IMG;i++) pixels[i] = imgData[i*4]/255;
+  return pixels;
+}
+
+function generateDataset(classes, perClass, noisePct){
+  const X = [], y = [];
+  for (let ci=0; ci<classes.length; ci++){
+    for (let i=0; i<perClass; i++){
+      X.push(generateSample(classes[ci], noisePct));
+      y.push(ci);
+    }
+  }
+  return {X, y};
+}
+
+function shuffleInPlace(X, y){
+  for (let i=X.length-1; i>0; i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [X[i],X[j]]=[X[j],X[i]];
+    [y[i],y[j]]=[y[j],y[i]];
+  }
+}
+
+/* ---------------- Render helpers ---------------- */
+function pixelsToCanvas(pixels, canvas){
+  const w = canvas.width, h = canvas.height;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  const tmp = document.createElement('canvas');
+  tmp.width = IMG; tmp.height = IMG;
+  const tctx = tmp.getContext('2d');
+  const id = tctx.createImageData(IMG,IMG);
+  for (let i=0;i<IMG*IMG;i++){
+    const v = Math.round(Math.max(0,Math.min(1,pixels[i]))*255);
+    id.data[i*4]=id.data[i*4+1]=id.data[i*4+2]=v;
+    id.data[i*4+3]=255;
+  }
+  tctx.putImageData(id,0,0);
+  ctx.clearRect(0,0,w,h);
+  ctx.drawImage(tmp,0,0,w,h);
+}
+
+function arrayToCanvasGray(arr, canvas, w, h){
+  let mn = Infinity, mx = -Infinity;
+  for (let i=0;i<arr.length;i++){
+    if (arr[i]<mn) mn=arr[i];
+    if (arr[i]>mx) mx=arr[i];
+  }
+  const range = (mx-mn) || 1;
+  const tmp = document.createElement('canvas');
+  tmp.width = w; tmp.height = h;
+  const tctx = tmp.getContext('2d');
+  const id = tctx.createImageData(w,h);
+  for (let i=0;i<arr.length;i++){
+    const v = Math.round(((arr[i]-mn)/range)*255);
+    id.data[i*4]=id.data[i*4+1]=id.data[i*4+2]=v;
+    id.data[i*4+3]=255;
+  }
+  tctx.putImageData(id,0,0);
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(tmp,0,0,canvas.width,canvas.height);
+}
+
+/* ---------------- Layer Builder UI ---------------- */
+const LAYER_DEFAULTS = {
+  conv2d: ()=>({type:'conv2d', filters:16, kernelSize:3, activation:'relu'}),
+  maxpool: ()=>({type:'maxpool', poolSize:2}),
+  avgpool: ()=>({type:'avgpool', poolSize:2}),
+  dropout: ()=>({type:'dropout', rate:0.25}),
+  dense: ()=>({type:'dense', units:32, activation:'relu'}),
+};
+
+const LAYER_NAMES = {
+  conv2d: 'Conv2D',
+  maxpool: 'MaxPool2D',
+  avgpool: 'AvgPool2D',
+  dropout: 'Dropout',
+  dense: 'Dense',
+};
+
+function renderLayerBuilder(){
+  const wrap = document.getElementById('layerList');
+  wrap.innerHTML = '';
+
+  if (state.layers.length === 0){
+    wrap.innerHTML = '<div class="empty-layers">Nenhuma camada — adicione uma abaixo</div>';
+    return;
+  }
+
+  state.layers.forEach((layer, idx)=>{
+    const div = document.createElement('div');
+    let typeClass = 't-conv';
+    if (layer.type === 'maxpool' || layer.type === 'avgpool') typeClass = 't-pool';
+    else if (layer.type === 'dense') typeClass = 't-dense';
+    else if (layer.type === 'dropout') typeClass = 't-dropout';
+    div.className = `layer-item ${typeClass}`;
+
+    let paramsHtml = '';
+    if (layer.type === 'conv2d'){
+      paramsHtml = `
+        <div class="layer-params">
+          <div class="pf">
+            <label>filtros</label>
+            <select data-idx="${idx}" data-prop="filters">
+              ${[4,8,16,32,64].map(v=>`<option value="${v}" ${v===layer.filters?'selected':''}>${v}</option>`).join('')}
+            </select>
+          </div>
+          <div class="pf">
+            <label>kernel</label>
+            <select data-idx="${idx}" data-prop="kernelSize">
+              ${[3,5,7].map(v=>`<option value="${v}" ${v===layer.kernelSize?'selected':''}>${v}×${v}</option>`).join('')}
+            </select>
+          </div>
+          <div class="pf" style="grid-column:1/-1">
+            <label>ativação</label>
+            <select data-idx="${idx}" data-prop="activation">
+              ${['relu','tanh','sigmoid'].map(v=>`<option value="${v}" ${v===layer.activation?'selected':''}>${v}</option>`).join('')}
+            </select>
+          </div>
+        </div>`;
+    } else if (layer.type === 'maxpool' || layer.type === 'avgpool'){
+      paramsHtml = `
+        <div class="layer-params full">
+          <div class="pf">
+            <label>tamanho do pool</label>
+            <select data-idx="${idx}" data-prop="poolSize">
+              ${[2,3].map(v=>`<option value="${v}" ${v===layer.poolSize?'selected':''}>${v}×${v}</option>`).join('')}
+            </select>
+          </div>
+        </div>`;
+    } else if (layer.type === 'dropout'){
+      paramsHtml = `
+        <div class="layer-params full">
+          <div class="pf">
+            <label>taxa de descarte</label>
+            <select data-idx="${idx}" data-prop="rate">
+              ${[0.1,0.2,0.25,0.3,0.5].map(v=>`<option value="${v}" ${v===layer.rate?'selected':''}>${v}</option>`).join('')}
+            </select>
+          </div>
+        </div>`;
+    } else if (layer.type === 'dense'){
+      paramsHtml = `
+        <div class="layer-params">
+          <div class="pf">
+            <label>neurônios</label>
+            <select data-idx="${idx}" data-prop="units">
+              ${[8,16,32,64,128].map(v=>`<option value="${v}" ${v===layer.units?'selected':''}>${v}</option>`).join('')}
+            </select>
+          </div>
+          <div class="pf">
+            <label>ativação</label>
+            <select data-idx="${idx}" data-prop="activation">
+              ${['relu','tanh','sigmoid'].map(v=>`<option value="${v}" ${v===layer.activation?'selected':''}>${v}</option>`).join('')}
+            </select>
+          </div>
+        </div>`;
+    }
+
+    div.innerHTML = `
+      <div class="layer-head">
+        <div class="l-name">
+          <span class="l-num">#${idx+1}</span>
+          ${LAYER_NAMES[layer.type]}
+        </div>
+        <div class="l-actions">
+          <button class="up" title="Mover para cima" ${idx===0?'disabled':''}>▲</button>
+          <button class="down" title="Mover para baixo" ${idx===state.layers.length-1?'disabled':''}>▼</button>
+          <button class="del" title="Remover">✕</button>
+        </div>
+      </div>
+      ${paramsHtml}`;
+
+    // event listeners
+    div.querySelectorAll('select').forEach(sel=>{
+      sel.addEventListener('change', e=>{
+        const i = parseInt(e.target.dataset.idx);
+        const prop = e.target.dataset.prop;
+        let val = e.target.value;
+        if (prop === 'rate') val = parseFloat(val);
+        else if (prop === 'activation') val = val;
+        else val = parseInt(val);
+        state.layers[i][prop] = val;
+        invalidateModel();
+      });
+    });
+    div.querySelector('.del').addEventListener('click',()=>{
+      state.layers.splice(idx,1);
+      renderLayerBuilder();
+      invalidateModel();
+    });
+    div.querySelector('.up').addEventListener('click',()=>{
+      if (idx>0){
+        [state.layers[idx-1],state.layers[idx]]=[state.layers[idx],state.layers[idx-1]];
+        renderLayerBuilder();
+        invalidateModel();
+      }
+    });
+    div.querySelector('.down').addEventListener('click',()=>{
+      if (idx<state.layers.length-1){
+        [state.layers[idx+1],state.layers[idx]]=[state.layers[idx],state.layers[idx+1]];
+        renderLayerBuilder();
+        invalidateModel();
+      }
+    });
+
+    wrap.appendChild(div);
+  });
+}
+
+function invalidateModel(){
+  if (state.model){ state.model.dispose(); state.model=null; }
+  state.trained = false;
+  renderFlow();   // só estrutura, sem ativações
+  renderOutput();
+  document.getElementById('btnPredictDraw').disabled = true;
+  document.getElementById('statusText').textContent = 'Arquitetura modificada — treine novamente';
+  document.querySelector('#statusBox .dot').className='dot';
+}
+
+/* ---------------- Calcular shapes esperadas ---------------- */
+function computeStageShapes(){
+  // Retorna array de stages com shape/info — sem precisar do TF
+  const stages = [];
+  let h = IMG, w = IMG, c = 1;
+  let isFlat = false;
+  let flatSize = 0;
+
+  stages.push({
+    type:'input', label:'Input',
+    sub:`${h}×${w}×${c}`,
+    h, w, c, isFlat:false,
+  });
+
+  for (const layer of state.layers){
+    if (layer.type === 'conv2d'){
+      // padding 'same' → h,w preservados
+      c = layer.filters;
+      stages.push({
+        type:'conv2d', label:'Conv2D',
+        sub:`${h}×${w}×${c}`,
+        sub2:`${layer.kernelSize}×${layer.kernelSize} ${layer.activation}`,
+        h, w, c, isFlat:false,
+      });
+    } else if (layer.type === 'maxpool' || layer.type === 'avgpool'){
+      h = Math.floor(h/layer.poolSize);
+      w = Math.floor(w/layer.poolSize);
+      stages.push({
+        type:layer.type, label: layer.type==='maxpool'?'MaxPool':'AvgPool',
+        sub:`${h}×${w}×${c}`,
+        sub2:`pool ${layer.poolSize}×${layer.poolSize}`,
+        h, w, c, isFlat:false,
+      });
+    } else if (layer.type === 'dropout'){
+      stages.push({
+        type:'dropout', label:'Dropout',
+        sub: isFlat ? `${flatSize}` : `${h}×${w}×${c}`,
+        sub2:`p=${layer.rate}`,
+        h, w, c, isFlat,
+        flatSize,
+      });
+    } else if (layer.type === 'dense'){
+      if (!isFlat){
+        flatSize = h*w*c;
+        stages.push({
+          type:'flatten', label:'Flatten',
+          sub:`${flatSize}`, sub2:'',
+          isFlat:true, flatSize,
+        });
+        isFlat = true;
+      }
+      flatSize = layer.units;
+      stages.push({
+        type:'dense', label:'Dense',
+        sub:`${layer.units} ${layer.activation}`, sub2:'',
+        isFlat:true, flatSize,
+      });
+    }
+  }
+
+  // Saída
+  if (!isFlat){
+    flatSize = h*w*c;
+    stages.push({
+      type:'flatten', label:'Flatten',
+      sub:`${flatSize}`, sub2:'',
+      isFlat:true, flatSize,
+    });
+    isFlat = true;
+  }
+  const K = state.classes.length;
+  stages.push({
+    type:'output', label:'Output',
+    sub:`${K} softmax`, sub2:'', isFlat:true, flatSize:K, isOut:true,
+  });
+
+  return stages;
+}
+
+/* ---------------- Render arquitetura (estrutura sem ativações) ---------------- */
+function renderFlow(activations){
+  const wrap = document.getElementById('flowStages');
+  wrap.innerHTML = '';
+  const stages = computeStageShapes();
+
+  stages.forEach((stg, i)=>{
+    const stEl = document.createElement('div');
+    stEl.className = 'flow-stage';
+
+    // bloco visual
+    const visEl = document.createElement('div');
+    visEl.className = 'stage-visual';
+
+    if (stg.type === 'input'){
+      const sq = document.createElement('div');
+      sq.className = 'stage-block-input';
+      visEl.appendChild(sq);
+    } else if (stg.type === 'conv2d' || stg.type === 'maxpool' || stg.type === 'avgpool'){
+      // pilha de retângulos
+      const stack = document.createElement('div');
+      stack.className = 'stage-block-stack';
+      const baseW = Math.max(40, Math.min(74, stg.w*2.5));
+      const baseH = Math.max(40, Math.min(74, stg.h*2.5));
+      const depth = Math.min(8, stg.c);
+      const offset = 3;
+      const color = (stg.type === 'conv2d') ? 'var(--conv)' : 'var(--pool)';
+      for (let z=depth-1; z>=0; z--){
+        const r = document.createElement('div');
+        r.className = 'layer-rect';
+        r.style.width = baseW+'px';
+        r.style.height = baseH+'px';
+        r.style.left = `calc(50% - ${baseW/2}px + ${z*offset}px)`;
+        r.style.top = `calc(50% - ${baseH/2}px - ${z*offset}px)`;
+        r.style.background = color;
+        r.style.borderColor = color;
+        r.style.opacity = (0.6 - z*0.04).toFixed(2);
+        stack.appendChild(r);
+      }
+      visEl.appendChild(stack);
+    } else if (stg.type === 'flatten'){
+      const bar = document.createElement('div');
+      bar.className = 'stage-bar flat-bar';
+      const barH = Math.min(140, 30 + Math.log2(Math.max(2,stg.flatSize))*14);
+      bar.style.height = barH+'px';
+      // dots
+      const dots = Math.min(8, stg.flatSize);
+      for (let k=0;k<dots;k++){
+        const d = document.createElement('div');
+        d.className='neuron';
+        d.style.top = `${(k+1)*100/(dots+1)}%`;
+        bar.appendChild(d);
+      }
+      visEl.appendChild(bar);
+    } else if (stg.type === 'dense' || stg.type === 'output'){
+      const bar = document.createElement('div');
+      bar.className = 'stage-bar ' + (stg.isOut?'out-bar':'dense-bar');
+      const barH = Math.min(140, 30 + Math.log2(Math.max(2,stg.flatSize))*14);
+      bar.style.height = barH+'px';
+      const dots = Math.min(8, stg.flatSize);
+      for (let k=0;k<dots;k++){
+        const d = document.createElement('div');
+        d.className='neuron';
+        d.style.top = `${(k+1)*100/(dots+1)}%`;
+        bar.appendChild(d);
+      }
+      visEl.appendChild(bar);
+    } else if (stg.type === 'dropout'){
+      // representação leve: barras semi-transparentes
+      const stack = document.createElement('div');
+      stack.className = 'stage-block-stack';
+      stack.innerHTML = `<div class="layer-rect" style="width:54px;height:54px;left:calc(50% - 27px);top:calc(50% - 27px);background:var(--info);border-color:var(--info);opacity:0.5;border-style:dashed"></div>`;
+      visEl.appendChild(stack);
+    }
+
+    stEl.appendChild(visEl);
+
+    // label e sub
+    const lbl = document.createElement('div');
+    lbl.className = 'stage-label';
+    lbl.textContent = stg.label;
+    stEl.appendChild(lbl);
+
+    const sub = document.createElement('div');
+    sub.className = 'stage-sub';
+    sub.innerHTML = stg.sub + (stg.sub2 ? `<small>${stg.sub2}</small>` : '');
+    stEl.appendChild(sub);
+
+    // painel de ativações
+    const actEl = document.createElement('div');
+    actEl.className = 'stage-activations';
+    if (activations && activations[i]){
+      renderStageActivations(actEl, stg, activations[i]);
+    } else {
+      actEl.classList.add('empty');
+      actEl.textContent = state.trained ? 'aguardando entrada' : 'treine para ver';
+    }
+    stEl.appendChild(actEl);
+
+    wrap.appendChild(stEl);
+
+    // arrow entre stages
+    if (i < stages.length-1){
+      const arr = document.createElement('div');
+      arr.className = 'flow-arrow';
+      arr.textContent = '→';
+      wrap.appendChild(arr);
+    }
+  });
+}
+
+function renderStageActivations(el, stg, actData){
+  el.classList.remove('empty');
+  el.innerHTML = '';
+
+  if (stg.type === 'input'){
+    // mostra a imagem de entrada
+    const grid = document.createElement('div');
+    grid.className = 'activations-grid';
+    grid.style.gridTemplateColumns = '1fr';
+    const tile = document.createElement('div');
+    tile.className = 'act-tile';
+    const cv = document.createElement('canvas');
+    cv.width = 80; cv.height = 80;
+    pixelsToCanvas(actData.pixels, cv);
+    tile.appendChild(cv);
+    grid.appendChild(tile);
+    el.appendChild(grid);
+    const meta = document.createElement('div');
+    meta.className = 'act-meta';
+    meta.textContent = `1 canal · ${IMG}×${IMG}`;
+    el.appendChild(meta);
+  } else if ((stg.type === 'conv2d' || stg.type === 'maxpool' || stg.type === 'avgpool') ||
+             (stg.type === 'dropout' && !stg.isFlat)){
+    // grade de feature maps (também para dropout aplicado em tensor 4D)
+    const C = stg.c, H = stg.h, W = stg.w;
+    const cols = Math.min(4, Math.max(2, Math.ceil(Math.sqrt(C))));
+    const grid = document.createElement('div');
+    grid.className = 'activations-grid';
+    grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    // limitar a 16 mapas para não estourar
+    const maxShow = Math.min(C, 16);
+    for (let c=0; c<maxShow; c++){
+      const flat = [];
+      for (let i=0;i<H;i++){
+        for (let j=0;j<W;j++){
+          flat.push(actData.arr[0][i][j][c]);
+        }
+      }
+      const tile = document.createElement('div');
+      tile.className = 'act-tile';
+      const cv = document.createElement('canvas');
+      cv.width = 32; cv.height = 32;
+      arrayToCanvasGray(flat, cv, W, H);
+      tile.appendChild(cv);
+      grid.appendChild(tile);
+    }
+    el.appendChild(grid);
+    const meta = document.createElement('div');
+    meta.className = 'act-meta';
+    meta.textContent = `${C} mapas · ${H}×${W}` + (C>16?` (mostrando 16)`:'');
+    el.appendChild(meta);
+  } else if (stg.type === 'flatten' || stg.type === 'dense' ||
+             (stg.type === 'dropout' && stg.isFlat)){
+    // barra de ativações por neurônio
+    let arr = actData.arr;
+    if (Array.isArray(arr) && Array.isArray(arr[0])) arr = arr[0];
+
+    const N = arr.length;
+    const maxShow = Math.min(N, 32);
+    const stride = Math.ceil(N/maxShow);
+    let mx = 0;
+    for (let i=0;i<N;i++) if (Math.abs(arr[i])>mx) mx=Math.abs(arr[i]);
+    const wrapAct = document.createElement('div');
+    wrapAct.className = 'act-dense';
+
+    for (let i=0;i<N && i<maxShow*stride; i+=stride){
+      const v = arr[i];
+      const bar = document.createElement('div');
+      bar.className = 'act-dense-bar';
+      const fill = document.createElement('div');
+      fill.className = 'act-dense-fill';
+      const pct = mx>0 ? Math.abs(v)/mx*100 : 0;
+      fill.style.width = pct+'%';
+      bar.appendChild(fill);
+      wrapAct.appendChild(bar);
+    }
+    el.appendChild(wrapAct);
+    const meta = document.createElement('div');
+    meta.className = 'act-meta';
+    meta.textContent = `${N} neurônios` + (N>maxShow?` (amostra)`:'');
+    el.appendChild(meta);
+  } else if (stg.type === 'output'){
+    // barras de probabilidade
+    let arr = actData.arr;
+    if (Array.isArray(arr) && Array.isArray(arr[0])) arr = arr[0];
+    const wrapAct = document.createElement('div');
+    wrapAct.className = 'act-dense';
+    const maxIdx = arr.indexOf(Math.max(...arr));
+    arr.forEach((v,k)=>{
+      const bar = document.createElement('div');
+      bar.className = 'act-dense-bar';
+      bar.style.height = '8px';
+      const fill = document.createElement('div');
+      fill.className = 'act-dense-fill';
+      fill.style.width = (v*100)+'%';
+      if (k===maxIdx){
+        fill.style.background = 'var(--accent)';
+      }
+      bar.appendChild(fill);
+      wrapAct.appendChild(bar);
+      const lab = document.createElement('div');
+      lab.style.fontSize = '8px';
+      lab.style.color = k===maxIdx ? 'var(--accent)' : 'var(--text-2)';
+      lab.style.fontWeight = k===maxIdx ? '700' : '500';
+      lab.textContent = `${state.classes[k].slice(0,5)} ${(v*100).toFixed(0)}%`;
+      wrapAct.appendChild(lab);
+    });
+    el.appendChild(wrapAct);
+  }
+}
+
+/* ---------------- Modelo ---------------- */
+function buildModel(){
+  const m = tf.sequential();
+  m.add(tf.layers.inputLayer({inputShape:[IMG,IMG,1]}));
+  state.layerNames = [];
+  let isFlat = false;
+
+  state.layers.forEach((layer, i)=>{
+    const baseName = `user_${i}`;
+    if (layer.type === 'conv2d'){
+      const name = baseName;
+      m.add(tf.layers.conv2d({
+        filters: layer.filters,
+        kernelSize: layer.kernelSize,
+        activation: layer.activation,
+        padding: 'same',
+        kernelInitializer:'glorotUniform',
+        name
+      }));
+      state.layerNames.push(name);
+    } else if (layer.type === 'maxpool'){
+      const name = baseName;
+      m.add(tf.layers.maxPooling2d({poolSize:layer.poolSize, name}));
+      state.layerNames.push(name);
+    } else if (layer.type === 'avgpool'){
+      const name = baseName;
+      m.add(tf.layers.averagePooling2d({poolSize:layer.poolSize, name}));
+      state.layerNames.push(name);
+    } else if (layer.type === 'dropout'){
+      const name = baseName;
+      m.add(tf.layers.dropout({rate:layer.rate, name}));
+      state.layerNames.push(name);
+    } else if (layer.type === 'dense'){
+      if (!isFlat){
+        m.add(tf.layers.flatten({name:`auto_flat_${i}`}));
+        // não adiciona ao layerNames pois é auto
+        // mas no stages computeStageShapes, há um stage 'flatten' antes do dense
+        // → para alinhar com stages, precisamos registrá-lo
+        state.layerNames.push(`auto_flat_${i}`);
+        isFlat = true;
+      }
+      const name = baseName;
+      m.add(tf.layers.dense({
+        units: layer.units,
+        activation: layer.activation,
+        name
+      }));
+      state.layerNames.push(name);
+    }
+  });
+
+  if (!isFlat){
+    m.add(tf.layers.flatten({name:'auto_flat_final'}));
+    state.layerNames.push('auto_flat_final');
+  }
+
+  const K = state.classes.length;
+  m.add(tf.layers.dense({units:K, activation:'softmax', name:'output'}));
+  state.layerNames.push('output');
+
+  return m;
+}
+
+/* ---------------- Datos ---------------- */
+function prepareTensors(){
+  const dsName = document.getElementById('dsName').value;
+  state.classes = (dsName === 'shapes3') ? CLASSES_3 : CLASSES_5;
+  document.getElementById('outClasses').textContent = state.classes.length;
+  const perClass = parseInt(document.getElementById('samplesPerClass').value);
+  const noisePct = 12;
+
+  const {X, y} = generateDataset(state.classes, perClass, noisePct);
+  shuffleInPlace(X, y);
+
+  const split = 0.8;
+  const N = X.length;
+  const Ntr = Math.floor(N*split);
+
+  const Xtr = X.slice(0, Ntr);
+  const ytr = y.slice(0, Ntr);
+  const Xte = X.slice(Ntr);
+  const yte = y.slice(Ntr);
+
+  const K = state.classes.length;
+  const flatTr = new Float32Array(Xtr.length*IMG*IMG);
+  Xtr.forEach((px,i)=>flatTr.set(px, i*IMG*IMG));
+  const flatTe = new Float32Array(Xte.length*IMG*IMG);
+  Xte.forEach((px,i)=>flatTe.set(px, i*IMG*IMG));
+
+  if (state.X) state.X.dispose();
+  if (state.y) state.y.dispose();
+  if (state.Xtest) state.Xtest.dispose();
+  if (state.ytest) state.ytest.dispose();
+
+  state.X = tf.tensor4d(flatTr, [Xtr.length, IMG, IMG, 1]);
+  state.y = tf.oneHot(tf.tensor1d(ytr,'int32'), K);
+  state.Xtest = tf.tensor4d(flatTe, [Xte.length, IMG, IMG, 1]);
+  state.ytest = tf.oneHot(tf.tensor1d(yte,'int32'), K);
+}
+
+/* ---------------- Validação da arquitetura ---------------- */
+function validateArchitecture(){
+  // Verificar se camadas convolucionais não geram dimensão zero
+  let h = IMG, w = IMG;
+  for (const layer of state.layers){
+    if (layer.type === 'maxpool' || layer.type === 'avgpool'){
+      h = Math.floor(h/layer.poolSize);
+      w = Math.floor(w/layer.poolSize);
+      if (h<1 || w<1) return {ok:false, msg:'Pooling em excesso reduziu a dimensão a zero. Remova alguma camada de pooling.'};
+    } else if (layer.type === 'conv2d'){
+      if (layer.kernelSize > Math.min(h,w)) return {ok:false, msg:`Kernel ${layer.kernelSize}×${layer.kernelSize} maior que o feature map ${h}×${w}.`};
+    } else if (layer.type === 'dense'){
+      // dense é sempre OK
+      break;
+    }
+  }
+  return {ok:true};
+}
+
+/* ---------------- Treinamento ---------------- */
+async function train(){
+  const btnTrain = document.getElementById('btnTrain');
+  const btnReset = document.getElementById('btnReset');
+  const status = document.getElementById('statusText');
+  const dot = document.querySelector('#statusBox .dot');
+  const prog = document.getElementById('progBar');
+  const progFill = document.getElementById('progFill');
+
+  if (state.layers.length === 0){
+    alert('Adicione ao menos uma camada antes de treinar.');
+    return;
+  }
+
+  const v = validateArchitecture();
+  if (!v.ok){
+    alert(v.msg);
+    return;
+  }
+
+  try {
+    btnTrain.disabled=true; btnReset.disabled=true;
+    dot.className='dot training';
+    status.textContent='Preparando dados...';
+
+    prepareTensors();
+
+    if (state.model){ state.model.dispose(); state.model=null; }
+    state.model = buildModel();
+
+    const lr = parseFloat(document.getElementById('lrVal').textContent);
+    const epochs = parseInt(document.getElementById('epochs').value);
+    const batch = parseInt(document.getElementById('batchSize').value);
+
+    state.model.compile({
+      optimizer: tf.train.adam(lr),
+      loss:'categoricalCrossentropy',
+      metrics:['accuracy']
+    });
+
+    status.textContent=`Treinando (0/${epochs})...`;
+    prog.classList.add('active');
+    progFill.style.width='0%';
+
+    await state.model.fit(state.X, state.y, {
+      epochs,
+      batchSize: batch,
+      validationData: [state.Xtest, state.ytest],
+      shuffle: true,
+      callbacks: {
+        onEpochEnd: async (epoch, logs)=>{
+          status.textContent = `Treinando (${epoch+1}/${epochs}) — loss=${logs.loss.toFixed(3)} acc=${(logs.acc*100).toFixed(1)}% val=${(logs.val_acc*100).toFixed(1)}%`;
+          progFill.style.width = `${((epoch+1)/epochs)*100}%`;
+          await tf.nextFrame();
+        }
+      }
+    });
+
+    state.trained = true;
+    const evalRes = state.model.evaluate(state.Xtest, state.ytest);
+    const accVal = (await evalRes[1].data())[0];
+    evalRes[0].dispose(); evalRes[1].dispose();
+
+    status.textContent = `Treino concluído — acurácia teste: ${(accVal*100).toFixed(2)}%`;
+    dot.className='dot ready';
+    document.getElementById('btnPredictDraw').disabled = false;
+
+    // propagar a entrada atual
+    propagateCurrentInput();
+
+    setTimeout(()=>prog.classList.remove('active'), 800);
+  } catch (e){
+    console.error(e);
+    status.textContent='Erro: '+e.message;
+    dot.className='dot error';
+    prog.classList.remove('active');
+    alert('Erro ao treinar: '+e.message);
+  } finally {
+    btnTrain.disabled=false;
+    btnReset.disabled=false;
+  }
+}
+
+/* ---------------- Propagação ---------------- */
+async function propagateCurrentInput(){
+  if (!state.trained || !state.model) return;
+  const px = getDrawingPixels();
+  // verificar se há algo desenhado
+  let sum=0; for (let i=0;i<px.length;i++) sum+=px[i];
+  if (sum < 2){
+    // canvas vazio — limpa visualizações (mas mantém o input)
+    const inputAct = {pixels:px};
+    const fakeActs = [{pixels:px}];
+    renderFlow(fakeActs);
+    renderOutput(null);
+    return;
+  }
+
+  state.currentInput = px;
+  const x = tf.tensor4d(px, [1, IMG, IMG, 1]);
+
+  const stages = computeStageShapes();
+  const activations = new Array(stages.length);
+
+  // input
+  activations[0] = {pixels:px};
+
+  // para cada layerName, cria submodel até essa camada
+  // mas precisamos alinhar layerNames com os stages
+  // stages[0] = input
+  // stages[1..N] = um por camada (incluindo flatten auto e output)
+  // state.layerNames = nomes em ordem das camadas TF (após o input)
+  // OBS: computeStageShapes pode ter mais "stages" do que layerNames se
+  //   houver dropout (que aparece como layer mas tb é layer no TF) — ok, é 1:1
+  // dense pode adicionar um flatten automático antes — em compute também há 'flatten' antes
+  //   → ok se buildModel adicionou auto_flat e registrou no layerNames
+
+  // Agora propagamos — captura saída de cada layerName
+  // Para evitar re-criar muitos submodelos, vamos fazer 1 forward pass capturando todas
+  // mas tf.model + multiple outputs usa keras-style; vamos usar abordagem simples:
+  // criar submodels separadamente
+
+  for (let i=0; i<state.layerNames.length; i++){
+    const name = state.layerNames[i];
+    let layer;
+    try { layer = state.model.getLayer(name); } catch(e){ continue; }
+    if (!layer) continue;
+
+    const sub = tf.model({inputs: state.model.input, outputs: layer.output});
+    const out = sub.predict(x);
+    const arr = await out.array();
+    activations[i+1] = {arr};
+    out.dispose();
+    // não disposar sub! ele compartilha pesos
+  }
+
+  renderFlow(activations);
+
+  // saída final — barras de probabilidade para o painel grande
+  const lastAct = activations[activations.length-1];
+  if (lastAct && lastAct.arr){
+    let probs = lastAct.arr;
+    if (Array.isArray(probs) && Array.isArray(probs[0])) probs = probs[0];
+    renderOutput(probs);
+  }
+
+  x.dispose();
+}
+
+/* ---------------- Output panel ---------------- */
+function renderOutput(probs){
+  const wrap = document.getElementById('outputSection');
+  if (!probs){
+    wrap.innerHTML = `
+      <div class="needs-train">
+        <div class="ico">🎯</div>
+        <strong>${state.trained ? 'Desenhe algo no canvas' : 'Treine a rede para ver as predições'}</strong>
+        ${state.trained ? '' : 'Configure as camadas e clique em <em>Treinar Rede</em>.'}
+      </div>`;
+    return;
+  }
+  const maxIdx = probs.indexOf(Math.max(...probs));
+  const bars = state.classes.map((cls,i)=>{
+    return `
+      <div class="pred-bar ${i===maxIdx?'winner':''}">
+        <div class="pred-label">${cls}</div>
+        <div class="pred-track"><div class="pred-fill" style="width:${probs[i]*100}%"></div></div>
+        <div class="pred-pct">${(probs[i]*100).toFixed(1)}%</div>
+      </div>`;
+  }).join('');
+  wrap.innerHTML = `<div class="pred-bars">${bars}</div>`;
+}
+
+/* ---------------- Drawing ---------------- */
+function setupDrawing(){
+  const cv = document.getElementById('drawCanvas');
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle='#000';
+  ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.strokeStyle='#fff';
+  ctx.lineWidth=14;
+  ctx.lineCap='round';
+  ctx.lineJoin='round';
+
+  let drawing=false;
+  let lastX=0, lastY=0;
+
+  const getPos = (e)=>{
+    const rect = cv.getBoundingClientRect();
+    const sx = cv.width/rect.width;
+    const sy = cv.height/rect.height;
+    const x = ((e.touches?e.touches[0].clientX:e.clientX) - rect.left)*sx;
+    const y = ((e.touches?e.touches[0].clientY:e.clientY) - rect.top)*sy;
+    return {x,y};
+  };
+
+  const start = (e)=>{
+    e.preventDefault();
+    drawing=true;
+    const p = getPos(e);
+    lastX=p.x; lastY=p.y;
+    ctx.beginPath();
+    ctx.moveTo(p.x,p.y);
+    ctx.lineTo(p.x,p.y);
+    ctx.stroke();
+  };
+  const move = (e)=>{
+    if (!drawing) return;
+    e.preventDefault();
+    const p = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(lastX,lastY);
+    ctx.lineTo(p.x,p.y);
+    ctx.stroke();
+    lastX=p.x; lastY=p.y;
+    updateDrawPreview();
+  };
+  const end = ()=>{
+    if (drawing){
+      drawing=false;
+      // ao soltar, propaga
+      if (state.trained) propagateCurrentInput();
+    }
+  };
+
+  cv.addEventListener('mousedown', start);
+  cv.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', end);
+  cv.addEventListener('touchstart', start);
+  cv.addEventListener('touchmove', move);
+  cv.addEventListener('touchend', end);
+
+  document.getElementById('btnClearDraw').onclick=()=>{
+    ctx.fillStyle='#000';
+    ctx.fillRect(0,0,cv.width,cv.height);
+    updateDrawPreview();
+    if (state.trained) propagateCurrentInput();
+  };
+  document.getElementById('btnPredictDraw').onclick=()=>{
+    if (state.trained) propagateCurrentInput();
+  };
+
+  // preset shapes
+  document.querySelectorAll('.preset-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      drawPresetOnCanvas(btn.dataset.preset);
+      updateDrawPreview();
+      if (state.trained) propagateCurrentInput();
+    });
+  });
+
+  updateDrawPreview();
+}
+
+function drawPresetOnCanvas(label){
+  const cv = document.getElementById('drawCanvas');
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle='#000';
+  ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.strokeStyle='#fff';
+  ctx.fillStyle='#fff';
+  ctx.lineWidth=14;
+  ctx.lineCap='round';
+  ctx.lineJoin='round';
+
+  const W = cv.width, H = cv.height;
+  const cx = W/2, cy = H/2;
+  const s = W*0.3;
+  switch(label){
+    case 'círculo':
+      ctx.beginPath(); ctx.arc(cx,cy,s,0,Math.PI*2); ctx.stroke(); break;
+    case 'quadrado':
+      ctx.beginPath(); ctx.rect(cx-s,cy-s,s*2,s*2); ctx.stroke(); break;
+    case 'triângulo':
+      ctx.beginPath();
+      ctx.moveTo(cx,cy-s); ctx.lineTo(cx+s,cy+s*0.8); ctx.lineTo(cx-s,cy+s*0.8); ctx.closePath();
+      ctx.stroke(); break;
+    case 'X':
+      ctx.beginPath();
+      ctx.moveTo(cx-s,cy-s); ctx.lineTo(cx+s,cy+s);
+      ctx.moveTo(cx+s,cy-s); ctx.lineTo(cx-s,cy+s);
+      ctx.stroke(); break;
+    case 'cruz':
+      ctx.beginPath();
+      ctx.moveTo(cx,cy-s); ctx.lineTo(cx,cy+s);
+      ctx.moveTo(cx-s,cy); ctx.lineTo(cx+s,cy);
+      ctx.stroke(); break;
+  }
+}
+
+function getDrawingPixels(){
+  const cv = document.getElementById('drawCanvas');
+  const tmp = document.createElement('canvas');
+  tmp.width=IMG; tmp.height=IMG;
+  const tctx = tmp.getContext('2d');
+  tctx.imageSmoothingEnabled = true;
+  tctx.imageSmoothingQuality = 'high';
+  tctx.drawImage(cv, 0, 0, IMG, IMG);
+  const id = tctx.getImageData(0,0,IMG,IMG).data;
+  const px = new Float32Array(IMG*IMG);
+  for (let i=0;i<IMG*IMG;i++){
+    px[i] = id[i*4]/255;
+  }
+  return px;
+}
+
+function updateDrawPreview(){
+  const px = getDrawingPixels();
+  const cv = document.getElementById('drawPreview');
+  pixelsToCanvas(px, cv);
+}
+
+/* ---------------- Sidebar inputs ---------------- */
+function setupInputs(){
+  const linkRange = (id, valId, fmt)=>{
+    const inp = document.getElementById(id);
+    const val = document.getElementById(valId);
+    const update = ()=>{ val.textContent = fmt(inp.value); };
+    inp.addEventListener('input', update);
+    update();
+  };
+  linkRange('samplesPerClass','samplesPerClassVal',v=>v);
+  linkRange('lr','lrVal',v=>{
+    const map = {'-1':'0.1','-2':'0.01','-3':'0.001','-4':'0.0001'};
+    return map[v];
+  });
+  linkRange('epochs','epochsVal',v=>v);
+  linkRange('batchSize','batchSizeVal',v=>v);
+
+  // dataset name
+  document.getElementById('dsName').addEventListener('change', ()=>{
+    const dsName = document.getElementById('dsName').value;
+    state.classes = (dsName === 'shapes3') ? CLASSES_3 : CLASSES_5;
+    document.getElementById('outClasses').textContent = state.classes.length;
+    invalidateModel();
+    // atualizar presets disponíveis
+    document.querySelectorAll('.preset-btn').forEach(btn=>{
+      const has = state.classes.includes(btn.dataset.preset);
+      btn.style.display = has ? '' : 'none';
+    });
+  });
+
+  // add layer button + menu
+  const addBtn = document.getElementById('addLayerBtn');
+  const addMenu = document.getElementById('addLayerMenu');
+  addBtn.addEventListener('click', e=>{
+    e.stopPropagation();
+    addMenu.classList.toggle('open');
+  });
+  document.addEventListener('click', e=>{
+    if (!addMenu.contains(e.target) && e.target !== addBtn){
+      addMenu.classList.remove('open');
+    }
+  });
+  addMenu.querySelectorAll('button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const type = b.dataset.type;
+      state.layers.push(LAYER_DEFAULTS[type]());
+      renderLayerBuilder();
+      invalidateModel();
+      addMenu.classList.remove('open');
+    });
+  });
+
+  // train / reset
+  document.getElementById('btnTrain').onclick = train;
+  document.getElementById('btnReset').onclick = ()=>{
+    if (confirm('Resetar para a arquitetura padrão (Conv1, Pool1, Conv2, Pool2, Dense)?')){
+      state.layers = [
+        {type:'conv2d', filters:8, kernelSize:3, activation:'relu'},
+        {type:'maxpool', poolSize:2},
+        {type:'conv2d', filters:16, kernelSize:3, activation:'relu'},
+        {type:'maxpool', poolSize:2},
+        {type:'dense', units:32, activation:'relu'},
+      ];
+      renderLayerBuilder();
+      invalidateModel();
+    }
+  };
+}
+
+/* ---------------- Init ---------------- */
+async function init(){
+  setupInputs();
+  renderLayerBuilder();
+  setupDrawing();
+  renderFlow();   // estrutura inicial sem ativações
+  renderOutput();
+
+  document.getElementById('tfStatus').textContent = 'Inicializando TF.js';
+  await tf.ready();
+  document.getElementById('tfStatus').textContent = 'TF.js · ' + tf.getBackend();
+
+  document.getElementById('btnTrain').disabled = false;
+  document.getElementById('statusText').textContent = 'Pronto. Configure as camadas e treine.';
+  document.querySelector('#statusBox .dot').className='dot ready';
+}
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>
