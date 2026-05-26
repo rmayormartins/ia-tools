@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI / ML / DL — Cheat Sheet Completo v3</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f; --card-bg: #12121a; --border: #1e1e2e;
+  --ai-primary: #e74c3c; --ai-secondary: #ff6b6b; --ai-bg: #1a0f0f;
+  --ml-primary: #2ecc71; --ml-secondary: #55efc4; --ml-bg: #0f1a12;
+  --dl-primary: #3498db; --dl-secondary: #74b9ff; --dl-bg: #0f131a;
+  --yellow: #f1c40f; --orange: #e67e22; --purple: #9b59b6; --cyan: #00cec9;
+  --text: #e0e0e0; --text-dim: #8a8a9a; --text-bright: #fff;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:'Space Grotesk',sans-serif; font-size:11px; line-height:1.4; }
+.page-header { text-align:center; padding:30px 20px 20px; background:linear-gradient(135deg,#1a0505 0%,#050a1a 50%,#0a1a05 100%); border-bottom:2px solid #222; position:relative; overflow:hidden; }
+.page-header::before { content:''; position:absolute; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.01) 2px,rgba(255,255,255,.01) 4px); pointer-events:none; }
+.page-header h1 { font-family:'JetBrains Mono',monospace; font-size:28px; font-weight:700; letter-spacing:4px; text-transform:uppercase; background:linear-gradient(90deg,var(--ai-primary),var(--ml-primary),var(--dl-primary)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.page-header .subtitle { font-family:'JetBrains Mono',monospace; color:var(--text-dim); font-size:10px; margin-top:6px; letter-spacing:3px; text-transform:uppercase; }
+.nav-tabs { display:flex; justify-content:center; gap:4px; padding:12px 20px; background:#08080d; border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
+.nav-tab { padding:8px 24px; border:1px solid var(--border); border-radius:4px; cursor:pointer; font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600; letter-spacing:2px; text-transform:uppercase; transition:all .2s; background:var(--card-bg); color:var(--text-dim); }
+.nav-tab:hover { transform:translateY(-1px); }
+.nav-tab.active-ai { background:var(--ai-bg); color:var(--ai-primary); border-color:var(--ai-primary); box-shadow:0 0 12px rgba(231,76,60,.2); }
+.nav-tab.active-ml { background:var(--ml-bg); color:var(--ml-primary); border-color:var(--ml-primary); box-shadow:0 0 12px rgba(46,204,113,.2); }
+.nav-tab.active-dl { background:var(--dl-bg); color:var(--dl-primary); border-color:var(--dl-primary); box-shadow:0 0 12px rgba(52,152,219,.2); }
+.section { display:none; padding:16px; } .section.active { display:block; }
+.section-title { font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:700; letter-spacing:3px; text-transform:uppercase; margin:10px 0 6px; padding-bottom:8px; border-bottom:2px solid; }
+.section-title.ai { color:var(--ai-primary); border-color:var(--ai-primary); }
+.section-title.ml { color:var(--ml-primary); border-color:var(--ml-primary); }
+.section-title.dl { color:var(--dl-primary); border-color:var(--dl-primary); }
+.category-label { font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; margin:18px 0 8px; padding:6px 12px; border-radius:3px; display:inline-block; }
+.cat-ai { background:var(--ai-bg); color:var(--ai-secondary); border-left:3px solid var(--ai-primary); }
+.cat-ml { background:var(--ml-bg); color:var(--ml-secondary); border-left:3px solid var(--ml-primary); }
+.cat-dl { background:var(--dl-bg); color:var(--dl-secondary); border-left:3px solid var(--dl-primary); }
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(360px,1fr)); gap:8px; margin-bottom:12px; }
+.card { background:var(--card-bg); border:1px solid var(--border); border-radius:6px; padding:10px 12px; transition:all .15s; overflow:hidden; }
+.card:hover { transform:translateY(-1px); }
+.card.ai-card { border-left:3px solid var(--ai-primary); } .card.ai-card:hover { box-shadow:0 4px 16px rgba(231,76,60,.1); }
+.card.ml-card { border-left:3px solid var(--ml-primary); } .card.ml-card:hover { box-shadow:0 4px 16px rgba(46,204,113,.1); }
+.card.dl-card { border-left:3px solid var(--dl-primary); } .card.dl-card:hover { box-shadow:0 4px 16px rgba(52,152,219,.1); }
+.card-name { font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; margin-bottom:4px; }
+.card.ai-card .card-name { color:var(--ai-secondary); } .card.ml-card .card-name { color:var(--ml-secondary); } .card.dl-card .card-name { color:var(--dl-secondary); }
+.card-desc { color:var(--text); font-size:10.5px; margin-bottom:6px; line-height:1.45; }
+.tag-row { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:5px; }
+.tag { font-family:'JetBrains Mono',monospace; font-size:8.5px; padding:2px 6px; border-radius:3px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; white-space:nowrap; }
+.tag-domain { background:rgba(155,89,182,.15); color:#bb6bd9; border:1px solid rgba(155,89,182,.25); }
+.tag-task { background:rgba(241,196,15,.12); color:#f0d060; border:1px solid rgba(241,196,15,.2); }
+.tag-type { background:rgba(0,206,201,.12); color:#55efc4; border:1px solid rgba(0,206,201,.2); }
+.tag-complex { background:rgba(232,67,147,.12); color:#fd79a8; border:1px solid rgba(232,67,147,.2); }
+.formula-box { background:#0d0d14; border:1px solid #1a1a2e; border-radius:4px; padding:5px 8px; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--yellow); margin:4px 0; overflow-x:auto; white-space:nowrap; }
+.props { display:grid; grid-template-columns:auto 1fr; gap:1px 8px; font-size:10px; margin-top:4px; }
+.prop-label { font-family:'JetBrains Mono',monospace; font-weight:600; font-size:9px; text-transform:uppercase; letter-spacing:.5px; }
+.card.ai-card .prop-label { color:var(--ai-primary); } .card.ml-card .prop-label { color:var(--ml-primary); } .card.dl-card .prop-label { color:var(--dl-primary); }
+.prop-label.hiper { color:#e67e22 !important; }
+.prop-label.norm-yes { color:#e74c3c !important; }
+.prop-label.norm-no { color:#2ecc71 !important; }
+.prop-label.norm-rec { color:#e67e22 !important; }
+.prop-label.distrib { color:#9b59b6 !important; }
+.prop-label.lib { color:#00cec9 !important; }
+.prop-value { color:var(--text-dim); }
+.process-steps { display:flex; flex-wrap:wrap; gap:2px; align-items:center; margin-top:4px; }
+.step { font-family:'JetBrains Mono',monospace; font-size:8.5px; padding:2px 5px; border-radius:2px; background:rgba(255,255,255,.04); color:var(--text-dim); border:1px solid rgba(255,255,255,.06); }
+.step-arrow { color:var(--text-dim); font-size:9px; }
+.legend { display:flex; flex-wrap:wrap; gap:10px; padding:10px 16px; background:var(--card-bg); border:1px solid var(--border); border-radius:6px; margin-bottom:14px; }
+.legend-item { display:flex; align-items:center; gap:4px; font-size:9px; color:var(--text-dim); }
+.footer-info { text-align:center; padding:20px; color:var(--text-dim); font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; border-top:1px solid var(--border); margin-top:20px; }
+@media (max-width:768px) { .grid { grid-template-columns:1fr; } .nav-tab { padding:6px 14px; font-size:10px; } }
+</style>
+</head>
+<body>
+<div class="page-header">
+  <h1>AI / ML / DL</h1>
+  <div class="subtitle">Cheat Sheet Completo v3 &mdash; Hiperparâmetros, Normalização, Distribuição &amp; Pacotes Python/R</div>
+</div>
+<div class="nav-tabs">
+  <div class="nav-tab active-ai" onclick="showSection('ai',this)">🧠 Inteligência Artificial</div>
+  <div class="nav-tab" onclick="showSection('ml',this)">📊 Machine Learning</div>
+  <div class="nav-tab" onclick="showSection('dl',this)">🔬 Deep Learning</div>
+</div>
+<div id="sec-ai" class="section active">
+  <div class="section-title ai">🧠 Inteligência Artificial — Técnicas Clássicas</div>
+  <div class="legend">
+    <div class="legend-item"><span class="tag tag-type">TIPO</span> Categoria</div>
+    <div class="legend-item"><span class="tag tag-task">TAREFA</span> O que resolve</div>
+    <div class="legend-item"><span class="tag tag-domain">DOMÍNIO</span> Aplicação</div>
+    <div class="legend-item"><span class="tag tag-complex">COMPLEX.</span> Complexidade</div>
+    <div class="legend-item"><span class="prop-label hiper" style="font-size:9px">HIPER.</span> Hiperparâmetros</div>
+    <div class="legend-item"><span class="prop-label norm-yes" style="font-size:9px">NORM.</span> Obrigatório</div>
+    <div class="legend-item"><span class="prop-label norm-no" style="font-size:9px">NORM.</span> Não necessário</div>
+    <div class="legend-item"><span class="prop-label distrib" style="font-size:9px">DISTRIB.</span> Sensibilidade</div>
+    <div class="legend-item"><span class="prop-label lib" style="font-size:9px">PYTHON/R</span> Pacotes</div>
+  </div>
+  <div class="category-label cat-ai">🔍 Busca e Planejamento</div>
+  <div class="grid">
+    <div class="card ai-card">
+      <div class="card-name">BFS — Breadth-First Search</div>
+      <div class="card-desc">Explora todos os nós por nível. Garante caminho mais curto em grafos não-ponderados.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Busca Cega</span>
+        <span class="tag tag-task">Caminho Mínimo</span>
+        <span class="tag tag-domain">Grafos / Rotas</span>
+        <span class="tag tag-complex">O(V+E)</span>
+      </div>
+      <div class="props">
+        <span class="prop-label">Completo:</span><span class="prop-value">Sim</span>
+        <span class="prop-label">Ótimo:</span><span class="prop-value">Sim (custos iguais)</span>
+        <span class="prop-label">Memória:</span><span class="prop-value">O(b^d) — exponencial</span>
+        <span class="prop-label hiper">Hiper.:</span><span class="prop-value">Nenhum (método exato)</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">networkx (nx.bfs_edges), collections.deque, igraph</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">igraph (bfs), cppRouting</span>
+      </div>
+      <div class="process-steps"><span class="step">Fila FIFO</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Expandir nó</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Enfileirar filhos</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Testar objetivo</span></div>
+    </div>
+    <div class="card ai-card">
+      <div class="card-name">DFS — Depth-First Search</div>
+      <div class="card-desc">Explora o mais fundo possível antes de retroceder. Menos memória, não garante ótimo.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Busca Cega</span>
+        <span class="tag tag-task">Exploração</span>
+        <span class="tag tag-domain">Puzzles / Grafos</span>
+        <span class="tag tag-complex">O(V+E)</span>
+      </div>
+      <div class="props">
+        <span class="prop-label">Completo:</span><span class="prop-value">Não (pode ciclar)</span>
+        <span class="prop-label">Ótimo:</span><span class="prop-value">Não</span>
+        <span class="prop-label">Memória:</span><span class="prop-value">O(b·m) — linear</span>
+        <span class="prop-label hiper">Hiper.:</span><span class="prop-value">depth_limit (DLS/IDDFS)</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">networkx (nx.dfs_edges), igraph, recursão nativa</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">igraph (dfs), cppRouting</span>
+      </div>
+      <div class="process-steps"><span class="step">Pilha LIFO</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Expandir nó</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Empilhar filhos</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Backtrack</span></div>
+    </div>
+    <div class="card ai-card">
+      <div class="card-name">A* Search</div>
+      <div class="card-desc">Busca informada: g(n) + h(n). Ótimo e completo com heurística admissível.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Busca Heurística</span>
+        <span class="tag tag-task">Caminho Ótimo</span>
+        <span class="tag tag-domain">Navegação / Jogos / Robótica</span>
+      </div>
+      <div class="formula-box">f(n) = g(n) + h(n) &nbsp;|&nbsp; h(n) ≤ h*(n) admissível</div>
+      <div class="props">
+        <span class="prop-label">Heurísticas:</span><span class="prop-value">Manhattan, Euclidiana, Chebyshev, Octile</span>
+        <span class="prop-label hiper">Hiper.:</span><span class="prop-value">Escolha de h(n), peso w para WA*</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">networkx (nx.astar_path), python-astar, heapq</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">igraph, cppRouting, astar (custom)</span>
+      </div>
+    </div>
+    <div class="card ai-card">
+      <div class="card-name">IDA* / Uniform Cost (Dijkstra) / Greedy</div>
+      <div class="card-desc">IDA*: A* com memória linear. UCS/Dijkstra: menor custo g(n). Greedy: só h(n), rápido mas não ótimo.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Busca</span>
+        <span class="tag tag-task">Caminhos</span>
+        <span class="tag tag-domain">Redes / Puzzles</span>
+      </div>
+      <div class="formula-box">UCS: f(n)=g(n) &nbsp;|&nbsp; Greedy: f(n)=h(n) &nbsp;|&nbsp; IDA*: threshold crescente</div>
+      <div class="props">
+        <span class="prop-label lib">Python:</span><span class="prop-value">networkx (nx.dijkstra_path, nx.shortest_path), scipy.sparse.csgraph</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">igraph (shortest_paths), cppRouting, Rgraphviz</span>
+      </div>
+    </div>
+    <div class="card ai-card">
+      <div class="card-name">STRIPS / Planejamento / Beam Search</div>
+      <div class="card-desc">STRIPS: ações com pré-condições e efeitos (PDDL). Beam: mantém w melhores candidatos por nível.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Planejamento / Busca</span>
+        <span class="tag tag-task">Sequenciamento / Decodif.</span>
+        <span class="tag tag-domain">Robótica / NLP</span>
+      </div>
+      <div class="props">
+        <span class="prop-label hiper">Beam Hiper.:</span><span class="prop-value">w (beam width, 4-10)</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">pyperplan (PDDL), unified-planning, pddlgym, transformers (beam search em generate())</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">Não há pacote padrão (custom implementation)</span>
+      </div>
+      <div class="process-steps"><span class="step">Estado Inicial</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Precondições</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Efeitos</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Objetivo</span></div>
+    </div>
+  </div>
+  <div class="category-label cat-ai">🎮 Teoria de Jogos e Decisão</div>
+  <div class="grid">
+    <div class="card ai-card">
+      <div class="card-name">Minimax / Alpha-Beta Pruning</div>
+      <div class="card-desc">Minimax: MAX vs MIN em soma zero. Alpha-Beta poda ramos irrelevantes, O(b^m) → O(b^(m/2)).</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Busca Adversarial</span>
+        <span class="tag tag-task">Decisão em Jogos</span>
+        <span class="tag tag-domain">Xadrez / Damas / Go</span>
+        <span class="tag tag-complex">O(b^m)</span>
+      </div>
+      <div class="formula-box">minimax(s) = max_a min_b U(s,a,b) &nbsp;|&nbsp; Podar se α ≥ β</div>
+      <div class="props">
+        <span class="prop-label hiper">Hiper.:</span><span class="prop-value">depth_limit, função de avaliação heurística</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">python-chess (chess.engine), easyAI, OpenSpiel</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">Não há pacote padrão (custom)</span>
+      </div>
+    </div>
+    <div class="card ai-card">
+      <div class="card-name">Monte Carlo Tree Search (MCTS)</div>
+      <div class="card-desc">Simulações aleatórias constroem árvore. UCB balanceia exploração/explotação. Base do AlphaGo.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Busca Estocástica</span>
+        <span class="tag tag-task">Jogos Complexos</span>
+        <span class="tag tag-domain">Go / Poker</span>
+      </div>
+      <div class="formula-box">UCB1 = X̄i + C·√(ln N / ni)</div>
+      <div class="props">
+        <span class="prop-label hiper">Hiper.:</span><span class="prop-value">C (~√2), n_simulations (1K-100K), rollout_depth</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">mcts, OpenSpiel, PettingZoo, custom</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">Não há pacote padrão</span>
+      </div>
+      <div class="process-steps"><span class="step">Selection</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Expansion</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Simulation</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Backpropagation</span></div>
+    </div>
+    <div class="card ai-card">
+      <div class="card-name">Expectimax</div>
+      <div class="card-desc">Minimax com nós de chance (dados, cartas). Calcula valor esperado nas transições aleatórias.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Adversarial + Chance</span>
+        <span class="tag tag-task">Jogos Estocásticos</span>
+      </div>
+      <div class="formula-box">E[v] = Σ P(si) · V(si)</div>
+      <div class="props">
+        <span class="prop-label lib">Python:</span><span class="prop-value">Custom implementation, OpenSpiel</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">Custom implementation</span>
+      </div>
+    </div>
+  </div>
+  <div class="category-label cat-ai">📜 Lógica e Representação de Conhecimento</div>
+  <div class="grid">
+    <div class="card ai-card">
+      <div class="card-name">Lógica Proposicional / FOL</div>
+      <div class="card-desc">Proposicional: V/F + conectivos, SAT. FOL: quantificadores, predicados, unificação. Semi-decidível.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Lógica Formal</span>
+        <span class="tag tag-task">Inferência / Prova</span>
+        <span class="tag tag-domain">Verificação / Prolog</span>
+      </div>
+      <div class="formula-box">Modus Ponens: (P→Q) ∧ P ⊢ Q &nbsp;|&nbsp; FOL: ∀x[H(x)→M(x)]</div>
+      <div class="props">
+        <span class="prop-label lib">Python:</span><span class="prop-value">pysat (SAT), z3-solver (SMT), sympy.logic, pyDatalog, pyswip (SWI-Prolog)</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">Não há pacote padrão. Interfaces: rswipl (Prolog)</span>
+      </div>
+    </div>
+    <div class="card ai-card">
+      <div class="card-name">Redes Bayesianas / HMM</div>
+      <div class="card-desc">Bayes Net: DAG probabilístico. HMM: estados ocultos + emissões, prop. de Markov.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Modelo Probabilístico</span>
+        <span class="tag tag-task">Incerteza / Sequências</span>
+        <span class="tag tag-domain">Diagnóstico / Fala / Genômica</span>
+      </div>
+      <div class="formula-box">P(X1,...,Xn) = Π P(Xi|Parents(Xi)) &nbsp;|&nbsp; Viterbi: argmax P(Q|O)</div>
+      <div class="props">
+        <span class="prop-label hiper">HMM Hiper.:</span><span class="prop-value">n_states, n_iter (EM), covariance_type</span>
+        <span class="prop-label distrib">Distribuição:</span><span class="prop-value">BN: qualquer conjunta. HMM: Gaussian, Multinomial, GMM</span>
+        <span class="prop-label lib">Python BN:</span><span class="prop-value">pgmpy, pomegranate, bnlearn (py), causalnex</span>
+        <span class="prop-label lib">R BN:</span><span class="prop-value">bnlearn, gRain, deal, pcalg</span>
+        <span class="prop-label lib">Python HMM:</span><span class="prop-value">hmmlearn, pomegranate, pyhsmm</span>
+        <span class="prop-label lib">R HMM:</span><span class="prop-value">depmixS4, HMM, seqHMM, mhsmm</span>
+      </div>
+    </div>
+    <div class="card ai-card">
+      <div class="card-name">Sist. Especialistas / Ontologias / Knowledge Graphs</div>
+      <div class="card-desc">Especialistas: regras SE-ENTÃO. Ontologias: OWL/RDF. KG: triplas (s, p, o).</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Repr. Conhecimento</span>
+        <span class="tag tag-task">Diagnóstico / Semântica</span>
+        <span class="tag tag-domain">Medicina / Web</span>
+      </div>
+      <div class="props">
+        <span class="prop-label lib">Python:</span><span class="prop-value">experta (regras), owlready2 (OWL), rdflib (RDF/SPARQL), networkx, py2neo (Neo4j)</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">rrdf, rdflib (via reticulate), neo4r (Neo4j)</span>
+      </div>
+    </div>
+  </div>
+  <div class="category-label cat-ai">⚡ Otimização e Metaheurísticas</div>
+  <div class="grid">
+    <div class="card ai-card">
+      <div class="card-name">Algoritmos Genéticos (GA)</div>
+      <div class="card-desc">Evolução: seleção + crossover + mutação. Cada indivíduo = solução candidata.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Computação Evolutiva</span>
+        <span class="tag tag-task">Otimiz. Global</span>
+        <span class="tag tag-domain">Engenharia / Scheduling</span>
+      </div>
+      <div class="props">
+        <span class="prop-label hiper">Hiper.:</span><span class="prop-value">pop_size (50-200), crossover_rate (0.6-0.9), mutation_rate (0.01-0.1), elite_size, tournament_k</span>
+        <span class="prop-label distrib">Distribuição:</span><span class="prop-value">Não-paramétrico</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">deap, pygad, pymoo, geneticalgorithm, inspyred</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">GA, genalg, ecr, nsga2R, rmoo</span>
+      </div>
+      <div class="process-steps"><span class="step">Pop Inicial</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Fitness</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Seleção</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Crossover</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Mutação</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Nova Geração</span></div>
+    </div>
+    <div class="card ai-card">
+      <div class="card-name">Simulated Annealing / Tabu Search</div>
+      <div class="card-desc">SA: aceita piores com prob. decrescente. Tabu: lista proíbe movimentos recentes.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Metaheurística</span>
+        <span class="tag tag-task">Otimiz. Combinatória</span>
+        <span class="tag tag-domain">TSP / VRP</span>
+      </div>
+      <div class="formula-box">SA: P(aceitar) = exp(−ΔE / T)</div>
+      <div class="props">
+        <span class="prop-label hiper">SA Hiper.:</span><span class="prop-value">T_initial, T_min, cooling_rate (0.9-0.999)</span>
+        <span class="prop-label hiper">Tabu Hiper.:</span><span class="prop-value">tabu_list_size (5-20), max_iter</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">scipy.optimize.dual_annealing, simanneal, optuna, tabu-search</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">GenSA, optimization, tabuSearch</span>
+      </div>
+    </div>
+    <div class="card ai-card">
+      <div class="card-name">PSO / ACO</div>
+      <div class="card-desc">PSO: partículas com pBest/gBest. ACO: formigas + feromônio + evaporação.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Inteligência de Enxame</span>
+        <span class="tag tag-task">Otimiz. Contínua / Comb.</span>
+        <span class="tag tag-domain">Engenharia / Roteamento</span>
+      </div>
+      <div class="formula-box">PSO: vi = w·vi + c1·r1·(pBest−xi) + c2·r2·(gBest−xi)</div>
+      <div class="props">
+        <span class="prop-label hiper">PSO Hiper.:</span><span class="prop-value">n_particles (20-50), w (0.4-0.9), c1 (~2), c2 (~2)</span>
+        <span class="prop-label hiper">ACO Hiper.:</span><span class="prop-value">n_ants, α, β, ρ (0.1-0.5)</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">pyswarms (PSO), pymoo, pants (ACO), inspyred</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">pso, metaheuristicOpt, irace</span>
+      </div>
+    </div>
+    <div class="card ai-card">
+      <div class="card-name">Hill Climbing / ES / GP</div>
+      <div class="card-desc">HC: busca local gulosa. ES: mutação gaussiana. GP: evolui árvores de expressão.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Local / Evolutiva</span>
+        <span class="tag tag-task">Otimização</span>
+      </div>
+      <div class="props">
+        <span class="prop-label hiper">ES Hiper.:</span><span class="prop-value">μ, λ, σ (auto-adaptativo)</span>
+        <span class="prop-label hiper">GP Hiper.:</span><span class="prop-value">pop_size, max_depth</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">deap (ES+GP), gplearn (GP simbólica), cma (CMA-ES), pymoo</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">gramEvol, rgp, cmaes, ecr</span>
+      </div>
+    </div>
+  </div>
+  <div class="category-label cat-ai">🌀 Lógica Fuzzy, CSP e Outros</div>
+  <div class="grid">
+    <div class="card ai-card">
+      <div class="card-name">Lógica Fuzzy</div>
+      <div class="card-desc">Pertinência [0,1]. Regras linguísticas SE-ENTÃO. Controle sem modelo matemático preciso.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Raciocínio Aproximado</span>
+        <span class="tag tag-task">Controle</span>
+        <span class="tag tag-domain">Automação / Industrial</span>
+      </div>
+      <div class="formula-box">μ_A(x) ∈ [0,1] &nbsp;|&nbsp; SE temp=ALTA ENTÃO válvula=ABERTA</div>
+      <div class="props">
+        <span class="prop-label hiper">Hiper.:</span><span class="prop-value">Funções pertinência, regras, defuzzificação (centróide/MOM)</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">scikit-fuzzy, fuzzylogic, simpful</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">FuzzyR, sets, frbs</span>
+      </div>
+      <div class="process-steps"><span class="step">Fuzzificação</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Regras</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Inferência</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Defuzzificação</span></div>
+    </div>
+    <div class="card ai-card">
+      <div class="card-name">CSP / CBR / Sistemas Multi-Agente</div>
+      <div class="card-desc">CSP: AC-3, MRV. CBR: 4Rs. MAS: agentes autônomos cooperando.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Restrições / Analógico / Agentes</span>
+        <span class="tag tag-task">Sudoku / Diagnóstico / Simulação</span>
+      </div>
+      <div class="props">
+        <span class="prop-label lib">Python:</span><span class="prop-value">python-constraint (CSP), mesa (MAS), SPADE (MAS), JADE (Java)</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">Não há pacotes padrão (custom / reticulate)</span>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="sec-ml" class="section">
+  <div class="section-title ml">📊 Machine Learning — Algoritmos e Técnicas</div>
+  <div class="legend">
+    <div class="legend-item"><span class="tag tag-type">TIPO</span> Categoria</div>
+    <div class="legend-item"><span class="tag tag-task">TAREFA</span> O que resolve</div>
+    <div class="legend-item"><span class="tag tag-domain">DOMÍNIO</span> Aplicação</div>
+    <div class="legend-item"><span class="tag tag-complex">COMPLEX.</span> Complexidade</div>
+    <div class="legend-item"><span class="prop-label hiper" style="font-size:9px">HIPER.</span> Hiperparâmetros</div>
+    <div class="legend-item"><span class="prop-label norm-yes" style="font-size:9px">NORM.</span> Obrigatório</div>
+    <div class="legend-item"><span class="prop-label norm-no" style="font-size:9px">NORM.</span> Não necessário</div>
+    <div class="legend-item"><span class="prop-label distrib" style="font-size:9px">DISTRIB.</span> Sensibilidade</div>
+    <div class="legend-item"><span class="prop-label lib" style="font-size:9px">PYTHON/R</span> Pacotes</div>
+  </div>
+  <div class="category-label cat-ml">📈 Supervisionado — Regressão</div>
+  <div class="grid">
+    <div class="card ml-card">
+      <div class="card-name">Regressão Linear</div>
+      <div class="card-desc">Modelo linear, minimiza MSE (OLS). Simples, interpretável, solução fechada.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Supervisionado</span>
+        <span class="tag tag-task">Regressão</span>
+        <span class="tag tag-domain">Finanças / Previsão</span>
+        <span class="tag tag-complex">O(n·p²)</span>
+      </div>
+      <div class="formula-box">y = β₀ + β₁x₁ + ... + βₚxₚ &nbsp;|&nbsp; MSE = (1/n)Σ(yi−ŷi)²</div>
+      <div class="props">
+        <span class="prop-label hiper">Hiper.:</span><span class="prop-value">fit_intercept (True), positive (False)</span>
+        <span class="prop-label norm-rec">Normaliz.:</span><span class="prop-value">Recomendado se features em escalas diferentes</span>
+        <span class="prop-label distrib">Distribuição:</span><span class="prop-value">ASSUME: resíduos normais, homocedasticidade, independência, linearidade, sem multicolinearidade</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">sklearn.linear_model.LinearRegression, statsmodels.OLS, numpy.linalg.lstsq</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">stats::lm(), broom, caret, tidymodels</span>
+      </div>
+    </div>
+    <div class="card ml-card">
+      <div class="card-name">Ridge (L2) / Lasso (L1) / ElasticNet</div>
+      <div class="card-desc">Ridge: Σβj², mantém features. Lasso: Σ|βj|, zera coefs. ElasticNet: combina ambos.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Supervisionado</span>
+        <span class="tag tag-task">Regressão Regularizada</span>
+      </div>
+      <div class="formula-box">Ridge: +λ·Σβj² &nbsp;|&nbsp; Lasso: +λ·Σ|βj| &nbsp;|&nbsp; EN: α·L1+(1−α)·L2</div>
+      <div class="props">
+        <span class="prop-label hiper">Hiper.:</span><span class="prop-value">alpha (1e-4 a 1e4, CV!), l1_ratio (EN, 0-1), max_iter, solver</span>
+        <span class="prop-label norm-yes">Normaliz.:</span><span class="prop-value">OBRIGATÓRIO (regularização sensível a escala!)</span>
+        <span class="prop-label distrib">Distribuição:</span><span class="prop-value">Mesmas da reg. linear. Lasso assume esparsidade</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">sklearn.linear_model.Ridge/Lasso/ElasticNet/RidgeCV/LassoCV, statsmodels</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">glmnet::glmnet(alpha=0/1/0.5), MASS::lm.ridge, caret, tidymodels</span>
+      </div>
+    </div>
+  </div>
+  <div class="category-label cat-ml">🎯 Supervisionado — Classificação</div>
+  <div class="grid">
+    <div class="card ml-card">
+      <div class="card-name">Regressão Logística</div>
+      <div class="card-desc">Sigmoid → probabilidade. Decision boundary linear. Extensível via softmax (multiclasse).</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Supervisionado</span>
+        <span class="tag tag-task">Classif. Binária / Multi</span>
+        <span class="tag tag-domain">Medicina / Crédito / Spam</span>
+        <span class="tag tag-complex">O(n·p)</span>
+      </div>
+      <div class="formula-box">P(y=1|x) = 1/(1+e^(−w^T·x−b)) &nbsp;|&nbsp; BCE = −[y·log(p)+(1−y)·log(1−p)]</div>
+      <div class="props">
+        <span class="prop-label hiper">Hiper.:</span><span class="prop-value">C (0.001-1000), penalty (l1/l2/elasticnet/none), solver (lbfgs/liblinear/saga), max_iter, class_weight</span>
+        <span class="prop-label norm-yes">Normaliz.:</span><span class="prop-value">OBRIGATÓRIO (com regularização)</span>
+        <span class="prop-label distrib">Distribuição:</span><span class="prop-value">NÃO assume normalidade. ASSUME linearidade do log-odds</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">sklearn.linear_model.LogisticRegression, statsmodels.Logit, torch.nn (custom)</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">stats::glm(family=binomial), glmnet, caret, tidymodels, nnet::multinom</span>
+      </div>
+    </div>
+    <div class="card ml-card">
+      <div class="card-name">KNN — K-Nearest Neighbors</div>
+      <div class="card-desc">Voto majoritário dos K vizinhos. Lazy learner. Sensível a escala e maldição da dimensionalidade.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Supervisionado</span>
+        <span class="tag tag-task">Classif. / Regressão</span>
+        <span class="tag tag-domain">Recomendação / Imputação</span>
+        <span class="tag tag-complex">O(n·d)/query</span>
+      </div>
+      <div class="formula-box">d(x,y) = √Σ(xi−yi)² &nbsp;|&nbsp; ŷ = mode(K vizinhos)</div>
+      <div class="props">
+        <span class="prop-label hiper">Hiper.:</span><span class="prop-value">n_neighbors (3-15, ímpar, CV!), weights (uniform/distance), metric, p, leaf_size, algorithm</span>
+        <span class="prop-label norm-yes">Normaliz.:</span><span class="prop-value">OBRIGATÓRIO (StandardScaler ou MinMaxScaler)</span>
+        <span class="prop-label distrib">Distribuição:</span><span class="prop-value">NENHUMA. Não-paramétrico</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">sklearn.neighbors.KNeighborsClassifier/Regressor, annoy (ANN), faiss</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">class::knn, caret, kknn, FNN, tidymodels</span>
+      </div>
+    </div>
+    <div class="card ml-card">
+      <div class="card-name">Naive Bayes</div>
+      <div class="card-desc">Bayes + independência condicional. Rápido, excelente para texto mesmo violando suposição.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Supervisionado</span>
+        <span class="tag tag-task">Classificação</span>
+        <span class="tag tag-domain">Texto / Spam / Sentimento</span>
+        <span class="tag tag-complex">O(n·p)</span>
+      </div>
+      <div class="formula-box">P(C|X) ∝ P(C) · Π P(xi|C)</div>
+      <div class="props">
+        <span class="prop-label hiper">Hiper.:</span><span class="prop-value">alpha (Laplace, 0.01-10), var_smoothing (Gaussian, 1e-9), fit_prior, class_prior</span>
+        <span class="prop-label norm-no">Normaliz.:</span><span class="prop-value">NÃO necessário (Multi/Bern). GaussianNB: recomendado</span>
+        <span class="prop-label distrib">Distribuição:</span><span class="prop-value">ASSUME independência condicional. GaussianNB: features NORMAIS. MultinomialNB: contagens</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">sklearn.naive_bayes.GaussianNB/MultinomialNB/BernoulliNB/ComplementNB</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">e1071::naiveBayes, naivebayes, klaR, caret, tidymodels</span>
+      </div>
+    </div>
+    <div class="card ml-card">
+      <div class="card-name">SVM — Support Vector Machine</div>
+      <div class="card-desc">Hiperplano de máxima margem. Kernel trick: RBF, Poly. Eficaz em alta dimensionalidade.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Supervisionado</span>
+        <span class="tag tag-task">Classif. / Regressão</span>
+        <span class="tag tag-domain">Texto / Imagem / Bio</span>
+        <span class="tag tag-complex">O(n²·p)~O(n³)</span>
+      </div>
+      <div class="formula-box">max 2/‖w‖ s.t. yi(w^T·xi+b) ≥ 1 &nbsp;|&nbsp; K(x,z) = φ(x)^T·φ(z)</div>
+      <div class="props">
+        <span class="prop-label hiper">Hiper.:</span><span class="prop-value">C (0.01-1000), kernel (linear/rbf/poly), gamma ('scale'/'auto'), degree (poly, 2-5)</span>
+        <span class="prop-label norm-yes">Normaliz.:</span><span class="prop-value">OBRIGATÓRIO (StandardScaler)</span>
+        <span class="prop-label distrib">Distribuição:</span><span class="prop-value">NENHUMA suposição. Não-paramétrico</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">sklearn.svm.SVC/SVR/LinearSVC, thundersvm (GPU), libsvm</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">e1071::svm, kernlab::ksvm, caret, tidymodels, liquidSVM</span>
+      </div>
+    </div>
+    <div class="card ml-card">
+      <div class="card-name">Decision Tree (Árvore de Decisão)</div>
+      <div class="card-desc">Splits recursivos. Interpretável, sem normalização, captura interações naturalmente.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Supervisionado</span>
+        <span class="tag tag-task">Classif. / Regressão</span>
+        <span class="tag tag-domain">Crédito / Diagnóstico</span>
+        <span class="tag tag-complex">O(n·p·log n)</span>
+      </div>
+      <div class="formula-box">Gini = 1−Σpk² &nbsp;|&nbsp; Entropia = −Σpk·log₂(pk)</div>
+      <div class="props">
+        <span class="prop-label hiper">Hiper.:</span><span class="prop-value">criterion (gini/entropy), max_depth (3-20), min_samples_split, min_samples_leaf, ccp_alpha, max_features</span>
+        <span class="prop-label norm-no">Normaliz.:</span><span class="prop-value">NÃO necessário</span>
+        <span class="prop-label distrib">Distribuição:</span><span class="prop-value">NENHUMA. Não-paramétrico</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">sklearn.tree.DecisionTreeClassifier/Regressor, dtreeviz (visualização), graphviz</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">rpart, rpart.plot, party::ctree, C50, tidymodels</span>
+      </div>
+    </div>
+    <div class="card ml-card">
+      <div class="card-name">Random Forest</div>
+      <div class="card-desc">Ensemble de árvores: bagging + random features. Robusto, versátil, OOB estimate.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Ensemble — Bagging</span>
+        <span class="tag tag-task">Classif. / Regressão</span>
+        <span class="tag tag-domain">Tabular / Genômica</span>
+        <span class="tag tag-complex">O(T·n·p·log n)</span>
+      </div>
+      <div class="formula-box">ŷ = mode(h₁,...,hT) &nbsp;|&nbsp; Cada ht: bootstrap + √p features</div>
+      <div class="props">
+        <span class="prop-label hiper">Hiper.:</span><span class="prop-value">n_estimators (100-1000), max_depth (None/10-30), max_features ('sqrt'/'log2'), min_samples_split, oob_score</span>
+        <span class="prop-label norm-no">Normaliz.:</span><span class="prop-value">NÃO necessário</span>
+        <span class="prop-label distrib">Distribuição:</span><span class="prop-value">NENHUMA. Não-paramétrico. Robusto a outliers</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">sklearn.ensemble.RandomForestClassifier/Regressor, skranger (ranger wrapper)</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">randomForest, ranger (mais rápido!), randomForestSRC, caret, tidymodels</span>
+      </div>
+    </div>
+    <div class="card ml-card">
+      <div class="card-name">Gradient Boosting (GBDT)</div>
+      <div class="card-desc">Árvores sequenciais corrigindo resíduos via gradient descent funcional.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Ensemble — Boosting</span>
+        <span class="tag tag-task">Classif. / Regressão</span>
+        <span class="tag tag-domain">Tabular</span>
+      </div>
+      <div class="formula-box">Fm(x) = Fm-1(x) + η·hm(x)</div>
+      <div class="props">
+        <span class="prop-label hiper">Hiper.:</span><span class="prop-value">n_estimators (100-5000), learning_rate (0.01-0.3), max_depth (3-8), subsample</span>
+        <span class="prop-label norm-no">Normaliz.:</span><span class="prop-value">NÃO necessário</span>
+        <span class="prop-label distrib">Distribuição:</span><span class="prop-value">NENHUMA</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">sklearn.ensemble.GradientBoostingClassifier/Regressor, HistGradientBoosting (sklearn)</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">gbm, caret, tidymodels</span>
+      </div>
+    </div>
+    <div class="card ml-card">
+      <div class="card-name">XGBoost</div>
+      <div class="card-desc">GBDT otimizado: regulariz. L1/L2, NaN nativo, GPU. Rei do tabular e competições.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Ensemble — Boosting</span>
+        <span class="tag tag-task">Classif. / Reg. / Ranking</span>
+        <span class="tag tag-domain">Kaggle / Indústria</span>
+      </div>
+      <div class="formula-box">Obj = Σ L(yi,ŷi) + Σ[γ·T + 0.5·λ·‖w‖²]</div>
+      <div class="props">
+        <span class="prop-label hiper">Hiper.:</span><span class="prop-value">eta (0.01-0.3), max_depth (3-10), min_child_weight, subsample, colsample_bytree, lambda (L2), alpha (L1), gamma</span>
+        <span class="prop-label norm-no">Normaliz.:</span><span class="prop-value">NÃO necessário</span>
+        <span class="prop-label distrib">Distribuição:</span><span class="prop-value">NENHUMA</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">xgboost (xgb.XGBClassifier/Regressor, DMatrix), optuna (tuning)</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">xgboost::xgb.train/xgboost, caret, tidymodels</span>
+      </div>
+    </div>
+    <div class="card ml-card">
+      <div class="card-name">LightGBM / CatBoost</div>
+      <div class="card-desc">LightGBM: GOSS+EFB, leaf-wise, rápido. CatBoost: Ordered Target Encoding, menos tuning.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Ensemble — Boosting</span>
+        <span class="tag tag-task">Classif. / Regressão</span>
+        <span class="tag tag-domain">Dados c/ Categóricas</span>
+      </div>
+      <div class="props">
+        <span class="prop-label hiper">LGBM Hiper.:</span><span class="prop-value">num_leaves (31), learning_rate, min_child_samples, feature_fraction, reg_alpha/lambda</span>
+        <span class="prop-label hiper">CatBoost Hiper.:</span><span class="prop-value">iterations (1000), depth (6), l2_leaf_reg, cat_features</span>
+        <span class="prop-label norm-no">Normaliz.:</span><span class="prop-value">NÃO necessário (ambos)</span>
+        <span class="prop-label distrib">Distribuição:</span><span class="prop-value">NENHUMA (ambos)</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">lightgbm (lgb.LGBMClassifier), catboost (CatBoostClassifier/Pool)</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">lightgbm::lgb.train, catboost::catboost.train, caret, tidymodels</span>
+      </div>
+    </div>
+    <div class="card ml-card">
+      <div class="card-name">AdaBoost / Bagging / Stacking</div>
+      <div class="card-desc">AdaBoost: pesos em amostras erradas. Bagging: bootstrap+voto. Stacking: meta-learner.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Ensemble</span>
+        <span class="tag tag-task">Combinação</span>
+      </div>
+      <div class="formula-box">AdaBoost: αt = 0.5·ln((1−εt)/εt)</div>
+      <div class="props">
+        <span class="prop-label hiper">Ada Hiper.:</span><span class="prop-value">n_estimators (50-500), learning_rate, estimator (stump)</span>
+        <span class="prop-label hiper">Stacking Hiper.:</span><span class="prop-value">estimators, final_estimator, cv</span>
+        <span class="prop-label norm-rec">Normaliz.:</span><span class="prop-value">Depende dos modelos base</span>
+        <span class="prop-label distrib">Distribuição:</span><span class="prop-value">Depende dos modelos base</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">sklearn.ensemble.AdaBoostClassifier, BaggingClassifier, StackingClassifier/VotingClassifier</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">ada, adabag, ipred::bagging, caretEnsemble, stacks (tidymodels)</span>
+      </div>
+    </div>
+  </div>
+  <div class="category-label cat-ml">🔮 Não-Supervisionado</div>
+  <div class="grid">
+    <div class="card ml-card">
+      <div class="card-name">K-Means</div>
+      <div class="card-desc">K clusters minimizando inércia. Iterativo: atribui + recalcula centróides.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Não-Supervisionado</span>
+        <span class="tag tag-task">Clusterização</span>
+        <span class="tag tag-domain">Segmentação / Marketing</span>
+        <span class="tag tag-complex">O(n·K·d·I)</span>
+      </div>
+      <div class="formula-box">J = Σk Σ_{x∈Ck} ‖x−μk‖²</div>
+      <div class="props">
+        <span class="prop-label hiper">Hiper.:</span><span class="prop-value">n_clusters (Elbow/Silhouette), init ('k-means++'), n_init (10), max_iter (300)</span>
+        <span class="prop-label norm-yes">Normaliz.:</span><span class="prop-value">OBRIGATÓRIO</span>
+        <span class="prop-label distrib">Distribuição:</span><span class="prop-value">ASSUME clusters esféricos/convexos de tamanho similar</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">sklearn.cluster.KMeans/MiniBatchKMeans, scipy.cluster.vq, faiss.Kmeans (GPU)</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">stats::kmeans, cluster::pam, factoextra, ClusterR, tidymodels</span>
+      </div>
+    </div>
+    <div class="card ml-card">
+      <div class="card-name">DBSCAN / HDBSCAN</div>
+      <div class="card-desc">Densidade: clusters arbitrários + outliers (-1). Não precisa K. HDBSCAN: adaptativo.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Não-Supervisionado</span>
+        <span class="tag tag-task">Cluster + Outliers</span>
+        <span class="tag tag-domain">Geoespacial / Anomalias</span>
+        <span class="tag tag-complex">O(n log n)</span>
+      </div>
+      <div class="props">
+        <span class="prop-label hiper">DBSCAN Hiper.:</span><span class="prop-value">eps (k-distance plot!), min_samples (2·dim ou ≥5)</span>
+        <span class="prop-label hiper">HDBSCAN Hiper.:</span><span class="prop-value">min_cluster_size, min_samples</span>
+        <span class="prop-label norm-yes">Normaliz.:</span><span class="prop-value">OBRIGATÓRIO</span>
+        <span class="prop-label distrib">Distribuição:</span><span class="prop-value">NENHUMA sobre forma</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">sklearn.cluster.DBSCAN/OPTICS, hdbscan, cuml.DBSCAN (GPU)</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">dbscan::dbscan/hdbscan, fpc::dbscan, cluster</span>
+      </div>
+    </div>
+    <div class="card ml-card">
+      <div class="card-name">Hierarchical / GMM</div>
+      <div class="card-desc">Hierárquico: dendrograma. GMM: mistura de Gaussianas, soft clustering via EM.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Não-Supervisionado</span>
+        <span class="tag tag-task">Cluster</span>
+        <span class="tag tag-domain">Bioinformática / Fala</span>
+      </div>
+      <div class="formula-box">GMM: P(x) = Σ πk · N(x|μk, Σk)</div>
+      <div class="props">
+        <span class="prop-label hiper">Hier. Hiper.:</span><span class="prop-value">linkage (ward/complete/average), n_clusters ou distance_threshold</span>
+        <span class="prop-label hiper">GMM Hiper.:</span><span class="prop-value">n_components (BIC/AIC), covariance_type (full/diag)</span>
+        <span class="prop-label norm-yes">Normaliz.:</span><span class="prop-value">OBRIGATÓRIO (Ward). GMM: recomendado</span>
+        <span class="prop-label distrib">Distribuição:</span><span class="prop-value">GMM ASSUME mistura de Gaussianas</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">sklearn.cluster.AgglomerativeClustering, scipy.cluster.hierarchy, sklearn.mixture.GaussianMixture</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">stats::hclust, cluster::agnes, mclust (GMM, excelente!), factoextra</span>
+      </div>
+    </div>
+    <div class="card ml-card">
+      <div class="card-name">PCA / t-SNE / UMAP</div>
+      <div class="card-desc">PCA: linear, máx variância. t-SNE: não-linear, vizinhança. UMAP: rápido, preserva global.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Não-Supervisionado</span>
+        <span class="tag tag-task">Redução / Visualização</span>
+        <span class="tag tag-domain">Embeddings</span>
+      </div>
+      <div class="formula-box">PCA: C·v = λ·v &nbsp;|&nbsp; t-SNE: KL(P‖Q) &nbsp;|&nbsp; UMAP: topologia</div>
+      <div class="props">
+        <span class="prop-label hiper">PCA Hiper.:</span><span class="prop-value">n_components (0.95=95%), svd_solver, whiten</span>
+        <span class="prop-label hiper">t-SNE Hiper.:</span><span class="prop-value">perplexity (5-50), learning_rate, n_iter</span>
+        <span class="prop-label hiper">UMAP Hiper.:</span><span class="prop-value">n_neighbors (5-50), min_dist, metric</span>
+        <span class="prop-label norm-yes">Normaliz.:</span><span class="prop-value">PCA: OBRIGATÓRIO. t-SNE/UMAP: recomendado</span>
+        <span class="prop-label distrib">Distribuição:</span><span class="prop-value">PCA: só variância linear. t-SNE/UMAP: nenhuma</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">sklearn.decomposition.PCA, sklearn.manifold.TSNE, umap-learn, openTSNE, cuml (GPU)</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">stats::prcomp, Rtsne, uwot::umap, irlba (PCA rápido), FactoMineR</span>
+      </div>
+    </div>
+    <div class="card ml-card">
+      <div class="card-name">Apriori / FP-Growth / Isolation Forest</div>
+      <div class="card-desc">Associação: suporte/confiança/lift. Isolation Forest: anomalias com path curto.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Não-Supervisionado</span>
+        <span class="tag tag-task">Associação / Anomalias</span>
+        <span class="tag tag-domain">Compras / Fraude / IoT</span>
+      </div>
+      <div class="formula-box">Suporte=freq(X∪Y)/N &nbsp;|&nbsp; IsoForest: Score=2^(−E[h]/c(n))</div>
+      <div class="props">
+        <span class="prop-label hiper">Assoc. Hiper.:</span><span class="prop-value">min_support, min_confidence, min_lift</span>
+        <span class="prop-label hiper">IF Hiper.:</span><span class="prop-value">n_estimators, contamination, max_samples</span>
+        <span class="prop-label norm-no">Normaliz.:</span><span class="prop-value">Assoc: N/A. IF: NÃO necessário</span>
+        <span class="prop-label distrib">Distribuição:</span><span class="prop-value">NENHUMA</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">mlxtend (Apriori/FP-Growth), sklearn.ensemble.IsolationForest, pyod (detecção anomalias)</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">arules::apriori, arulesViz, isotree, solitude, caret</span>
+      </div>
+    </div>
+  </div>
+  <div class="category-label cat-ml">🤖 Aprendizado por Reforço</div>
+  <div class="grid">
+    <div class="card ml-card">
+      <div class="card-name">Q-Learning / SARSA</div>
+      <div class="card-desc">Q-Learning: off-policy, max Q'. SARSA: on-policy, Q(s',a'). TD learning.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Reforço</span>
+        <span class="tag tag-task">Controle</span>
+        <span class="tag tag-domain">Jogos / Robótica</span>
+      </div>
+      <div class="formula-box">Q(s,a) ← Q(s,a) + α[r + γ·max Q(s',a') − Q(s,a)]</div>
+      <div class="props">
+        <span class="prop-label hiper">Hiper.:</span><span class="prop-value">α (0.01-0.5), γ (0.9-0.999), ε (decay 1.0→0.01)</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">gymnasium (env), stable-baselines3, RLlib, CleanRL, custom numpy</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">ReinforcementLearning, MDPtoolbox, gym (via reticulate)</span>
+      </div>
+    </div>
+    <div class="card ml-card">
+      <div class="card-name">Policy Gradient / Actor-Critic / PPO</div>
+      <div class="card-desc">REINFORCE: gradiente direto. PPO: clipped objective, estado da arte prático.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Reforço</span>
+        <span class="tag tag-task">Política Ótima</span>
+        <span class="tag tag-domain">RLHF / Robótica / Games</span>
+      </div>
+      <div class="formula-box">PPO: L = min(rt·Ât, clip(rt, 1±ε)·Ât)</div>
+      <div class="props">
+        <span class="prop-label hiper">PPO Hiper.:</span><span class="prop-value">clip_range (0.1-0.3), lr (3e-4), n_epochs (3-10), γ (0.99), gae_λ (0.95)</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">stable-baselines3 (PPO/A2C/SAC/TD3), CleanRL, RLlib (Ray), TorchRL, trl (RLHF)</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">Não há pacote maduro. Usar reticulate → SB3</span>
+      </div>
+    </div>
+  </div>
+  <div class="category-label cat-ml">📐 Avaliação e Pré-processamento</div>
+  <div class="grid">
+    <div class="card ml-card">
+      <div class="card-name">Cross-Validation / Métricas / Tuning</div>
+      <div class="card-desc">K-Fold, métricas (F1, AUC, MCC), tuning (Grid/Random/Bayesian).</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Avaliação</span>
+        <span class="tag tag-task">Performance</span>
+      </div>
+      <div class="formula-box">F1 = 2PR/(P+R) &nbsp;|&nbsp; AUC-ROC &nbsp;|&nbsp; MCC &nbsp;|&nbsp; κ = (p0−pe)/(1−pe)</div>
+      <div class="props">
+        <span class="prop-label lib">Python:</span><span class="prop-value">sklearn.model_selection (KFold, cross_val_score, GridSearchCV, RandomizedSearchCV), sklearn.metrics, optuna, hyperopt</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">caret::trainControl, yardstick, rsample, tune (tidymodels), mlr3, MLmetrics</span>
+      </div>
+    </div>
+    <div class="card ml-card">
+      <div class="card-name">Normalização / Feature Engineering / Bias-Variance</div>
+      <div class="card-desc">Escalonamento, encoding, seleção, imputação. Erro = Bias² + Variância + Ruído.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Pré-processamento / Teoria</span>
+      </div>
+      <div class="props">
+        <span class="prop-label">StandardScaler:</span><span class="prop-value">z=(x−μ)/σ. P/: SVM, KNN, PCA, NN</span>
+        <span class="prop-label">MinMaxScaler:</span><span class="prop-value">[0,1]. P/: NN, imagens</span>
+        <span class="prop-label">NÃO precisa:</span><span class="prop-value">DT, RF, XGBoost, LightGBM, CatBoost, NB(Multi/Bern)</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">sklearn.preprocessing (Standard/MinMax/RobustScaler, OneHotEncoder, LabelEncoder, OrdinalEncoder), sklearn.impute, sklearn.feature_selection, category_encoders, feature-engine</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">recipes (tidymodels), caret::preProcess, mice (imputação), vip, Boruta</span>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="sec-dl" class="section">
+  <div class="section-title dl">🔬 Deep Learning — Arquiteturas e Técnicas</div>
+  <div class="legend">
+    <div class="legend-item"><span class="tag tag-type">TIPO</span> Categoria</div>
+    <div class="legend-item"><span class="tag tag-task">TAREFA</span> O que resolve</div>
+    <div class="legend-item"><span class="tag tag-domain">DOMÍNIO</span> Aplicação</div>
+    <div class="legend-item"><span class="tag tag-complex">COMPLEX.</span> Complexidade</div>
+    <div class="legend-item"><span class="prop-label hiper" style="font-size:9px">HIPER.</span> Hiperparâmetros</div>
+    <div class="legend-item"><span class="prop-label norm-yes" style="font-size:9px">NORM.</span> Obrigatório</div>
+    <div class="legend-item"><span class="prop-label norm-no" style="font-size:9px">NORM.</span> Não necessário</div>
+    <div class="legend-item"><span class="prop-label distrib" style="font-size:9px">DISTRIB.</span> Sensibilidade</div>
+    <div class="legend-item"><span class="prop-label lib" style="font-size:9px">PYTHON/R</span> Pacotes</div>
+  </div>
+  <div class="category-label cat-dl">🧩 Fundamentos</div>
+  <div class="grid">
+    <div class="card dl-card">
+      <div class="card-name">MLP — Multilayer Perceptron</div>
+      <div class="card-desc">Feedforward totalmente conectado. Backpropagation + SGD/Adam.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Feedforward</span>
+        <span class="tag tag-task">Classif. / Regressão</span>
+        <span class="tag tag-domain">Tabular</span>
+      </div>
+      <div class="formula-box">a^(l) = σ(W^(l)·a^(l-1) + b^(l)) &nbsp;|&nbsp; W ← W − η·∂L/∂W</div>
+      <div class="props">
+        <span class="prop-label hiper">Hiper.:</span><span class="prop-value">hidden_layers, neurons (64-1024), lr (1e-4 a 1e-2), batch_size (32-256), optimizer (Adam), weight_init (He/Xavier)</span>
+        <span class="prop-label norm-yes">Normaliz.:</span><span class="prop-value">OBRIGATÓRIO</span>
+        <span class="prop-label distrib">Distribuição:</span><span class="prop-value">NENHUMA formal</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">torch.nn (Linear, Sequential), keras/tensorflow, sklearn.neural_network.MLPClassifier</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">keras::keras_model_sequential, nnet, neuralnet, torch (R), caret</span>
+      </div>
+    </div>
+    <div class="card dl-card">
+      <div class="card-name">Otimizadores / LR Schedulers / Regularização</div>
+      <div class="card-desc">Adam, AdamW, SGD. Dropout, BN, LN, Label Smoothing, Data Augmentation, Transfer Learning.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Componentes DL</span>
+        <span class="tag tag-task">Generalização</span>
+      </div>
+      <div class="props">
+        <span class="prop-label hiper">Adam:</span><span class="prop-value">lr=1e-3, betas=(0.9,0.999)</span>
+        <span class="prop-label hiper">AdamW:</span><span class="prop-value">lr=1e-4 (fine-tune), weight_decay=0.01-0.1</span>
+        <span class="prop-label">Dropout:</span><span class="prop-value">p=0.1 (Transformers) a 0.5</span>
+        <span class="prop-label">Data Aug:</span><span class="prop-value">RandAugment, Mixup, CutMix</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">torch.optim (Adam/AdamW/SGD), torch.optim.lr_scheduler, torchvision.transforms, albumentations, timm</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">keras::compile(optimizer), luz (R torch wrapper)</span>
+      </div>
+    </div>
+  </div>
+  <div class="category-label cat-dl">🖼️ CNN — Redes Convolucionais</div>
+  <div class="grid">
+    <div class="card dl-card">
+      <div class="card-name">CNN — Convolutional Neural Network</div>
+      <div class="card-desc">Filtros convolucionais extraem features espaciais. Weight sharing + translation invariance.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Convolucional</span>
+        <span class="tag tag-task">Classif. / Det. / Segm.</span>
+        <span class="tag tag-domain">Imagens / Vídeo / Médica</span>
+      </div>
+      <div class="formula-box">out(i,j) = Σ input(i+m,j+n)·kernel(m,n)+b &nbsp;|&nbsp; dim_out=(W−K+2P)/S+1</div>
+      <div class="props">
+        <span class="prop-label hiper">Hiper.:</span><span class="prop-value">filters (32-512), kernel (3×3), stride (1-2), padding, pool (2×2)</span>
+        <span class="prop-label norm-yes">Normaliz.:</span><span class="prop-value">Sim: /255 ou ImageNet stats</span>
+        <span class="prop-label distrib">Distribuição:</span><span class="prop-value">NENHUMA</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">torch.nn (Conv2d, MaxPool2d), torchvision, keras.layers.Conv2D, timm</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">keras::layer_conv_2d, torch::nn_conv2d, luz</span>
+      </div>
+      <div class="process-steps"><span class="step">Conv</span>
+        <span class="step-arrow">→</span>
+        <span class="step">BN</span>
+        <span class="step-arrow">→</span>
+        <span class="step">ReLU</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Pool</span>
+        <span class="step-arrow">→</span>
+        <span class="step">[repetir]</span>
+        <span class="step-arrow">→</span>
+        <span class="step">FC</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Softmax</span></div>
+    </div>
+    <div class="card dl-card">
+      <div class="card-name">ResNet / VGG / Inception / DenseNet / EfficientNet / MobileNet</div>
+      <div class="card-desc">ResNet: skip conn. VGG: 3×3. Inception: multi-scale. EfficientNet: compound scaling. MobileNet: edge.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">CNN Arquiteturas</span>
+        <span class="tag tag-task">Backbone / Mobile</span>
+      </div>
+      <div class="formula-box">ResNet: y = F(x) + x &nbsp;|&nbsp; EfficientNet: compound scaling d,w,r</div>
+      <div class="props">
+        <span class="prop-label hiper">Fine-tune:</span><span class="prop-value">lr_head=1e-3, lr_backbone=1e-5, epochs=20-50</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">torchvision.models (resnet50, efficientnet_b0, mobilenet_v3), timm (800+ modelos!), keras.applications</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">keras::application_resnet50/application_mobilenet_v2, torch::model_resnet18 (torchvision)</span>
+      </div>
+    </div>
+  </div>
+  <div class="category-label cat-dl">📦 Detecção e Segmentação</div>
+  <div class="grid">
+    <div class="card dl-card">
+      <div class="card-name">YOLO / Faster R-CNN / RT-DETR</div>
+      <div class="card-desc">YOLO: single-shot, real-time. Faster R-CNN: two-stage. RT-DETR: Transformer, sem NMS.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Detecção</span>
+        <span class="tag tag-task">Objetos</span>
+        <span class="tag tag-domain">Autônomos / Vigilância</span>
+      </div>
+      <div class="props">
+        <span class="prop-label hiper">YOLO Hiper.:</span><span class="prop-value">imgsz (640), epochs (100-300), batch (16), lr0 (0.01), conf (0.25), iou (0.45)</span>
+        <span class="prop-label">Métricas:</span><span class="prop-value">mAP@0.5, mAP@0.5:0.95, FPS</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">ultralytics (YOLOv8/v11), torchvision.models.detection (Faster R-CNN, SSD, FCOS), mmdetection, detectron2</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">Não há pacote nativo. Usar reticulate → ultralytics/detectron2</span>
+      </div>
+    </div>
+    <div class="card dl-card">
+      <div class="card-name">U-Net / Mask R-CNN / SAM</div>
+      <div class="card-desc">U-Net: enc-dec + skip (segm. médica). Mask R-CNN: instância. SAM: zero-shot promptable.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Segmentação</span>
+        <span class="tag tag-task">Semântica / Instância</span>
+        <span class="tag tag-domain">Médica / Satélite</span>
+      </div>
+      <div class="formula-box">Dice = 1 − 2|X∩Y|/(|X|+|Y|) &nbsp;|&nbsp; IoU = |X∩Y|/|X∪Y|</div>
+      <div class="props">
+        <span class="prop-label hiper">U-Net Hiper.:</span><span class="prop-value">encoder, decoder_channels, loss (Dice+BCE), lr=1e-4</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">segmentation_models_pytorch (smp), monai (médica), torchvision (Mask R-CNN), segment-anything (SAM)</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">keras (custom U-Net), Não há pacote nativo p/ SAM</span>
+      </div>
+    </div>
+  </div>
+  <div class="category-label cat-dl">🔄 Redes Recorrentes</div>
+  <div class="grid">
+    <div class="card dl-card">
+      <div class="card-name">RNN / LSTM / GRU</div>
+      <div class="card-desc">RNN: vanishing gradient. LSTM: 3 gates + célula. GRU: 2 gates, mais leve.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Recorrente</span>
+        <span class="tag tag-task">Sequências</span>
+        <span class="tag tag-domain">NLP / Fala / Séries</span>
+      </div>
+      <div class="formula-box">LSTM: ft=σ(Wf[ht-1,xt]) | ct=ft·ct-1+it·tanh(...) | ht=ot·tanh(ct)</div>
+      <div class="props">
+        <span class="prop-label hiper">Hiper.:</span><span class="prop-value">hidden_size (64-512), num_layers (1-4), dropout (0.1-0.5), bidirectional</span>
+        <span class="prop-label norm-rec">Normaliz.:</span><span class="prop-value">Recomendado p/ features de entrada</span>
+        <span class="prop-label distrib">Distribuição:</span><span class="prop-value">NENHUMA</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">torch.nn (LSTM, GRU, RNN), keras.layers.LSTM/GRU, pytorch-forecasting (séries)</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">keras::layer_lstm/layer_gru, torch::nn_lstm, forecast</span>
+      </div>
+    </div>
+    <div class="card dl-card">
+      <div class="card-name">Seq2Seq + Attention</div>
+      <div class="card-desc">Encoder→Decoder com mecanismo de atenção. Base pré-Transformer.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Encoder-Decoder</span>
+        <span class="tag tag-task">Tradução / Sumarização</span>
+        <span class="tag tag-domain">NLP</span>
+      </div>
+      <div class="formula-box">αij = softmax(score(si,hj)) &nbsp;|&nbsp; ci = Σ αij · hj</div>
+      <div class="props">
+        <span class="prop-label hiper">Hiper.:</span><span class="prop-value">enc/dec hidden (256-1024), attention (bahdanau/luong), teacher_forcing</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">torch.nn (custom), fairseq, OpenNMT-py</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">keras (custom), Não há pacote padrão</span>
+      </div>
+    </div>
+  </div>
+  <div class="category-label cat-dl">⚡ Transformers e LLMs</div>
+  <div class="grid">
+    <div class="card dl-card">
+      <div class="card-name">Transformer (2017)</div>
+      <div class="card-desc">Self-attention paralela. 'Attention Is All You Need'. Base de NLP, CV e multimodal.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Attention-based</span>
+        <span class="tag tag-task">Tudo</span>
+      </div>
+      <div class="formula-box">Attn(Q,K,V) = softmax(QK^T/√dk)·V &nbsp;|&nbsp; MultiHead = Concat(heads)·WO</div>
+      <div class="props">
+        <span class="prop-label hiper">Hiper.:</span><span class="prop-value">d_model (256-4096), nhead (4-64), num_layers (6-96), d_ff (4·d_model), dropout (0.1)</span>
+        <span class="prop-label">Pos Encoding:</span><span class="prop-value">Sinusoidal, Learned, RoPE, ALiBi</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">torch.nn.Transformer, transformers (HuggingFace), x-transformers, flash-attn</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">Não há pacote nativo. Usar reticulate → transformers</span>
+      </div>
+      <div class="process-steps"><span class="step">Embed</span>
+        <span class="step-arrow">→</span>
+        <span class="step">PosEnc</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Multi-Head Attn</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Add&amp;Norm</span>
+        <span class="step-arrow">→</span>
+        <span class="step">FFN</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Add&amp;Norm</span></div>
+    </div>
+    <div class="card dl-card">
+      <div class="card-name">BERT (Encoder) / GPT (Decoder) / T5 (Enc-Dec)</div>
+      <div class="card-desc">BERT: bidirecional, MLM. GPT: autorregressivo. T5: text-to-text.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Transformer LLM</span>
+        <span class="tag tag-task">NLP / Code / Multi</span>
+        <span class="tag tag-complex">110M → 1.5T+</span>
+      </div>
+      <div class="props">
+        <span class="prop-label hiper">BERT Fine-tune:</span><span class="prop-value">lr=2e-5 a 5e-5, epochs=2-4, batch=16-32, warmup=10%</span>
+        <span class="prop-label hiper">GPT Inferência:</span><span class="prop-value">temperature (0-2), top_p, top_k, repetition_penalty</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">transformers (AutoModel, pipeline, Trainer), sentence-transformers, tokenizers, datasets (HuggingFace)</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">text (wraps transformers), tidytext, quanteda (NLP clássico), reticulate → transformers</span>
+      </div>
+    </div>
+    <div class="card dl-card">
+      <div class="card-name">LLMs: LLaMA / Mistral / DeepSeek / Claude</div>
+      <div class="card-desc">LLaMA: RoPE+SwiGLU+GQA. Mistral: sliding window. DeepSeek: MoE. Claude: Constitutional AI.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">LLM</span>
+        <span class="tag tag-task">Geração / Instrução / Código</span>
+        <span class="tag tag-complex">7B → 405B+</span>
+      </div>
+      <div class="props">
+        <span class="prop-label">Alinhamento:</span><span class="prop-value">SFT, RLHF, DPO, ORPO, KTO</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">transformers, vllm (inferência rápida), llama.cpp (python-bindings), ollama, text-generation-inference, litellm</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">ollamar, ellmer (multi-provider), reticulate → transformers/vllm</span>
+      </div>
+    </div>
+    <div class="card dl-card">
+      <div class="card-name">LoRA / QLoRA / PEFT</div>
+      <div class="card-desc">Fine-tuning eficiente: matrizes low-rank. Treina ~1% params. QLoRA: 4-bit + LoRA.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Fine-tuning Eficiente</span>
+        <span class="tag tag-task">Adaptação</span>
+        <span class="tag tag-domain">LLMs / Difusão</span>
+      </div>
+      <div class="formula-box">W' = W + B·A &nbsp;|&nbsp; B∈ℝ^(d×r), A∈ℝ^(r×d), r ≪ d</div>
+      <div class="props">
+        <span class="prop-label hiper">Hiper.:</span><span class="prop-value">r (4-64), lora_alpha (16-64), target_modules (q/k/v_proj), lora_dropout (0.05-0.1)</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">peft (HuggingFace), unsloth (2x faster), axolotl, trl (SFTTrainer), bitsandbytes (QLoRA)</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">Não há pacote nativo. reticulate → peft/unsloth</span>
+      </div>
+    </div>
+    <div class="card dl-card">
+      <div class="card-name">RAG / MoE / Agents</div>
+      <div class="card-desc">RAG: retriever + LLM. MoE: router + experts. Agents: LLM + tools + planning.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Híbrido / Escalável</span>
+        <span class="tag tag-task">QA / Eficiência / Autonomia</span>
+        <span class="tag tag-domain">Enterprise</span>
+      </div>
+      <div class="props">
+        <span class="prop-label hiper">RAG Hiper.:</span><span class="prop-value">chunk_size (256-1024), top_k (3-10), embedding_model, reranker</span>
+        <span class="prop-label lib">Python RAG:</span><span class="prop-value">langchain, llama-index, haystack, chromadb, faiss, pinecone-client, weaviate-client</span>
+        <span class="prop-label lib">Python Agents:</span><span class="prop-value">langchain, crewai, autogen, smolagents, openai-agents-sdk</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">Não há pacote nativo. reticulate → langchain/llama-index</span>
+      </div>
+      <div class="process-steps"><span class="step">Query</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Embed</span>
+        <span class="step-arrow">→</span>
+        <span class="step">VectorSearch</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Top-K</span>
+        <span class="step-arrow">→</span>
+        <span class="step">LLM+Context</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Resposta</span></div>
+    </div>
+  </div>
+  <div class="category-label cat-dl">👁️ Vision Transformers e Multimodal</div>
+  <div class="grid">
+    <div class="card dl-card">
+      <div class="card-name">ViT / Swin / DeiT</div>
+      <div class="card-desc">ViT: patches + Transformer puro. Swin: janelas locais O(n). DeiT: distillation.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Vision Transformer</span>
+        <span class="tag tag-task">Classif. / Det. / Segm.</span>
+        <span class="tag tag-complex">86M — 197M</span>
+      </div>
+      <div class="props">
+        <span class="prop-label hiper">ViT Hiper.:</span><span class="prop-value">patch_size (16/14), image_size (224-384)</span>
+        <span class="prop-label hiper">Fine-tune:</span><span class="prop-value">lr=1e-5 a 5e-5, aug forte</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">timm (vit_base_patch16_224, swin_base), transformers (ViTForImageClassification), torchvision</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">keras (custom), Não há pacote nativo. reticulate → timm</span>
+      </div>
+    </div>
+    <div class="card dl-card">
+      <div class="card-name">CLIP / VLMs (Multimodais)</div>
+      <div class="card-desc">CLIP: alinha img+texto contrastivo. VLMs: GPT-4V, Claude, Gemini, LLaVA.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Multimodal</span>
+        <span class="tag tag-task">Zero-Shot / VQA</span>
+        <span class="tag tag-domain">Visão + Linguagem</span>
+      </div>
+      <div class="formula-box">CLIP: L = −log[exp(sim(I,T)/τ) / Σ exp(sim(I,Tj)/τ)]</div>
+      <div class="props">
+        <span class="prop-label lib">Python:</span><span class="prop-value">open_clip, transformers (CLIPModel), sentence-transformers (CLIP), openai (API)</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">reticulate → open_clip/transformers</span>
+      </div>
+    </div>
+  </div>
+  <div class="category-label cat-dl">🎨 Modelos Generativos</div>
+  <div class="grid">
+    <div class="card dl-card">
+      <div class="card-name">GAN / VAE</div>
+      <div class="card-desc">GAN: Gerador vs Discriminador. VAE: encoder→latente→decoder, ELBO.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Generativo</span>
+        <span class="tag tag-task">Geração</span>
+        <span class="tag tag-domain">Arte / Moléculas</span>
+      </div>
+      <div class="formula-box">GAN: min_G max_D E[log D(x)] + E[log(1−D(G(z)))] &nbsp;|&nbsp; VAE: ELBO</div>
+      <div class="props">
+        <span class="prop-label hiper">GAN Hiper.:</span><span class="prop-value">latent_dim (100-512), lr_G/lr_D (1e-4), n_critic (WGAN: 5)</span>
+        <span class="prop-label hiper">VAE Hiper.:</span><span class="prop-value">latent_dim, β (KL weight), recon_loss</span>
+        <span class="prop-label distrib">Distribuição:</span><span class="prop-value">Latente: N(0,I)</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">torch (custom GAN/VAE), pytorch-lightning, keras, stylegan2-ada-pytorch, pythae (VAE zoo)</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">keras (custom), torch (custom), Não há pacote específico</span>
+      </div>
+    </div>
+    <div class="card dl-card">
+      <div class="card-name">Diffusion Models (DDPM / Stable Diffusion)</div>
+      <div class="card-desc">Forward: ruído gradual. Reverse: denoise. Latent Diffusion: espaço latente comprimido.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Difusão</span>
+        <span class="tag tag-task">Geração Img / Vídeo / 3D</span>
+        <span class="tag tag-domain">SD / DALL·E / Midjourney</span>
+      </div>
+      <div class="formula-box">q(xt|xt-1) = N(√(1−βt)·xt-1, βt·I)</div>
+      <div class="props">
+        <span class="prop-label hiper">Train Hiper.:</span><span class="prop-value">T (1000), beta_schedule, lr (1e-4), ema_decay (0.9999)</span>
+        <span class="prop-label hiper">Inference Hiper.:</span><span class="prop-value">steps (20-50), guidance_scale/CFG (7.5), scheduler (DDIM/DPM-Solver)</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">diffusers (HuggingFace, StableDiffusionPipeline), denoising-diffusion-pytorch, ComfyUI, AUTOMATIC1111</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">Não há pacote nativo. reticulate → diffusers</span>
+      </div>
+      <div class="process-steps"><span class="step">x₀</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Forward(ruído)</span>
+        <span class="step-arrow">→</span>
+        <span class="step">xT</span>
+        <span class="step-arrow">→</span>
+        <span class="step">Reverse(denoise)</span>
+        <span class="step-arrow">→</span>
+        <span class="step">x₀(gerado)</span></div>
+    </div>
+    <div class="card dl-card">
+      <div class="card-name">Normalizing Flows / Autoencoder</div>
+      <div class="card-desc">Flows: transformações invertíveis. AE: bottleneck + reconstrução.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Generativo / Compressão</span>
+      </div>
+      <div class="props">
+        <span class="prop-label">Flows:</span><span class="prop-value">RealNVP, Glow, Flow Matching (Flux, SD3)</span>
+        <span class="prop-label">AE Variantes:</span><span class="prop-value">Sparse, Denoising, Contractive, VQ-VAE</span>
+        <span class="prop-label lib">Python:</span><span class="prop-value">nflows, normflows, flowtorch, torch (custom AE)</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">keras (custom AE)</span>
+      </div>
+    </div>
+  </div>
+  <div class="category-label cat-dl">🌐 Grafos, SSM, Áudio e Especiais</div>
+  <div class="grid">
+    <div class="card dl-card">
+      <div class="card-name">GNN / Mamba (SSM) / KAN</div>
+      <div class="card-desc">GNN: message passing em grafos. Mamba: SSM O(n). KAN: B-splines aprendíveis.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Grafos / SSM / Alternativa</span>
+        <span class="tag tag-task">Especializados</span>
+      </div>
+      <div class="formula-box">GNN: hv = UPDATE(hv, AGG({hu : u∈N(v)})) &nbsp;|&nbsp; Mamba: x'=Ax+Bu</div>
+      <div class="props">
+        <span class="prop-label hiper">GNN Hiper.:</span><span class="prop-value">hidden_channels, num_layers, heads (GAT)</span>
+        <span class="prop-label hiper">Mamba Hiper.:</span><span class="prop-value">d_model, d_state, d_conv</span>
+        <span class="prop-label lib">Python GNN:</span><span class="prop-value">torch_geometric (PyG), dgl, spektral (keras), networkx</span>
+        <span class="prop-label lib">Python SSM:</span><span class="prop-value">mamba-ssm, state-spaces/mamba (GitHub), transformers (Jamba)</span>
+        <span class="prop-label lib">Python KAN:</span><span class="prop-value">pykan, efficient-kan, torch (custom)</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">igraph (grafos clássicos). GNN/Mamba: reticulate → PyG</span>
+      </div>
+    </div>
+    <div class="card dl-card">
+      <div class="card-name">Whisper / Self-Supervised / Distillation / Quantização</div>
+      <div class="card-desc">Whisper: STT. SSL: SimCLR, DINO, MAE. Distill: student←teacher. Quant: FP32→INT4.</div>
+      <div class="tag-row">
+        <span class="tag tag-type">Áudio / SSL / Compressão</span>
+        <span class="tag tag-task">ASR / Deploy</span>
+        <span class="tag tag-domain">Edge / Mobile</span>
+      </div>
+      <div class="formula-box">Contrastive: L = −log[exp(sim/τ)/Σ] &nbsp;|&nbsp; Distill: (1−α)·CE + α·T²·KL</div>
+      <div class="props">
+        <span class="prop-label hiper">Whisper:</span><span class="prop-value">tiny(39M)→large-v3(1.5B)</span>
+        <span class="prop-label hiper">SSL:</span><span class="prop-value">SimCLR, DINO(v2), MAE. τ=0.07-0.5</span>
+        <span class="prop-label">Quant.:</span><span class="prop-value">PTQ, QAT, GPTQ, AWQ, GGUF, NF4</span>
+        <span class="prop-label lib">Python ASR:</span><span class="prop-value">transformers (WhisperForConditionalGeneration), faster-whisper, whisper.cpp</span>
+        <span class="prop-label lib">Python SSL:</span><span class="prop-value">lightly, vissl, solo-learn, timm (DINOv2), transformers (MAE)</span>
+        <span class="prop-label lib">Python Quant:</span><span class="prop-value">bitsandbytes, auto-gptq, autoawq, llama.cpp (GGUF), optimum (HuggingFace), onnxruntime, TensorRT</span>
+        <span class="prop-label lib">R:</span><span class="prop-value">Não há pacotes nativos. reticulate → transformers/bitsandbytes</span>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="footer-info">
+  AI / ML / DL Cheat Sheet Completo v3 &mdash; Prof. Ramon Mayor Martins, Ph.D. &mdash; IFSC Campus São José &mdash; 2026<br>
+  Ref: Russell &amp; Norvig (AIMA), Bishop (PRML), Goodfellow (DL Book), Vaswani et al. (2017), scikit-learn / PyTorch / R docs
+</div>
+<script>
+function showSection(id,tab) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.className='nav-tab');
+  document.getElementById('sec-'+id).classList.add('active');
+  tab.classList.add('active-'+id);
+}
+</script>
+</body>
+</html>
