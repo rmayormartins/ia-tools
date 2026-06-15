@@ -1,0 +1,2455 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audio.sys · ICD/IFSC</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/4.22.0/tf.min.js" onerror="window.__tfFallback=true"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js" onerror="window.__chartFallback=true"></script>
+<script>
+  // Fallback de CDN (jsDelivr) caso o cdnjs nao responda
+  (function(){
+    function add(src){ document.write('<scr'+'ipt src="'+src+'"><\/scr'+'ipt>'); }
+    if (window.__tfFallback) add('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js');
+    if (window.__chartFallback) add('https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js');
+  })();
+</script>
+<style>
+  :root{
+    --bg-0:#0b0f14;
+    --bg-1:#10161d;
+    --bg-2:#161e27;
+    --bg-3:#1c2631;
+    --border:#243140;
+    --border-soft:#1d2734;
+    --text-0:#e6edf3;
+    --text-1:#9aa6b2;
+    --text-2:#6b7785;
+    --accent:#3F9A4B;
+    --accent-2:#32A041;
+    --accent-soft:rgba(63,154,75,0.12);
+    --accent-glow:rgba(63,154,75,0.35);
+    --warn:#e0a83c;
+    --error:#e25c5c;
+    --info:#4ea1d3;
+    --purple:#a874e8;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg-0);
+    color:var(--text-0);
+    font-family:"Inter","Segoe UI",system-ui,sans-serif;
+    font-size:14px;
+    line-height:1.5;
+    overflow-x:hidden;
+  }
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-track{background:var(--bg-1)}
+  ::-webkit-scrollbar-thumb{background:var(--bg-3);border-radius:6px}
+  ::-webkit-scrollbar-thumb:hover{background:#2d3a48}
+
+  /* ---------- HEADER ---------- */
+  header.top{
+    background:linear-gradient(180deg,var(--bg-1) 0%,var(--bg-0) 100%);
+    border-bottom:1px solid var(--border);
+    padding:18px 28px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:24px;
+    flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:center;gap:16px}
+  .brand-icon{
+    width:54px;height:54px;
+    border-radius:14px;
+    background:linear-gradient(135deg,var(--accent) 0%,var(--accent-2) 100%);
+    display:flex;align-items:center;justify-content:center;
+    font-size:28px;
+    box-shadow:0 4px 18px var(--accent-glow);
+  }
+  .brand h1{
+    font-size:22px;
+    font-weight:700;
+    letter-spacing:-0.02em;
+    color:var(--text-0);
+  }
+  .brand h1 span{color:var(--accent)}
+  .brand p{font-size:12px;color:var(--text-1);margin-top:2px;letter-spacing:0.04em}
+  .header-meta{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text-1);flex-wrap:wrap}
+  .pill{
+    padding:5px 12px;
+    border-radius:999px;
+    background:var(--accent-soft);
+    color:var(--accent);
+    font-weight:600;
+    font-size:11px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    border:1px solid rgba(63,154,75,0.25);
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .pill::before{
+    content:"";width:6px;height:6px;border-radius:50%;
+    background:var(--accent);box-shadow:0 0 8px var(--accent);
+  }
+  .pill.dim{background:var(--bg-2);color:var(--text-1);border-color:var(--border)}
+  .pill.dim::before{background:var(--text-2);box-shadow:none}
+  .pill.warn{background:rgba(224,168,60,0.12);color:var(--warn);border-color:rgba(224,168,60,0.3)}
+  .pill.warn::before{background:var(--warn);box-shadow:0 0 8px var(--warn)}
+
+  /* ---------- PIPELINE AMCH ---------- */
+  .pipeline-wrap{
+    background:var(--bg-1);
+    border-bottom:1px solid var(--border);
+    padding:16px 28px 10px;
+  }
+  .pipeline-wrap svg{display:block;margin:0 auto;max-width:1080px;width:100%;height:auto}
+  .pipeline-caption{
+    text-align:center;
+    font-size:11px;
+    color:var(--text-2);
+    padding:6px 0 4px;
+    font-style:italic;
+  }
+  .stg{cursor:pointer}
+  .stg .chev{
+    fill:var(--bg-2);
+    stroke:var(--border);
+    stroke-width:1.5;
+    transition:fill 0.2s,stroke 0.2s;
+  }
+  .stg text{
+    fill:var(--text-1);
+    font-family:"Inter","Segoe UI",system-ui,sans-serif;
+    font-size:12.5px;
+    font-weight:600;
+    pointer-events:none;
+    transition:fill 0.2s;
+  }
+  .stg:hover .chev{stroke:var(--accent)}
+  .stg.done .chev{fill:var(--accent-soft);stroke:rgba(63,154,75,0.45)}
+  .stg.done text{fill:var(--text-0)}
+  .stg.active .chev{
+    fill:var(--accent);
+    stroke:var(--accent-2);
+    filter:drop-shadow(0 0 10px var(--accent-glow));
+  }
+  .stg.active text{fill:#ffffff}
+  .stg .badge{opacity:0;transition:opacity 0.2s}
+  .stg.done .badge{opacity:1}
+  .loop-path{
+    fill:none;
+    stroke:var(--accent);
+    stroke-width:2;
+    opacity:0.75;
+  }
+  .loop-arrow{fill:var(--accent)}
+
+  /* ---------- LAYOUT ---------- */
+  main.layout{
+    display:grid;
+    grid-template-columns:340px 1fr;
+    min-height:calc(100vh - 90px);
+  }
+  aside.sidebar{
+    background:var(--bg-1);
+    border-right:1px solid var(--border);
+    padding:18px;
+    overflow-y:auto;
+    height:calc(100vh - 90px);
+    position:sticky;top:0;
+  }
+  section.panel{
+    padding:22px 28px;
+    overflow-x:hidden;
+    min-width:0;
+  }
+
+  /* ---------- CARDS ---------- */
+  .card{
+    background:var(--bg-2);
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    padding:16px;
+    margin-bottom:14px;
+  }
+  .card h3{
+    font-size:13px;
+    font-weight:700;
+    color:var(--text-0);
+    margin-bottom:12px;
+    display:flex;align-items:center;gap:8px;
+    letter-spacing:0.02em;
+  }
+  .card h3 .ico{font-size:16px}
+  .card-help{
+    font-size:11px;color:var(--text-2);
+    margin-top:8px;line-height:1.5;
+  }
+
+  /* ---------- INPUTS ---------- */
+  label.field{
+    display:block;
+    font-size:11px;
+    color:var(--text-1);
+    margin-bottom:5px;
+    margin-top:10px;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    font-weight:600;
+  }
+  label.field:first-child{margin-top:0}
+  select,input[type="text"],input[type="number"],textarea{
+    width:100%;
+    background:var(--bg-3);
+    border:1px solid var(--border);
+    color:var(--text-0);
+    padding:8px 10px;
+    border-radius:8px;
+    font-size:13px;
+    font-family:inherit;
+    outline:none;
+    transition:border-color 0.15s;
+  }
+  textarea{resize:vertical;min-height:54px}
+  select:focus,input[type="text"]:focus,input[type="number"]:focus,textarea:focus{
+    border-color:var(--accent);
+  }
+  .range-row{display:flex;align-items:center;gap:8px}
+  .range-row input[type="range"]{flex:1;accent-color:var(--accent)}
+  .range-val{
+    min-width:48px;
+    text-align:right;
+    font-variant-numeric:tabular-nums;
+    font-weight:600;
+    color:var(--accent);
+    font-size:12px;
+  }
+  .check-row{
+    display:flex;align-items:center;gap:8px;
+    margin-top:10px;font-size:12px;color:var(--text-1);
+    cursor:pointer;user-select:none;
+  }
+  .check-row input{accent-color:var(--accent);width:14px;height:14px;cursor:pointer}
+
+  /* radio chip group */
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+  .chips label{
+    cursor:pointer;flex:1;
+    background:var(--bg-3);
+    border:1px solid var(--border);
+    color:var(--text-1);
+    padding:6px 10px;border-radius:8px;
+    font-size:12px;text-align:center;
+    transition:all 0.15s;
+    user-select:none;
+    min-width:48px;
+  }
+  .chips label:hover{border-color:var(--accent)}
+  .chips input{display:none}
+  .chips input:checked + span{color:var(--accent)}
+  .chips label:has(input:checked){
+    background:var(--accent-soft);
+    border-color:var(--accent);
+    color:var(--accent);
+    font-weight:600;
+  }
+  .chips.disabled{opacity:0.45;pointer-events:none}
+
+  /* buttons */
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:11px 16px;
+    border:none;
+    border-radius:10px;
+    font-family:inherit;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    transition:all 0.15s;
+    width:100%;
+  }
+  .btn-primary{
+    background:linear-gradient(180deg,var(--accent) 0%,var(--accent-2) 100%);
+    color:white;
+    box-shadow:0 2px 10px var(--accent-glow);
+    margin-top:12px;
+  }
+  .btn-primary:hover:not(:disabled){
+    transform:translateY(-1px);
+    box-shadow:0 4px 14px var(--accent-glow);
+  }
+  .btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+  .btn-secondary{
+    background:transparent;
+    color:var(--text-1);
+    border:1px solid var(--border);
+    margin-top:8px;
+  }
+  .btn-secondary:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+  .btn-secondary:disabled{opacity:0.5;cursor:not-allowed}
+  .btn-danger{
+    background:transparent;
+    color:var(--error);
+    border:1px solid rgba(226,92,92,0.4);
+    margin-top:8px;
+  }
+  .btn-danger:hover{background:rgba(226,92,92,0.1)}
+  .btn-row{display:flex;gap:8px}
+  .btn-row .btn{margin-top:8px}
+
+  /* status */
+  .status-box{
+    margin-top:12px;
+    padding:10px 12px;
+    background:var(--bg-3);
+    border-radius:8px;
+    font-size:12px;
+    color:var(--text-1);
+    display:flex;align-items:center;gap:8px;
+    min-height:38px;
+  }
+  .dot{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--text-2);
+    flex-shrink:0;
+  }
+  .dot.training{background:var(--warn);animation:pulse 1.2s infinite}
+  .dot.ready{background:var(--accent);box-shadow:0 0 6px var(--accent)}
+  .dot.error{background:var(--error)}
+  .dot.warn{background:var(--warn);box-shadow:0 0 6px var(--warn)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+  /* ---------- SECOES ---------- */
+  .stage-head{
+    display:flex;align-items:flex-start;justify-content:space-between;
+    gap:16px;margin-bottom:4px;flex-wrap:wrap;
+  }
+  .stage-eyebrow{
+    font-size:10px;font-weight:700;letter-spacing:0.12em;
+    text-transform:uppercase;color:var(--accent);
+    margin-bottom:4px;
+  }
+  .section-title{
+    font-size:17px;
+    font-weight:700;
+    color:var(--text-0);
+    margin-bottom:6px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .section-desc{
+    font-size:12px;
+    color:var(--text-1);
+    margin-bottom:16px;
+    line-height:1.6;
+    max-width:820px;
+  }
+  .section-desc code{
+    background:var(--bg-2);
+    padding:2px 6px;border-radius:4px;
+    font-size:11px;color:var(--accent);
+  }
+  .stage-nav{display:flex;gap:8px;flex-shrink:0}
+  .stage-nav button{
+    background:var(--bg-2);
+    border:1px solid var(--border);
+    color:var(--text-1);
+    border-radius:8px;
+    padding:7px 14px;
+    font-size:12px;font-weight:600;
+    cursor:pointer;font-family:inherit;
+    transition:all 0.15s;
+  }
+  .stage-nav button:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+  .stage-nav button:disabled{opacity:0.4;cursor:not-allowed}
+
+  /* metric grid */
+  .metric-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+    gap:12px;
+    margin-bottom:16px;
+  }
+  .metric-card{
+    background:var(--bg-1);
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    padding:14px 16px;
+  }
+  .metric-card .label{
+    font-size:11px;
+    color:var(--text-1);
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    margin-bottom:6px;
+  }
+  .metric-card .value{
+    font-size:24px;
+    font-weight:700;
+    color:var(--text-0);
+    font-variant-numeric:tabular-nums;
+  }
+  .metric-card .value.accent{color:var(--accent)}
+  .metric-card .value.warn{color:var(--warn)}
+  .metric-card .value.info{color:var(--info)}
+  .metric-card .sublabel{font-size:10px;color:var(--text-2);margin-top:4px}
+
+  /* charts */
+  .chart-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    margin-bottom:16px;
+  }
+  .chart-card{
+    background:var(--bg-1);
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    padding:16px;
+  }
+  .chart-card h4{
+    font-size:12px;
+    font-weight:700;
+    color:var(--text-0);
+    margin-bottom:10px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+  }
+  .chart-wrap{height:260px;position:relative}
+  .chart-wrap.tall{height:300px}
+
+  /* upload / dataset */
+  .class-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+    gap:14px;
+  }
+  .class-box{
+    background:var(--bg-1);
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    padding:14px;
+  }
+  .class-box-head{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:10px;
+  }
+  .class-name{
+    display:flex;align-items:center;gap:8px;
+    font-size:13px;font-weight:700;color:var(--text-0);
+  }
+  .class-swatch{
+    width:12px;height:12px;border-radius:4px;flex-shrink:0;
+  }
+  .class-count{
+    font-size:11px;color:var(--text-1);
+    font-variant-numeric:tabular-nums;
+    background:var(--bg-3);
+    padding:2px 8px;border-radius:999px;
+  }
+  .dropzone{
+    border:1.5px dashed var(--border);
+    border-radius:10px;
+    padding:14px 10px;
+    text-align:center;
+    font-size:11px;
+    color:var(--text-2);
+    cursor:pointer;
+    transition:all 0.15s;
+    background:var(--bg-2);
+  }
+  .dropzone:hover,.dropzone.dragover{
+    border-color:var(--accent);
+    color:var(--accent);
+    background:var(--accent-soft);
+  }
+  .dropzone input{display:none}
+  .ds-preview{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:4px;
+    margin-top:10px;
+    padding:8px;
+    background:var(--bg-3);
+    border-radius:8px;
+    min-height:50px;
+  }
+  .ds-thumb{
+    aspect-ratio:1;
+    background:#0a0d12;
+    border-radius:4px;
+    position:relative;
+    overflow:hidden;
+    cursor:pointer;
+  }
+  .ds-thumb canvas{width:100%;height:100%;display:block;object-fit:cover}
+  .ds-thumb::after{
+    content:"✕";
+    position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(226,92,92,0.65);
+    color:#fff;font-size:13px;font-weight:700;
+    opacity:0;transition:opacity 0.15s;
+  }
+  .ds-thumb:hover::after{opacity:1}
+  .ds-more{
+    aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+    font-size:10px;color:var(--text-2);
+    background:var(--bg-2);border-radius:4px;
+  }
+  .clear-class-btn{
+    background:none;border:none;color:var(--text-2);
+    font-size:11px;cursor:pointer;font-family:inherit;
+    padding:2px 6px;border-radius:6px;
+  }
+  .clear-class-btn:hover{color:var(--error);background:rgba(226,92,92,0.08)}
+
+  /* confusion matrix */
+  .cm-table{
+    border-collapse:collapse;
+    margin:0 auto;
+  }
+  .cm-table th,.cm-table td{
+    padding:8px 10px;
+    text-align:center;
+    font-size:12px;
+    border:1px solid var(--border);
+    min-width:42px;
+  }
+  .cm-table th{
+    background:var(--bg-2);
+    color:var(--text-1);
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    font-size:10px;
+  }
+  .cm-table td{
+    font-variant-numeric:tabular-nums;
+    font-weight:600;
+    background:var(--bg-1);
+  }
+  .cm-table .cm-axis{
+    background:transparent;
+    border:none;
+    color:var(--text-2);
+    font-style:italic;
+  }
+
+  /* report table */
+  .report-table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:12px;
+  }
+  .report-table th,.report-table td{
+    padding:8px 12px;
+    text-align:left;
+    border-bottom:1px solid var(--border-soft);
+  }
+  .report-table th{
+    background:var(--bg-2);
+    color:var(--text-1);
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    font-size:10px;
+  }
+  .report-table td{
+    background:var(--bg-1);
+    font-variant-numeric:tabular-nums;
+  }
+  .report-table tr:hover td{background:var(--bg-2)}
+  .report-table td.num{text-align:right}
+  .report-table th.num{text-align:right}
+
+  /* banners */
+  .banner{
+    border-radius:10px;
+    padding:14px 16px;
+    font-size:12.5px;
+    line-height:1.55;
+    margin-bottom:16px;
+    display:flex;align-items:flex-start;gap:10px;
+  }
+  .banner .b-ico{font-size:18px;line-height:1}
+  .banner.ok{background:var(--accent-soft);border:1px solid rgba(63,154,75,0.35);color:var(--text-0)}
+  .banner.warn{background:rgba(224,168,60,0.1);border:1px solid rgba(224,168,60,0.35);color:var(--text-0)}
+  .banner.info{background:rgba(78,161,211,0.1);border:1px solid rgba(78,161,211,0.3);color:var(--text-0)}
+  .banner .btn-mini{
+    display:inline-flex;align-items:center;gap:6px;
+    margin-top:8px;
+    background:var(--bg-2);
+    border:1px solid var(--border);
+    color:var(--text-0);
+    border-radius:8px;
+    padding:6px 12px;
+    font-size:12px;font-weight:600;
+    cursor:pointer;font-family:inherit;
+  }
+  .banner .btn-mini:hover{border-color:var(--accent);color:var(--accent)}
+
+  /* loading bar */
+  .training-progress{
+    margin-top:10px;
+    height:4px;
+    background:var(--bg-3);
+    border-radius:2px;
+    overflow:hidden;
+    display:none;
+  }
+  .training-progress.active{display:block}
+  .training-progress-fill{
+    height:100%;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    transition:width 0.3s;
+    width:0;
+  }
+
+  /* console */
+  .console-card{
+    background:#0a0d12;
+    border:1px solid var(--border-soft);
+    border-radius:10px;
+    padding:10px;
+    height:170px;
+    overflow-y:auto;
+    font-family:var(--mono);
+    font-size:10.5px;
+    line-height:1.55;
+  }
+  .console-card .ln{white-space:pre-wrap;word-break:break-word}
+  .console-card .t{color:var(--text-2)}
+  .console-card .info{color:var(--text-1)}
+  .console-card .ok{color:var(--accent)}
+  .console-card .warn{color:var(--warn)}
+  .console-card .err{color:var(--error)}
+
+  /* prediction cards */
+  .pred-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
+    gap:14px;
+  }
+  .pred-card{
+    background:var(--bg-1);
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    padding:12px;
+  }
+  .pred-card .pred-img{
+    width:100%;aspect-ratio:1;
+    background:#0a0d12;border-radius:8px;
+    overflow:hidden;margin-bottom:10px;
+  }
+  .pred-card .pred-img canvas{width:100%;height:100%;display:block;object-fit:cover}
+  .pred-card .pred-name{font-size:11px;color:var(--text-2);margin-bottom:6px;word-break:break-all}
+  .pred-card .pred-top{
+    display:flex;align-items:baseline;justify-content:space-between;gap:8px;
+    margin-bottom:8px;
+  }
+  .pred-card .pred-class{font-size:14px;font-weight:700}
+  .pred-card .pred-conf{font-size:13px;font-weight:700;color:var(--text-0);font-variant-numeric:tabular-nums}
+  .prob-row{display:flex;align-items:center;gap:8px;margin-top:5px}
+  .prob-row .p-lab{font-size:10px;color:var(--text-1);width:72px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .prob-row .p-bar{flex:1;height:6px;background:var(--bg-3);border-radius:3px;overflow:hidden}
+  .prob-row .p-fill{height:100%;border-radius:3px}
+  .prob-row .p-val{font-size:10px;color:var(--text-2);width:40px;text-align:right;font-variant-numeric:tabular-nums}
+
+  /* experimentos */
+  section.experiments{
+    border-top:1px solid var(--border);
+    background:var(--bg-1);
+    padding:24px 28px 30px;
+  }
+  .exp-head{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:14px;margin-bottom:14px;flex-wrap:wrap;
+  }
+  .exp-head .section-title{margin-bottom:0}
+  .exp-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .exp-actions .btn{width:auto;padding:8px 14px;font-size:12px;margin-top:0}
+  .exp-table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border-soft);margin-bottom:16px}
+  .exp-table{width:100%;border-collapse:collapse;font-size:12px;min-width:900px}
+  .exp-table th,.exp-table td{
+    padding:9px 12px;text-align:left;
+    border-bottom:1px solid var(--border-soft);
+    white-space:nowrap;
+  }
+  .exp-table th{
+    background:var(--bg-2);color:var(--text-1);
+    font-weight:600;text-transform:uppercase;
+    letter-spacing:0.04em;font-size:10px;
+    position:sticky;top:0;
+  }
+  .exp-table td{background:var(--bg-0);font-variant-numeric:tabular-nums}
+  .exp-table tr:hover td{background:var(--bg-2)}
+  .exp-table td.num,.exp-table th.num{text-align:right}
+  .exp-table .run-dot{
+    display:inline-block;width:10px;height:10px;border-radius:3px;
+    margin-right:8px;vertical-align:-1px;
+  }
+  .exp-table input[type="checkbox"]{accent-color:var(--accent);cursor:pointer}
+  .exp-del{
+    background:none;border:none;color:var(--text-2);
+    cursor:pointer;font-size:13px;font-family:inherit;
+    padding:2px 6px;border-radius:6px;
+  }
+  .exp-del:hover{color:var(--error);background:rgba(226,92,92,0.08)}
+  .exp-empty{
+    padding:26px;text-align:center;color:var(--text-2);font-size:12px;
+    background:var(--bg-0);
+  }
+  .best-star{color:var(--warn)}
+
+  pre.code-block{
+    background:#0a0d12;
+    border:1px solid var(--border-soft);
+    border-radius:10px;
+    padding:14px;
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--text-1);
+    overflow-x:auto;
+    line-height:1.6;
+  }
+  pre.code-block .k{color:var(--info)}
+  pre.code-block .s{color:var(--accent)}
+  pre.code-block .c{color:var(--text-2);font-style:italic}
+
+  /* sistema */
+  .sys-row{
+    display:flex;justify-content:space-between;align-items:center;
+    font-size:11px;color:var(--text-1);
+    padding:4px 0;
+    border-bottom:1px dashed var(--border-soft);
+  }
+  .sys-row:last-child{border-bottom:none}
+  .sys-row b{
+    color:var(--text-0);
+    font-variant-numeric:tabular-nums;
+    font-weight:600;
+    font-family:var(--mono);
+    font-size:10.5px;
+  }
+
+  .hidden{display:none !important}
+
+  /* footer */
+  footer{
+    padding:14px 28px;
+    text-align:center;
+    border-top:1px solid var(--border);
+    color:var(--text-2);
+    font-size:11px;
+    background:var(--bg-1);
+  }
+  footer a{color:var(--text-1);text-decoration:none}
+  footer a:hover{color:var(--accent)}
+
+  /* responsive */
+  @media (max-width:1100px){
+    main.layout{grid-template-columns:1fr}
+    aside.sidebar{
+      position:static;
+      height:auto;
+      border-right:none;
+      border-bottom:1px solid var(--border);
+    }
+    .chart-grid{grid-template-columns:1fr}
+  }
+
+  /* ====== audio.sys ====== */
+  .recorder{display:flex;flex-direction:column;gap:10px}
+  .rec-btn{
+    display:flex;align-items:center;justify-content:center;gap:9px;
+    width:100%;padding:13px;border-radius:10px;cursor:pointer;
+    border:1px solid var(--border);background:var(--bg-3);color:var(--text-0);
+    font-size:13px;font-weight:600;transition:.15s;font-family:inherit;
+  }
+  .rec-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .rec-btn .rec-led{width:11px;height:11px;border-radius:50%;background:var(--error);flex-shrink:0}
+  .rec-btn.armed{border-color:var(--error);color:var(--error);background:rgba(226,92,92,0.08)}
+  .rec-btn.armed .rec-led{animation:recpulse .9s infinite}
+  .rec-btn:disabled{opacity:.45;cursor:not-allowed}
+  @keyframes recpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.8)}}
+  .level-meter{height:8px;border-radius:4px;background:var(--bg-3);overflow:hidden;border:1px solid var(--border-soft)}
+  .level-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--warn),var(--error));transition:width .05s linear}
+  .rec-prog{height:4px;border-radius:3px;background:var(--bg-3);overflow:hidden;margin-top:2px}
+  .rec-prog-fill{height:100%;width:0%;background:var(--info)}
+  .rec-hint{font-size:10.5px;color:var(--text-2);text-align:center}
+  .sample-list{display:flex;flex-direction:column;gap:5px;margin-top:10px;max-height:230px;overflow-y:auto}
+  .sample-item{
+    display:flex;align-items:center;gap:8px;background:var(--bg-1);
+    border:1px solid var(--border-soft);border-radius:8px;padding:5px 8px;
+  }
+  .sample-item canvas{width:74px;height:26px;flex-shrink:0;background:var(--bg-0);border-radius:4px}
+  .sample-item .s-name{font-size:10.5px;color:var(--text-1);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sample-item .s-btn{
+    background:var(--bg-3);border:1px solid var(--border);color:var(--text-1);
+    border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:12px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;transition:.15s;
+  }
+  .sample-item .s-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .sample-item .s-btn.del:hover{border-color:var(--error);color:var(--error)}
+  .spec-canvas{width:100%;height:120px;border-radius:8px;background:var(--bg-0);display:block;image-rendering:pixelated}
+  .mic-note{font-size:11px;color:var(--text-2);margin-top:8px;line-height:1.5}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <div class="brand-icon">🎙️</div>
+    <div>
+      <h1>Audio<span>.sys</span></h1>
+      <p>Aprendizado de Máquina Centrado no Ser Humano · ICD · IFSC · Prof. Ramon Mayor Martins</p>
+    </div>
+  </div>
+  <div class="header-meta">
+    <span class="pill dim" id="pillRuns">🧪 0 experimentos</span>
+    <span class="pill dim" id="pillBackend">backend: ?</span>
+    <span class="pill warn" id="tfStatus">Carregando TF.js</span>
+  </div>
+</header>
+
+<!-- ============ PIPELINE AMCH (Martins et al., 2024) ============ -->
+<div class="pipeline-wrap">
+  <svg viewBox="0 0 1080 152" xmlns="http://www.w3.org/2000/svg" role="navigation" aria-label="Etapas do Aprendizado de Máquina Centrado no Ser Humano">
+    <defs>
+      <marker id="arrowG" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" class="loop-arrow"/>
+      </marker>
+    </defs>
+
+    <!-- ciclo treinamento <-> avaliação -->
+    <path class="loop-path" d="M 622 38 C 622 8, 450 8, 450 38" marker-end="url(#arrowG)"/>
+    <path class="loop-path" d="M 450 110 C 450 142, 622 142, 622 110" marker-end="url(#arrowG)"/>
+
+    <g class="stg" id="stg1" data-stage="1">
+      <title>Etapa 1 · Análise dos requisitos</title>
+      <polygon class="chev" points="20,44 162,44 180,74 162,104 20,104 38,74"/>
+      <text x="106" y="70" text-anchor="middle"><tspan x="106" dy="0">Análise dos</tspan><tspan x="106" dy="16">requisitos</tspan></text>
+      <g class="badge"><circle cx="166" cy="50" r="8" fill="#3F9A4B"/><text x="166" y="54" text-anchor="middle" style="fill:#fff;font-size:10px">✓</text></g>
+    </g>
+    <g class="stg" id="stg2" data-stage="2">
+      <title>Etapa 2 · Preparação de dados</title>
+      <polygon class="chev" points="192,44 334,44 352,74 334,104 192,104 210,74"/>
+      <text x="278" y="70" text-anchor="middle"><tspan x="278" dy="0">Preparação</tspan><tspan x="278" dy="16">de dados</tspan></text>
+      <g class="badge"><circle cx="338" cy="50" r="8" fill="#3F9A4B"/><text x="338" y="54" text-anchor="middle" style="fill:#fff;font-size:10px">✓</text></g>
+    </g>
+    <g class="stg" id="stg3" data-stage="3">
+      <title>Etapa 3 · Treinamento do modelo</title>
+      <polygon class="chev" points="364,44 506,44 524,74 506,104 364,104 382,74"/>
+      <text x="450" y="70" text-anchor="middle"><tspan x="450" dy="0">Treinamento</tspan><tspan x="450" dy="16">do modelo</tspan></text>
+      <g class="badge"><circle cx="510" cy="50" r="8" fill="#3F9A4B"/><text x="510" y="54" text-anchor="middle" style="fill:#fff;font-size:10px">✓</text></g>
+    </g>
+    <g class="stg" id="stg4" data-stage="4">
+      <title>Etapa 4 · Avaliação do modelo</title>
+      <polygon class="chev" points="536,44 678,44 696,74 678,104 536,104 554,74"/>
+      <text x="622" y="70" text-anchor="middle"><tspan x="622" dy="0">Avaliação do</tspan><tspan x="622" dy="16">modelo</tspan></text>
+      <g class="badge"><circle cx="682" cy="50" r="8" fill="#3F9A4B"/><text x="682" y="54" text-anchor="middle" style="fill:#fff;font-size:10px">✓</text></g>
+    </g>
+    <g class="stg" id="stg5" data-stage="5">
+      <title>Etapa 5 · Predição</title>
+      <polygon class="chev" points="708,44 850,44 868,74 850,104 708,104 726,74"/>
+      <text x="794" y="79" text-anchor="middle">Predição</text>
+      <g class="badge"><circle cx="854" cy="50" r="8" fill="#3F9A4B"/><text x="854" y="54" text-anchor="middle" style="fill:#fff;font-size:10px">✓</text></g>
+    </g>
+    <g class="stg" id="stg6" data-stage="6">
+      <title>Etapa 6 · Exportação</title>
+      <polygon class="chev" points="880,44 1022,44 1040,74 1022,104 880,104 898,74"/>
+      <text x="966" y="79" text-anchor="middle">Exportação</text>
+      <g class="badge"><circle cx="1026" cy="50" r="8" fill="#3F9A4B"/><text x="1026" y="54" text-anchor="middle" style="fill:#fff;font-size:10px">✓</text></g>
+    </g>
+  </svg>
+  <div class="pipeline-caption">Etapas do Aprendizado de Máquina Centrado no Ser Humano · Fonte: Martins et al. (2024) · clique em uma etapa para navegar</div>
+</div>
+
+<main class="layout">
+<!-- ==================== SIDEBAR ==================== -->
+<aside class="sidebar">
+
+  <!-- ETAPA 1 -->
+  <div class="sb-stage" id="sb1">
+    <div class="card">
+      <h3><span class="ico">📋</span> Projeto</h3>
+      <label class="field">Nome do projeto</label>
+      <input type="text" id="projName" value="Meu classificador de sons">
+      <label class="field">Problema / contexto (opcional)</label>
+      <textarea id="projDesc" placeholder="Ex.: distinguir palavras faladas, ruídos de máquinas ou notas musicais"></textarea>
+    </div>
+
+    <div class="card">
+      <h3><span class="ico">🏷️</span> Classes</h3>
+      <label class="field">Número de classes</label>
+      <div class="range-row">
+        <input type="range" id="numClasses" min="2" max="8" step="1" value="3">
+        <span class="range-val" id="numClassesVal">3</span>
+      </div>
+      <div id="classNamesBox"></div>
+      <div class="card-help">Dê nomes com significado para o seu problema (ex.: <strong>sim</strong>, <strong>não</strong>, <strong>silêncio</strong>). Nomes claros ajudam na leitura dos resultados.</div>
+    </div>
+
+    <div class="card">
+      <h3><span class="ico">🎯</span> Critérios de sucesso</h3>
+      <label class="field">Métrica alvo</label>
+      <select id="targetMetric">
+        <option value="acc">Acurácia (teste)</option>
+        <option value="f1">F1 macro (teste)</option>
+      </select>
+      <label class="field">Limiar de aceitação</label>
+      <div class="range-row">
+        <input type="range" id="targetThr" min="50" max="99" step="1" value="85">
+        <span class="range-val" id="targetThrVal">85%</span>
+      </div>
+      <label class="field">Mínimo de amostras por classe</label>
+      <input type="number" id="minPerClass" min="3" max="500" step="1" value="8">
+      <div class="card-help">Estes critérios vêm do <strong>ser humano</strong>: o que torna o modelo aceitável para o seu uso? Eles serão verificados na etapa de avaliação.</div>
+    </div>
+
+    <button class="btn btn-primary" id="btnLockReq">✓ Definir requisitos</button>
+    <button class="btn btn-secondary hidden" id="btnUnlockReq">✎ Editar requisitos</button>
+    <div class="status-box"><span class="dot" id="reqDot"></span><span id="reqStatus">Aguardando definição dos requisitos.</span></div>
+  </div>
+
+  <!-- ETAPA 2 -->
+  <div class="sb-stage hidden" id="sb2">
+    <div class="card">
+      <h3><span class="ico">✂️</span> Divisão dos dados</h3>
+      <label class="field">Treinamento</label>
+      <div class="range-row">
+        <input type="range" id="splitTrain" min="50" max="90" step="5" value="70">
+        <span class="range-val" id="splitTrainVal">70%</span>
+      </div>
+      <label class="field">Validação</label>
+      <div class="range-row">
+        <input type="range" id="splitVal" min="5" max="40" step="5" value="20">
+        <span class="range-val" id="splitValVal">20%</span>
+      </div>
+      <label class="field">Teste (restante)</label>
+      <div class="range-row">
+        <span class="range-val" id="splitTestVal" style="text-align:left">10%</span>
+      </div>
+      <div class="card-help">A divisão é <strong>estratificada</strong>: cada classe mantém a mesma proporção nos três conjuntos.</div>
+    </div>
+
+    <div class="card">
+      <h3><span class="ico">🌊</span> Pré-processamento (áudio)</h3>
+      <label class="field">Duração do clipe</label>
+      <div class="chips" id="durChips">
+        <label><input type="radio" name="dur" value="1"><span>1 s</span></label>
+        <label><input type="radio" name="dur" value="2" checked><span>2 s</span></label>
+        <label><input type="radio" name="dur" value="3"><span>3 s</span></label>
+      </div>
+      <label class="field">Janela FFT</label>
+      <div class="chips" id="fftChips">
+        <label><input type="radio" name="fft" value="512"><span>512</span></label>
+        <label><input type="radio" name="fft" value="1024" checked><span>1024</span></label>
+      </div>
+      <label class="field">Bandas mel</label>
+      <div class="chips" id="melChips">
+        <label><input type="radio" name="mel" value="40"><span>40</span></label>
+        <label><input type="radio" name="mel" value="64" checked><span>64</span></label>
+        <label><input type="radio" name="mel" value="80"><span>80</span></label>
+      </div>
+      <label class="check-row"><input type="checkbox" id="augNoise"> Aumento: ruído gaussiano</label>
+      <label class="check-row"><input type="checkbox" id="augShift"> Aumento: deslocamento temporal</label>
+      <label class="check-row"><input type="checkbox" id="augSpec"> Aumento: SpecAugment (máscaras tempo/freq)</label>
+      <div class="card-help">Cada clipe vira um <strong>espectrograma log-mel</strong> (taxa fixa de 16 kHz), tratado como imagem por uma CNN. Os aumentos dobram o conjunto de treino.</div>
+    </div>
+
+    <button class="btn btn-primary" id="btnPrepare">⚙ Preparar dados</button>
+    <button class="btn btn-danger" id="btnClearDS">🗑 Limpar amostras</button>
+    <div class="status-box"><span class="dot" id="prepDot"></span><span id="prepStatus">Grave ou envie áudios para cada classe no painel ao lado.</span></div>
+  </div>
+
+  <!-- ETAPA 3 -->
+  <div class="sb-stage hidden" id="sb3">
+    <div class="card">
+      <h3><span class="ico">🧠</span> Modelo</h3>
+      <label class="field">Arquitetura</label>
+      <select id="modelSel">
+        <option value="sg_micro">CNN Espectro Micro · do zero</option>
+        <option value="sg_std" selected>CNN Espectro Padrão · do zero</option>
+        <option value="sg_deep">CNN Espectro Profunda · do zero</option>
+      </select>
+      <div class="card-help" id="modelHelp"></div>
+    </div>
+
+    <div class="card">
+      <h3><span class="ico">🎛️</span> Hiperparâmetros</h3>
+      <label class="field">Épocas</label>
+      <div class="range-row">
+        <input type="range" id="hpEpochs" min="5" max="100" step="5" value="25">
+        <span class="range-val" id="hpEpochsVal">25</span>
+      </div>
+      <label class="field">Batch size</label>
+      <div class="chips" id="hpBatch">
+        <label><input type="radio" name="bs" value="8"><span>8</span></label>
+        <label><input type="radio" name="bs" value="16" checked><span>16</span></label>
+        <label><input type="radio" name="bs" value="32"><span>32</span></label>
+      </div>
+      <label class="field">Taxa de aprendizado</label>
+      <select id="hpLR">
+        <option value="0.0001">0.0001</option>
+        <option value="0.0005">0.0005</option>
+        <option value="0.001" selected>0.001</option>
+        <option value="0.005">0.005</option>
+        <option value="0.01">0.01</option>
+      </select>
+      <label class="field">Otimizador</label>
+      <div class="chips" id="hpOpt">
+        <label><input type="radio" name="opt" value="adam" checked><span>Adam</span></label>
+        <label><input type="radio" name="opt" value="sgd"><span>SGD</span></label>
+        <label><input type="radio" name="opt" value="rmsprop"><span>RMSprop</span></label>
+      </div>
+      <label class="field">Dropout</label>
+      <div class="range-row">
+        <input type="range" id="hpDrop" min="0" max="50" step="5" value="20">
+        <span class="range-val" id="hpDropVal">0.20</span>
+      </div>
+      <label class="field">Neurônios da camada densa</label>
+      <div class="chips" id="hpDense">
+        <label><input type="radio" name="du" value="32"><span>32</span></label>
+        <label><input type="radio" name="du" value="64" checked><span>64</span></label>
+        <label><input type="radio" name="du" value="128"><span>128</span></label>
+        <label><input type="radio" name="du" value="256"><span>256</span></label>
+      </div>
+      <label class="check-row"><input type="checkbox" id="hpES"> Parada antecipada (val_loss)</label>
+      <label class="field">Paciência (épocas)</label>
+      <input type="number" id="hpPatience" min="2" max="30" step="1" value="5">
+    </div>
+
+    <button class="btn btn-primary" id="btnTrain">▶ Iniciar treinamento</button>
+    <div class="btn-row">
+      <button class="btn btn-secondary" id="btnStop" disabled>■ Parar</button>
+      <button class="btn btn-secondary" id="btnClearModel">🗑 Limpar modelo</button>
+    </div>
+    <div class="training-progress" id="progBar"><div class="training-progress-fill" id="progFill"></div></div>
+    <div class="status-box"><span class="dot" id="trainDot"></span><span id="trainStatus">Modelo ainda não treinado.</span></div>
+  </div>
+
+  <!-- ETAPA 4 -->
+  <div class="sb-stage hidden" id="sb4">
+    <div class="card">
+      <h3><span class="ico">📈</span> Avaliação</h3>
+      <label class="field">Conjunto de avaliação</label>
+      <div class="chips" id="evalSet">
+        <label><input type="radio" name="evset" value="test" checked><span>Teste</span></label>
+        <label><input type="radio" name="evset" value="val"><span>Validação</span></label>
+      </div>
+      <button class="btn btn-primary" id="btnEval">✓ Avaliar modelo</button>
+      <button class="btn btn-secondary" id="btnRegister">🧪 Registrar experimento</button>
+      <div class="card-help">Registrar um experimento salva configuração, curvas e métricas na seção <strong>Experimentos</strong> para comparação entre modelos.</div>
+    </div>
+    <div class="card">
+      <h3><span class="ico">🎯</span> Critério de sucesso</h3>
+      <div class="card-help" id="critInfo">Defina os requisitos na etapa 1.</div>
+    </div>
+    <div class="status-box"><span class="dot" id="evalDot"></span><span id="evalStatus">Modelo ainda não avaliado.</span></div>
+  </div>
+
+  <!-- ETAPA 5 -->
+  <div class="sb-stage hidden" id="sb5">
+    <div class="card">
+      <h3><span class="ico">🔮</span> Inferência</h3>
+      <button class="rec-btn" id="btnRecPred"><span class="rec-led"></span><span id="recPredLabel">● Gravar clipe de teste</span></button>
+      <div class="level-meter" style="margin-top:8px"><div class="level-fill" id="predLevel"></div></div>
+      <div class="rec-prog"><div class="rec-prog-fill" id="predProg"></div></div>
+      <div class="rec-hint" id="predHint">Grava no microfone com a duração configurada.</div>
+      <div class="dropzone" id="predDrop" style="margin-top:12px">
+        ⬆ ou arraste arquivos de áudio novos<br>(não vistos no treinamento)
+        <input type="file" id="predFiles" accept="audio/*" multiple>
+      </div>
+      <button class="btn btn-secondary" id="btnClearPred">🗑 Limpar resultados</button>
+      <div class="card-help">Os áudios testados aqui <strong>não</strong> entram no dataset. O modelo retorna a classe prevista, a confiança em cada classe e o espectrograma do clipe.</div>
+    </div>
+  </div>
+
+  <!-- ETAPA 6 -->
+  <div class="sb-stage hidden" id="sb6">
+    <div class="card">
+      <h3><span class="ico">📦</span> Exportar</h3>
+      <button class="btn btn-primary" id="btnExpModel">⬇ Modelo (TF.js)</button>
+      <button class="btn btn-secondary" id="btnExpMeta">⬇ Metadados (JSON)</button>
+      <button class="btn btn-secondary" id="btnExpReport">⬇ Relatório do experimento (JSON)</button>
+      <div class="card-help">O modelo é salvo como <strong>model.json + pesos .bin</strong> (formato TensorFlow.js). Os metadados guardam os parâmetros de áudio (duração, FFT, bandas mel) necessários para reproduzir o pré-processamento.</div>
+    </div>
+  </div>
+
+  <!-- PERSISTENTE -->
+  <div class="card">
+    <h3><span class="ico">🖥️</span> Sistema</h3>
+    <div class="sys-row"><span>Backend</span><b id="sysBackend">?</b></div>
+    <div class="sys-row"><span>Tensores ativos</span><b id="sysTensors">0</b></div>
+    <div class="sys-row"><span>Memória (tensores)</span><b id="sysMem">0 MB</b></div>
+    <div class="sys-row"><span>Dataset</span><b id="sysData">vazio</b></div>
+    <div class="sys-row"><span>Modelo</span><b id="sysModel">nenhum</b></div>
+  </div>
+
+  <div class="card">
+    <h3><span class="ico">🧾</span> Console <button class="clear-class-btn" id="btnClearLog" style="margin-left:auto">limpar</button></h3>
+    <div class="console-card" id="consoleBox"></div>
+  </div>
+
+</aside>
+
+<!-- ==================== PAINEL ==================== -->
+<section class="panel">
+
+  <!-- ETAPA 1 -->
+  <div class="pn-stage" id="pn1">
+    <div class="stage-head">
+      <div>
+        <div class="stage-eyebrow">Etapa 1 · 6</div>
+        <div class="section-title">📋 Análise dos requisitos</div>
+      </div>
+      <div class="stage-nav">
+        <button disabled>← Anterior</button>
+        <button onclick="gotoStage(2)">Próxima →</button>
+      </div>
+    </div>
+    <div class="section-desc">
+      No AMCH, tudo começa pelas <strong>pessoas</strong>: que problema o modelo resolve, quais classes fazem sentido e qual desempenho é aceitável.
+      Defina o projeto, as classes e os critérios de sucesso na barra lateral. Esses requisitos guiam todas as etapas seguintes.
+    </div>
+    <div class="metric-grid">
+      <div class="metric-card"><div class="label">Classes</div><div class="value accent" id="m1Classes">3</div></div>
+      <div class="metric-card"><div class="label">Métrica alvo</div><div class="value info" id="m1Metric" style="font-size:16px">Acurácia</div></div>
+      <div class="metric-card"><div class="label">Limiar</div><div class="value" id="m1Thr">85%</div></div>
+      <div class="metric-card"><div class="label">Mín. por classe</div><div class="value warn" id="m1Min">20</div></div>
+    </div>
+    <div class="card">
+      <h3><span class="ico">🏷️</span> Classes definidas</h3>
+      <div id="reqClassList" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+    </div>
+    <div class="banner info"><span class="b-ico">💡</span><div>
+      Requisitos bem definidos evitam o erro mais comum em ML: treinar um modelo tecnicamente bom para o <strong>problema errado</strong>.
+      Quando estiver pronto, clique em <strong>Definir requisitos</strong> e avance para a preparação de dados.
+    </div></div>
+  </div>
+
+  <!-- ETAPA 2 -->
+  <div class="pn-stage hidden" id="pn2">
+    <div class="stage-head">
+      <div>
+        <div class="stage-eyebrow">Etapa 2 · 6</div>
+        <div class="section-title">🗂️ Preparação de dados</div>
+      </div>
+      <div class="stage-nav">
+        <button onclick="gotoStage(1)">← Anterior</button>
+        <button onclick="gotoStage(3)">Próxima →</button>
+      </div>
+    </div>
+    <div class="section-desc">
+      Grave clipes pelo microfone ou envie arquivos (<code>wav</code>, <code>mp3</code>, <code>webm</code>) para cada classe. Procure <strong>variedade</strong> (vozes, distâncias, ruído de fundo) e <strong>equilíbrio</strong> entre classes.
+      Depois, clique em <strong>Preparar dados</strong> para gerar os espectrogramas e dividir em treino, validação e teste.
+    </div>
+    <div class="class-grid" id="classGrid"></div>
+    <div class="chart-grid" style="margin-top:16px">
+      <div class="chart-card">
+        <h4>Balanceamento das classes (nº de amostras)</h4>
+        <div class="chart-wrap"><canvas id="balanceChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h4>Divisão dos conjuntos</h4>
+        <div id="splitTableWrap" class="card-help">Os dados ainda não foram preparados.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ETAPA 3 -->
+  <div class="pn-stage hidden" id="pn3">
+    <div class="stage-head">
+      <div>
+        <div class="stage-eyebrow">Etapa 3 · 6</div>
+        <div class="section-title">🏋️ Treinamento do modelo</div>
+      </div>
+      <div class="stage-nav">
+        <button onclick="gotoStage(2)">← Anterior</button>
+        <button onclick="gotoStage(4)">Próxima →</button>
+      </div>
+    </div>
+    <div class="section-desc">
+      Escolha a arquitetura e os hiperparâmetros na barra lateral e acompanhe as curvas em tempo real.
+      Se a curva de <strong>validação</strong> descolar da de treino, é sinal de sobreajuste: ajuste dropout, aumentos, dados ou épocas e treine de novo (este é o ciclo treinamento ↔ avaliação do AMCH).
+    </div>
+    <div class="metric-grid">
+      <div class="metric-card"><div class="label">Época</div><div class="value" id="m3Epoch">0 / 0</div></div>
+      <div class="metric-card"><div class="label">Loss (treino)</div><div class="value warn" id="m3Loss">·</div></div>
+      <div class="metric-card"><div class="label">Acurácia (treino)</div><div class="value" id="m3Acc">·</div></div>
+      <div class="metric-card"><div class="label">Acurácia (validação)</div><div class="value accent" id="m3ValAcc">·</div></div>
+      <div class="metric-card"><div class="label">Tempo</div><div class="value info" id="m3Time">00:00</div></div>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h4>Perda por época</h4>
+        <div class="chart-wrap"><canvas id="lossChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h4>Acurácia por época</h4>
+        <div class="chart-wrap"><canvas id="accChart"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3><span class="ico">🏗️</span> Arquitetura do modelo</h3>
+      <pre class="code-block" id="archSummary">Selecione um modelo e inicie o treinamento para ver o resumo das camadas.</pre>
+    </div>
+  </div>
+
+  <!-- ETAPA 4 -->
+  <div class="pn-stage hidden" id="pn4">
+    <div class="stage-head">
+      <div>
+        <div class="stage-eyebrow">Etapa 4 · 6</div>
+        <div class="section-title">📈 Avaliação do modelo</div>
+      </div>
+      <div class="stage-nav">
+        <button onclick="gotoStage(3)">← Anterior</button>
+        <button onclick="gotoStage(5)">Próxima →</button>
+      </div>
+    </div>
+    <div class="section-desc">
+      A avaliação usa dados que o modelo <strong>nunca viu</strong> no treinamento. Compare o resultado com o critério de sucesso definido na etapa 1:
+      se não atingiu, volte ao treinamento e ajuste; se atingiu, siga para a predição.
+    </div>
+    <div id="evalBanner"></div>
+    <div class="metric-grid">
+      <div class="metric-card"><div class="label">Acurácia</div><div class="value accent" id="m4Acc">·</div><div class="sublabel" id="m4Set">conjunto: teste</div></div>
+      <div class="metric-card"><div class="label">F1 macro</div><div class="value" id="m4F1">·</div></div>
+      <div class="metric-card"><div class="label">Precisão macro</div><div class="value" id="m4Prec">·</div></div>
+      <div class="metric-card"><div class="label">Revocação macro</div><div class="value" id="m4Rec">·</div></div>
+      <div class="metric-card"><div class="label">Amostras</div><div class="value info" id="m4N">·</div></div>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h4>Matriz de confusão</h4>
+        <div id="cmWrap" class="card-help" style="overflow-x:auto">Avalie o modelo para gerar a matriz.</div>
+      </div>
+      <div class="chart-card">
+        <h4>Relatório por classe</h4>
+        <div id="reportWrap" class="card-help">Avalie o modelo para gerar o relatório.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ETAPA 5 -->
+  <div class="pn-stage hidden" id="pn5">
+    <div class="stage-head">
+      <div>
+        <div class="stage-eyebrow">Etapa 5 · 6</div>
+        <div class="section-title">🔮 Predição</div>
+      </div>
+      <div class="stage-nav">
+        <button onclick="gotoStage(4)">← Anterior</button>
+        <button onclick="gotoStage(6)">Próxima →</button>
+      </div>
+    </div>
+    <div class="section-desc">
+      Hora de usar o modelo no mundo real: grave ou envie áudios novos e observe a classe prevista, a confiança e o espectrograma.
+      Predições erradas aqui são informação valiosa: podem indicar classes acusticamente parecidas ou falta de exemplos no treino.
+    </div>
+    <div class="card-help" id="predEmpty" style="padding:26px;text-align:center;background:var(--bg-1);border-radius:12px;border:1px solid var(--border-soft)">Nenhum áudio classificado ainda. Grave ou envie um clipe pelo painel lateral.</div>
+    <div class="pred-grid" id="predGrid"></div>
+  </div>
+
+  <!-- ETAPA 6 -->
+  <div class="pn-stage hidden" id="pn6">
+    <div class="stage-head">
+      <div>
+        <div class="stage-eyebrow">Etapa 6 · 6</div>
+        <div class="section-title">📦 Exportação</div>
+      </div>
+      <div class="stage-nav">
+        <button onclick="gotoStage(5)">← Anterior</button>
+        <button disabled>Próxima →</button>
+      </div>
+    </div>
+    <div class="section-desc">
+      Exporte o modelo treinado e os metadados para reutilizar fora do Image.sys: em outra página web, em um aplicativo ou convertido para Keras.
+      O relatório do experimento documenta todo o ciclo, do requisito ao resultado.
+    </div>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h4>Como carregar o modelo exportado</h4>
+        <pre class="code-block" id="loadSnippet"></pre>
+      </div>
+      <div class="chart-card">
+        <h4>Metadados do modelo atual</h4>
+        <pre class="code-block" id="metaPreview">Treine um modelo para gerar os metadados.</pre>
+      </div>
+    </div>
+  </div>
+
+</section>
+</main>
+
+<!-- ==================== EXPERIMENTOS ==================== -->
+<section class="experiments">
+  <div class="exp-head">
+    <div>
+      <div class="section-title">🧪 Experimentos</div>
+      <div class="section-desc" style="margin-bottom:0">Registro e comparação de execuções, no estilo Weights &amp; Biases: varie modelo, áudio e hiperparâmetros, registre cada run e compare curvas e métricas finais.</div>
+    </div>
+    <div class="exp-actions">
+      <button class="btn btn-secondary" id="btnExpRunsJson">⬇ Exportar runs (JSON)</button>
+      <button class="btn btn-secondary" id="btnImpRunsJson">⬆ Importar runs (JSON)</button>
+      <input type="file" id="impRunsFile" accept="application/json" class="hidden">
+      <button class="btn btn-danger" id="btnClearRuns">🗑 Limpar tudo</button>
+    </div>
+  </div>
+
+  <div class="exp-table-wrap">
+    <table class="exp-table" id="expTable">
+      <thead>
+        <tr>
+          <th>📊</th><th>Run</th><th>Modelo</th>
+          <th class="num">Épocas</th><th class="num">LR</th><th class="num">Batch</th><th class="num">Dropout</th>
+          <th>Dados</th>
+          <th class="num">Acc val</th><th class="num">Acc teste</th><th class="num">F1 teste</th>
+          <th class="num">Tempo</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="expTbody"></tbody>
+    </table>
+    <div class="exp-empty" id="expEmpty">Nenhum experimento registrado. Treine um modelo e clique em <strong>Registrar experimento</strong> na etapa de avaliação.</div>
+  </div>
+
+  <div class="chart-grid">
+    <div class="chart-card">
+      <h4>Acurácia de validação por época</h4>
+      <div class="chart-wrap tall"><canvas id="cmpLineChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h4>Comparativo no conjunto de teste</h4>
+      <div class="chart-wrap tall"><canvas id="cmpBarChart"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Audio.sys · ICD · IFSC · 2026 · <a href="https://rmayormartins.github.io" target="_blank">Prof. Ramon Mayor Martins</a> · Construído com TensorFlow.js · AMCH: Martins et al. (2024)
+</footer>
+
+<canvas id="workCanvas" class="hidden"></canvas>
+
+<script>
+/* =====================================================================
+   Audio.sys · Aprendizado de Maquina Centrado no Ser Humano
+   Etapas: requisitos > dados > treinamento <-> avaliacao > predicao > exportacao
+   Pipeline de audio: gravacao 16 kHz -> espectrograma log-mel -> CNN
+   ===================================================================== */
+
+const CLASS_COLORS = ['#3F9A4B','#4ea1d3','#e0a83c','#a874e8','#e25c5c','#3dd6c4','#e06ca8','#c9d34e'];
+const RUN_COLORS   = ['#3F9A4B','#4ea1d3','#e0a83c','#a874e8','#e25c5c','#3dd6c4','#e06ca8','#c9d34e','#7f9cf5','#f59e7f'];
+const MODEL_LABEL  = { sg_micro:'CNN Espectro Micro', sg_std:'CNN Espectro Padrao', sg_deep:'CNN Espectro Profunda' };
+const SR = 16000;
+
+const S = {
+  stage: 1,
+  req:   { locked:false, name:'', desc:'', classes:[], metric:'acc', thr:0.85, minPer:8 },
+  data:  { items:[], prepared:false, split:null, counts:{train:0,val:0,test:0} },
+  tens:  { key:null, sets:{} },
+  model: { kind:null, net:null, params:null, specShape:null, trained:false, history:null, durationS:0, totalParams:0 },
+  audio: { stream:null, liveCtx:null, analyser:null, decCtx:null, recording:false },
+  lastEval: null,
+  runs:  [],
+  runSeq: 0,
+  training: false,
+  stopFlag: false
+};
+
+const $ = id => document.getElementById(id);
+const fmtPct = v => (v*100).toFixed(1).replace('.',',') + '%';
+const fmtNum = (v,d=4) => (v==null||isNaN(v)) ? '·' : v.toFixed(d).replace('.',',');
+const nowHMS = () => new Date().toLocaleTimeString('pt-BR',{hour12:false});
+const chipVal = name => { const el = document.querySelector('input[name="'+name+'"]:checked'); return el ? el.value : null; };
+
+/* ---------------- console ---------------- */
+function log(msg, type='info'){
+  const box = $('consoleBox');
+  const ln = document.createElement('div');
+  ln.className = 'ln';
+  ln.innerHTML = '<span class="t">[' + nowHMS() + ']</span> <span class="' + type + '">' + msg + '</span>';
+  box.appendChild(ln);
+  while (box.children.length > 300) box.removeChild(box.firstChild);
+  box.scrollTop = box.scrollHeight;
+}
+$('btnClearLog').addEventListener('click', e => { e.stopPropagation(); $('consoleBox').innerHTML=''; });
+
+/* ---------------- navegacao de etapas ---------------- */
+function gotoStage(n){
+  if (n < 1 || n > 6) return;
+  S.stage = n;
+  for (let i=1; i<=6; i++){
+    $('sb'+i).classList.toggle('hidden', i!==n);
+    $('pn'+i).classList.toggle('hidden', i!==n);
+    $('stg'+i).classList.toggle('active', i===n);
+  }
+  updatePipelineBadges();
+  updateSysCard();
+}
+function updatePipelineBadges(){
+  const done = { 1:S.req.locked, 2:S.data.prepared, 3:S.model.trained, 4:!!S.lastEval, 5:$('predGrid').children.length>0, 6:false };
+  for (let i=1; i<=6; i++) $('stg'+i).classList.toggle('done', !!done[i]);
+}
+document.querySelectorAll('.stg').forEach(g => g.addEventListener('click', () => gotoStage(parseInt(g.dataset.stage))));
+
+/* =====================================================================
+   ETAPA 1 · ANALISE DOS REQUISITOS
+   ===================================================================== */
+function renderClassInputs(){
+  const n = parseInt($('numClasses').value);
+  $('numClassesVal').textContent = n;
+  const box = $('classNamesBox');
+  const prev = [...box.querySelectorAll('input')].map(i => i.value);
+  box.innerHTML = '';
+  for (let i=0; i<n; i++){
+    const lab = document.createElement('label'); lab.className='field'; lab.textContent='Classe '+i;
+    const inp = document.createElement('input'); inp.type='text'; inp.value = prev[i] || ('classe_'+i); inp.dataset.idx=i;
+    box.appendChild(lab); box.appendChild(inp);
+  }
+  refreshReqSummary();
+}
+function readClassNames(){
+  const names = [...$('classNamesBox').querySelectorAll('input')].map((i,k)=>(i.value.trim()||('classe_'+k)));
+  return names.map((nm,i)=> names.indexOf(nm)!==i ? nm+'_'+i : nm);
+}
+function refreshReqSummary(){
+  const names = readClassNames();
+  $('m1Classes').textContent = names.length;
+  $('m1Metric').textContent = $('targetMetric').value==='acc' ? 'Acurácia' : 'F1 macro';
+  $('m1Thr').textContent = $('targetThr').value + '%';
+  $('m1Min').textContent = $('minPerClass').value;
+  $('targetThrVal').textContent = $('targetThr').value + '%';
+  const list = $('reqClassList'); list.innerHTML='';
+  names.forEach((nm,i)=>{
+    const chip = document.createElement('span');
+    chip.style.cssText='display:inline-flex;align-items:center;gap:7px;background:var(--bg-3);border:1px solid var(--border);border-radius:999px;padding:5px 12px;font-size:12px;color:var(--text-0)';
+    chip.innerHTML='<span class="class-swatch" style="background:'+CLASS_COLORS[i%CLASS_COLORS.length]+'"></span>'+nm;
+    list.appendChild(chip);
+  });
+}
+function setReqLocked(locked){
+  S.req.locked = locked;
+  ['projName','projDesc','numClasses','targetMetric','targetThr','minPerClass'].forEach(id => $(id).disabled = locked);
+  $('classNamesBox').querySelectorAll('input').forEach(i => i.disabled = locked);
+  $('btnLockReq').classList.toggle('hidden', locked);
+  $('btnUnlockReq').classList.toggle('hidden', !locked);
+  $('reqDot').className = 'dot' + (locked ? ' ready' : '');
+  $('reqStatus').textContent = locked
+    ? 'Requisitos definidos: ' + S.req.classes.length + ' classes · alvo ' + ($('targetMetric').value==='acc'?'acurácia':'F1 macro') + ' ≥ ' + Math.round(S.req.thr*100) + '%.'
+    : 'Aguardando definição dos requisitos.';
+}
+function lockRequirements(){
+  S.req.name   = $('projName').value.trim() || 'Meu classificador de sons';
+  S.req.desc   = $('projDesc').value.trim();
+  S.req.classes = readClassNames();
+  S.req.metric = $('targetMetric').value;
+  S.req.thr    = parseInt($('targetThr').value)/100;
+  S.req.minPer = parseInt($('minPerClass').value) || 1;
+  S.data.items = S.req.classes.map((_,i) => S.data.items[i] || []);
+  S.data.items.length = S.req.classes.length;
+  setReqLocked(true);
+  updateCritInfo();
+  buildClassGrid();
+  updateBalanceChart();
+  updatePipelineBadges();
+  updateSysCard();
+  log('Requisitos definidos: projeto <b>'+S.req.name+'</b>, '+S.req.classes.length+' classes ['+S.req.classes.join(', ')+']', 'ok');
+  log('Critério de sucesso: '+(S.req.metric==='acc'?'acurácia':'F1 macro')+' ≥ '+Math.round(S.req.thr*100)+'% no teste · mínimo '+S.req.minPer+' amostras/classe', 'info');
+  gotoStage(2);
+}
+function unlockRequirements(){
+  const total = S.data.items.reduce((a,c)=>a+c.length,0);
+  if (total > 0 && !confirm('Editar os requisitos limpa as amostras, os tensores e o modelo atual (os experimentos registrados são mantidos). Continuar?')) return;
+  clearDataset(true);
+  setReqLocked(false);
+  updateCritInfo();
+  updatePipelineBadges();
+  log('Requisitos destravados para edição.', 'warn');
+}
+$('numClasses').addEventListener('input', renderClassInputs);
+['targetMetric','targetThr','minPerClass'].forEach(id => $(id).addEventListener('input', refreshReqSummary));
+$('classNamesBox').addEventListener('input', refreshReqSummary);
+$('btnLockReq').addEventListener('click', lockRequirements);
+$('btnUnlockReq').addEventListener('click', unlockRequirements);
+
+/* =====================================================================
+   AUDIO · captura, decodificacao e utilitarios
+   ===================================================================== */
+function audioParams(){
+  const dur = parseInt(chipVal('dur'));
+  const fft = parseInt(chipVal('fft'));
+  const mel = parseInt(chipVal('mel'));
+  const hop = fft/4;
+  const numSamples = SR*dur;
+  const frames = 1 + Math.floor((numSamples - fft)/hop);
+  return { sr:SR, dur, fft, hop, mel, numSamples, frames };
+}
+function getDecodeCtx(){
+  if (!S.audio.decCtx) S.audio.decCtx = new (window.AudioContext||window.webkitAudioContext)({sampleRate:SR});
+  return S.audio.decCtx;
+}
+async function ensureMic(){
+  if (S.audio.stream) return S.audio.stream;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('getUserMedia indisponível neste navegador/contexto');
+  const stream = await navigator.mediaDevices.getUserMedia({ audio:{ channelCount:1, echoCancellation:true, noiseSuppression:true, autoGainControl:true } });
+  S.audio.stream = stream;
+  const ctx = new (window.AudioContext||window.webkitAudioContext)();
+  const src = ctx.createMediaStreamSource(stream);
+  const an = ctx.createAnalyser(); an.fftSize = 1024;
+  src.connect(an);
+  S.audio.liveCtx = ctx; S.audio.analyser = an;
+  log('Microfone autorizado.', 'ok');
+  return stream;
+}
+function currentLevel(){
+  const an = S.audio.analyser; if (!an) return 0;
+  const buf = new Float32Array(an.fftSize);
+  an.getFloatTimeDomainData(buf);
+  let sum=0; for (let i=0;i<buf.length;i++) sum += buf[i]*buf[i];
+  return Math.min(1, Math.sqrt(sum/buf.length)*3.2);
+}
+function fitLength(pcm, n){
+  if (pcm.length === n) return pcm;
+  const out = new Float32Array(n);
+  out.set(pcm.length > n ? pcm.subarray(0,n) : pcm);
+  return out;
+}
+function mixToMono(audioBuf){
+  const n = audioBuf.length, ch = audioBuf.numberOfChannels;
+  const out = new Float32Array(n);
+  for (let c=0;c<ch;c++){ const d = audioBuf.getChannelData(c); for (let i=0;i<n;i++) out[i]+=d[i]/ch; }
+  return out;
+}
+async function recordClip(durSec, onLevel, onProg){
+  const stream = await ensureMic();
+  if (S.audio.liveCtx && S.audio.liveCtx.state === 'suspended') await S.audio.liveCtx.resume();
+  const mime = (window.MediaRecorder && MediaRecorder.isTypeSupported('audio/webm')) ? 'audio/webm' : '';
+  const rec = new MediaRecorder(stream, mime ? {mimeType:mime} : undefined);
+  const chunks = [];
+  rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+  const stopped = new Promise(res => rec.onstop = res);
+  rec.start();
+  const t0 = performance.now(), ms = durSec*1000;
+  await new Promise(res => {
+    function tick(){
+      const el = performance.now()-t0;
+      if (onLevel) onLevel(currentLevel());
+      if (onProg) onProg(Math.min(1, el/ms));
+      if (el >= ms){ res(); return; }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  });
+  rec.stop();
+  await stopped;
+  const blob = new Blob(chunks, { type: mime || 'audio/webm' });
+  const arr = await blob.arrayBuffer();
+  const audioBuf = await getDecodeCtx().decodeAudioData(arr.slice(0));
+  const pcm = fitLength(audioBuf.numberOfChannels>1 ? mixToMono(audioBuf) : audioBuf.getChannelData(0).slice(), Math.round(durSec*SR));
+  return { pcm, url: URL.createObjectURL(blob) };
+}
+async function decodeFile(file, durSec){
+  const arr = await file.arrayBuffer();
+  const audioBuf = await getDecodeCtx().decodeAudioData(arr.slice(0));
+  const pcm = fitLength(audioBuf.numberOfChannels>1 ? mixToMono(audioBuf) : audioBuf.getChannelData(0).slice(), Math.round(durSec*SR));
+  return { pcm, url: URL.createObjectURL(file) };
+}
+
+/* =====================================================================
+   ESPECTROGRAMA LOG-MEL (tf.signal + banco de filtros mel)
+   ===================================================================== */
+function hzToMel(f){ return 2595*Math.log10(1+f/700); }
+function melToHz(m){ return 700*(Math.pow(10,m/2595)-1); }
+let melCache = { key:null, tensor:null };
+function getMelMatrix(nMels, fftLength, sr){
+  const key = nMels+'|'+fftLength+'|'+sr;
+  if (melCache.key === key) return melCache.tensor;
+  if (melCache.tensor) melCache.tensor.dispose();
+  const nBins = fftLength/2 + 1, fMin = 20, fMax = sr/2;
+  const melMin = hzToMel(fMin), melMax = hzToMel(fMax);
+  const pts = []; for (let i=0;i<nMels+2;i++) pts.push(melToHz(melMin + (melMax-melMin)*i/(nMels+1)));
+  const M = new Float32Array(nBins*nMels);
+  for (let m=0;m<nMels;m++){
+    const left=pts[m], center=pts[m+1], right=pts[m+2];
+    for (let k=0;k<nBins;k++){
+      const f = k*sr/fftLength;
+      let w = 0;
+      if (f>=left && f<=center) w = (f-left)/((center-left)||1);
+      else if (f>center && f<=right) w = (right-f)/((right-center)||1);
+      if (w>0) M[k*nMels+m] = w;
+    }
+  }
+  melCache.tensor = tf.tensor2d(M, [nBins, nMels]);
+  melCache.key = key;
+  return melCache.tensor;
+}
+function pcmToSpec(pcm, p){
+  return tf.tidy(() => {
+    const x = tf.tensor1d(fitLength(pcm, p.numSamples));
+    const stft = tf.signal.stft(x, p.fft, p.hop, p.fft);
+    const power = tf.square(tf.abs(stft));               // [frames, bins]
+    const mel = tf.matMul(power, getMelMatrix(p.mel, p.fft, p.sr)); // [frames, mel]
+    const logmel = tf.log(tf.add(mel, 1e-6)).div(Math.LN10).mul(10); // dB
+    const db = tf.clipByValue(logmel.sub(logmel.max()), -80, 0);
+    return db.add(80).div(80);                            // [frames, mel] em [0,1]
+  });
+}
+
+/* =====================================================================
+   ETAPA 2 · PREPARACAO DE DADOS (gravacao por classe)
+   ===================================================================== */
+function buildClassGrid(){
+  const grid = $('classGrid'); grid.innerHTML = '';
+  S.req.classes.forEach((nm,ci) => {
+    const color = CLASS_COLORS[ci % CLASS_COLORS.length];
+    const box = document.createElement('div');
+    box.className = 'class-box';
+    box.innerHTML =
+      '<div class="class-box-head">' +
+        '<div class="class-name"><span class="class-swatch" style="background:'+color+'"></span>'+nm+'</div>' +
+        '<div style="display:flex;align-items:center;gap:6px">' +
+          '<span class="class-count" id="count-'+ci+'">0 amostras</span>' +
+          '<button class="clear-class-btn" data-clear="'+ci+'" title="Remover todas">✕ limpar</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="recorder">' +
+        '<button class="rec-btn" data-rec="'+ci+'"><span class="rec-led"></span><span class="rec-txt">● Gravar</span></button>' +
+        '<div class="level-meter"><div class="level-fill" id="lvl-'+ci+'"></div></div>' +
+        '<div class="rec-prog"><div class="rec-prog-fill" id="prog-'+ci+'"></div></div>' +
+        '<label class="dropzone" id="dz-'+ci+'" style="padding:10px">⬆ ou enviar arquivos de áudio' +
+          '<input type="file" accept="audio/*" multiple data-class="'+ci+'"></label>' +
+      '</div>' +
+      '<div class="sample-list" id="prev-'+ci+'"></div>';
+    grid.appendChild(box);
+  });
+  grid.querySelectorAll('[data-rec]').forEach(b => b.addEventListener('click', () => recordInto(parseInt(b.dataset.rec))));
+  grid.querySelectorAll('input[type=file]').forEach(inp => inp.addEventListener('change', e => { uploadInto(parseInt(inp.dataset.class), e.target.files); inp.value=''; }));
+  grid.querySelectorAll('.dropzone').forEach(dz => {
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+    dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('dragover'); uploadInto(parseInt(dz.querySelector('input').dataset.class), e.dataTransfer.files); });
+  });
+  grid.querySelectorAll('[data-clear]').forEach(b => b.addEventListener('click', () => clearClass(parseInt(b.dataset.clear))));
+  S.req.classes.forEach((_,ci) => renderThumbs(ci));
+}
+function setRecUI(disabled){
+  document.querySelectorAll('[data-rec]').forEach(b => b.disabled = disabled);
+  $('btnRecPred').disabled = disabled;
+}
+async function recordInto(ci){
+  if (S.audio.recording) return;
+  const p = audioParams();
+  const btn = document.querySelector('[data-rec="'+ci+'"]');
+  const txt = btn.querySelector('.rec-txt');
+  S.audio.recording = true; setRecUI(true);
+  btn.classList.add('armed'); txt.textContent = 'Gravando ' + p.dur + 's...';
+  try {
+    const { pcm, url } = await recordClip(p.dur,
+      lvl => $('lvl-'+ci).style.width = (lvl*100).toFixed(0)+'%',
+      pr  => $('prog-'+ci).style.width = (pr*100).toFixed(0)+'%');
+    addSample(ci, pcm, 'gravacao_'+(S.data.items[ci].length+1)+'.webm', url);
+  } catch(e){
+    log('Falha ao gravar: '+e.message+'. Verifique a permissão do microfone (requer https; pode estar bloqueado na pré-visualização).', 'err');
+  } finally {
+    S.audio.recording = false; setRecUI(false);
+    btn.classList.remove('armed'); txt.textContent = '● Gravar';
+    $('lvl-'+ci).style.width = '0%'; $('prog-'+ci).style.width = '0%';
+  }
+}
+async function uploadInto(ci, fileList){
+  const files = [...fileList].filter(f => f.type.startsWith('audio/') || /\.(wav|mp3|ogg|webm|m4a|flac)$/i.test(f.name));
+  if (!files.length){ log('Nenhum arquivo de áudio reconhecido.', 'warn'); return; }
+  const p = audioParams();
+  let ok = 0;
+  for (const f of files){
+    try { const { pcm, url } = await decodeFile(f, p.dur); addSample(ci, pcm, f.name, url, true); ok++; }
+    catch(e){ log('Falha ao decodificar <b>'+f.name+'</b>: '+e.message, 'err'); }
+  }
+  if (ok) log(ok+' arquivo(s) de áudio adicionado(s) à classe <b>'+S.req.classes[ci]+'</b>.', 'ok');
+}
+function addSample(ci, pcm, name, url, silent){
+  S.data.items[ci].push({ pcm, name, url });
+  invalidatePrepared('novas amostras adicionadas');
+  renderThumbs(ci); updateBalanceChart(); updateSysCard();
+  if (!silent) log('Amostra adicionada à classe <b>'+S.req.classes[ci]+'</b> · total '+S.data.items[ci].length, 'ok');
+}
+function drawWaveform(canvas, pcm, color){
+  const ctx = canvas.getContext('2d'), w = canvas.width, h = canvas.height;
+  ctx.clearRect(0,0,w,h);
+  ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.globalAlpha = 0.9;
+  const step = Math.max(1, Math.floor(pcm.length / w));
+  ctx.beginPath();
+  for (let x=0; x<w; x++){
+    let mn=1, mx=-1;
+    for (let j=0;j<step;j++){ const v = pcm[x*step+j]||0; if (v<mn) mn=v; if (v>mx) mx=v; }
+    const y1 = (1-(mx*0.9+1)/2)*h, y2 = (1-(mn*0.9+1)/2)*h;
+    ctx.moveTo(x+0.5, y1); ctx.lineTo(x+0.5, y2);
+  }
+  ctx.stroke(); ctx.globalAlpha = 1;
+}
+function renderThumbs(ci){
+  const prev = $('prev-'+ci), items = S.data.items[ci] || [];
+  $('count-'+ci).textContent = items.length + ' amostra' + (items.length===1?'':'s');
+  prev.innerHTML = '';
+  const color = CLASS_COLORS[ci % CLASS_COLORS.length];
+  const MAXSHOW = 30;
+  items.slice(0,MAXSHOW).forEach((it,idx) => {
+    const row = document.createElement('div'); row.className = 'sample-item';
+    const cv = document.createElement('canvas'); cv.width = 74; cv.height = 26;
+    drawWaveform(cv, it.pcm, color);
+    const nm = document.createElement('span'); nm.className='s-name'; nm.textContent = it.name;
+    const play = document.createElement('button'); play.className='s-btn'; play.textContent='▶'; play.title='Ouvir';
+    play.addEventListener('click', () => { const a = new Audio(it.url); a.play().catch(()=>{}); });
+    const del = document.createElement('button'); del.className='s-btn del'; del.textContent='✕'; del.title='Remover';
+    del.addEventListener('click', () => removeSample(ci, idx));
+    row.appendChild(cv); row.appendChild(nm); row.appendChild(play); row.appendChild(del);
+    prev.appendChild(row);
+  });
+  if (items.length > MAXSHOW){
+    const more = document.createElement('div'); more.className='card-help'; more.style.textAlign='center';
+    more.textContent = '+ '+(items.length-MAXSHOW)+' amostras';
+    prev.appendChild(more);
+  }
+}
+function removeSample(ci, idx){
+  const it = S.data.items[ci].splice(idx,1)[0];
+  if (it && it.url) try{ URL.revokeObjectURL(it.url); }catch(e){}
+  invalidatePrepared('amostra removida');
+  renderThumbs(ci); updateBalanceChart(); updateSysCard();
+}
+function clearClass(ci){
+  S.data.items[ci].forEach(it => { if (it.url) try{ URL.revokeObjectURL(it.url); }catch(e){} });
+  S.data.items[ci] = [];
+  invalidatePrepared('classe limpa');
+  renderThumbs(ci); updateBalanceChart(); updateSysCard();
+  log('Classe <b>'+S.req.classes[ci]+'</b> limpa.', 'warn');
+}
+function clearDataset(silent){
+  (S.data.items||[]).forEach((arr) => arr.forEach(it => { if (it.url) try{ URL.revokeObjectURL(it.url); }catch(e){} }));
+  S.data.items = (S.req.classes||[]).map(()=>[]);
+  S.data.prepared = false; S.data.split = null;
+  disposeAllTensors();
+  if ($('classGrid').children.length) S.req.classes.forEach((_,ci) => renderThumbs(ci));
+  $('splitTableWrap').innerHTML = 'Os dados ainda não foram preparados.';
+  $('prepDot').className = 'dot';
+  $('prepStatus').textContent = 'Grave ou envie áudios para cada classe no painel ao lado.';
+  updateBalanceChart(); updatePipelineBadges(); updateSysCard();
+  if (!silent) log('Amostras descartadas (áudios, divisão e tensores).', 'warn');
+}
+function invalidatePrepared(reason){
+  if (!S.data.prepared) return;
+  S.data.prepared = false; S.data.split = null;
+  disposeAllTensors();
+  $('splitTableWrap').innerHTML = 'Os dados ainda não foram preparados.';
+  $('prepDot').className = 'dot';
+  $('prepStatus').textContent = 'Dados alterados (' + reason + '). Prepare novamente.';
+  updatePipelineBadges();
+  log('Divisão invalidada: '+reason+'. Execute <b>Preparar dados</b> de novo.', 'warn');
+}
+function onAudioParamChange(){ invalidatePrepared('parâmetros de áudio alterados'); }
+
+/* sliders de divisao */
+function syncSplit(){
+  let tr = parseInt($('splitTrain').value), va = parseInt($('splitVal').value);
+  if (tr + va > 95){ va = 95 - tr; $('splitVal').value = va; }
+  const te = 100 - tr - va;
+  $('splitTrainVal').textContent = tr+'%'; $('splitValVal').textContent = va+'%'; $('splitTestVal').textContent = te+'%';
+}
+$('splitTrain').addEventListener('input', syncSplit);
+$('splitVal').addEventListener('input', syncSplit);
+
+function shuffled(n){ const a=[...Array(n).keys()]; for (let i=n-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function prepareData(){
+  if (!S.req.locked){ log('Defina os requisitos (etapa 1) antes de preparar os dados.', 'err'); gotoStage(1); return; }
+  const counts = S.data.items.map(a => a.length);
+  if (counts.some(c => c < 3)){ log('Cada classe precisa de pelo menos 3 amostras para dividir em treino/val/teste.', 'err'); return; }
+  counts.forEach((c,i) => { if (c < S.req.minPer) log('Atenção: classe <b>'+S.req.classes[i]+'</b> tem '+c+' amostras, abaixo do mínimo ('+S.req.minPer+').', 'warn'); });
+  const mx = Math.max(...counts), mn = Math.min(...counts);
+  if (mx/mn > 2) log('Desbalanceamento detectado (razão '+(mx/mn).toFixed(1)+':1). Considere equilibrar as classes.', 'warn');
+
+  const pTr = parseInt($('splitTrain').value)/100, pVa = parseInt($('splitVal').value)/100;
+  const split = { train:[], val:[], test:[] };
+  S.data.items.forEach((arr,ci) => {
+    const idx = shuffled(arr.length);
+    let nTr = Math.max(1, Math.round(arr.length*pTr));
+    let nVa = Math.max(1, Math.round(arr.length*pVa));
+    if (nTr+nVa >= arr.length) nVa = Math.max(1, arr.length-nTr-1);
+    if (nTr+nVa >= arr.length){ nTr = arr.length-2; nVa = 1; }
+    idx.forEach((k,pos) => {
+      const ref = { c:ci, i:k };
+      if (pos < nTr) split.train.push(ref);
+      else if (pos < nTr+nVa) split.val.push(ref);
+      else split.test.push(ref);
+    });
+  });
+  ['train','val','test'].forEach(s => { const a=split[s]; for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } });
+  S.data.split = split;
+  S.data.counts = { train:split.train.length, val:split.val.length, test:split.test.length };
+  S.data.prepared = true;
+  disposeAllTensors();
+  renderSplitTable();
+  const p = audioParams();
+  $('prepDot').className = 'dot ready';
+  $('prepStatus').textContent = 'Preparado: '+split.train.length+' treino · '+split.val.length+' val · '+split.test.length+' teste · espectro '+p.frames+'×'+p.mel;
+  updatePipelineBadges(); updateSysCard();
+  log('Preparação concluída (divisão estratificada): treino='+split.train.length+', val='+split.val.length+', teste='+split.test.length+' · espectrograma '+p.frames+'×'+p.mel+' (clipe '+p.dur+'s, FFT '+p.fft+', '+p.mel+' bandas mel)', 'ok');
+}
+function renderSplitTable(){
+  const split = S.data.split;
+  const per = S.req.classes.map((nm,ci) => ({ nm,
+    tr: split.train.filter(r=>r.c===ci).length,
+    va: split.val.filter(r=>r.c===ci).length,
+    te: split.test.filter(r=>r.c===ci).length }));
+  let html = '<table class="report-table"><thead><tr><th>Classe</th><th class="num">Treino</th><th class="num">Val</th><th class="num">Teste</th><th class="num">Total</th></tr></thead><tbody>';
+  per.forEach(p => html += '<tr><td>'+p.nm+'</td><td class="num">'+p.tr+'</td><td class="num">'+p.va+'</td><td class="num">'+p.te+'</td><td class="num">'+(p.tr+p.va+p.te)+'</td></tr>');
+  const T = S.data.counts;
+  html += '<tr><td><strong>Total</strong></td><td class="num"><strong>'+T.train+'</strong></td><td class="num"><strong>'+T.val+'</strong></td><td class="num"><strong>'+T.test+'</strong></td><td class="num"><strong>'+(T.train+T.val+T.test)+'</strong></td></tr></tbody></table>';
+  $('splitTableWrap').innerHTML = html;
+}
+$('btnPrepare').addEventListener('click', prepareData);
+$('btnClearDS').addEventListener('click', () => { if (confirm('Remover todas as amostras?')) clearDataset(false); });
+
+/* ---------------- tensores (espectrogramas) ---------------- */
+async function buildSetTensors(setName, p){
+  const refs = S.data.split[setName];
+  const specs = [], labels = [];
+  for (let i=0;i<refs.length;i++){
+    const r = refs[i];
+    specs.push(pcmToSpec(S.data.items[r.c][r.i].pcm, p));
+    labels.push(r.c);
+    if (i % 8 === 7) await tf.nextFrame();
+  }
+  const x2 = tf.stack(specs); specs.forEach(t => t.dispose());     // [N, frames, mel]
+  const x = x2.expandDims(-1); x2.dispose();                       // [N, frames, mel, 1]
+  const y = tf.oneHot(tf.tensor1d(labels,'int32'), S.req.classes.length);
+  return { x, y, labels };
+}
+async function ensureTensors(setName, p){
+  const key = p.dur+'|'+p.fft+'|'+p.mel;
+  if (S.tens.key !== key){ disposeAllTensors(); S.tens.key = key; }
+  if (!S.tens.sets[setName]){
+    log('Gerando espectrogramas do conjunto <b>'+setName+'</b> ('+S.data.split[setName].length+' clipes, '+p.frames+'×'+p.mel+')...', 'info');
+    S.tens.sets[setName] = await buildSetTensors(setName, p);
+  }
+  return S.tens.sets[setName];
+}
+function disposeAllTensors(){
+  Object.values(S.tens.sets).forEach(s => { s.x.dispose(); s.y.dispose(); });
+  S.tens.sets = {}; S.tens.key = null;
+}
+
+/* =====================================================================
+   GRAFICOS (Chart.js, tema escuro)
+   ===================================================================== */
+let balanceChart=null, lossChart=null, accChart=null, cmpLineChart=null, cmpBarChart=null;
+function initCharts(){
+  Chart.defaults.color = '#9aa6b2';
+  Chart.defaults.borderColor = '#243140';
+  Chart.defaults.font.family = "'Inter','Segoe UI',sans-serif";
+  Chart.defaults.font.size = 11;
+  balanceChart = new Chart($('balanceChart'), {
+    type:'bar', data:{ labels:[], datasets:[{ label:'Amostras', data:[], backgroundColor:[], borderRadius:5 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} },
+      scales:{ y:{ beginAtZero:true, ticks:{precision:0}, grid:{color:'#1d2734'} }, x:{ grid:{display:false} } } }
+  });
+  const lineOpts = (yTitle,yMax) => ({ responsive:true, maintainAspectRatio:false, animation:false,
+    interaction:{mode:'index', intersect:false}, plugins:{ legend:{labels:{boxWidth:12, boxHeight:12}} },
+    scales:{ x:{ title:{display:true, text:'Época'}, grid:{color:'#1d2734'} }, y:{ title:{display:true, text:yTitle}, grid:{color:'#1d2734'}, beginAtZero:true, max:yMax } } });
+  lossChart = new Chart($('lossChart'), { type:'line', data:{ labels:[], datasets:[
+    { label:'Treino', data:[], borderColor:'#e0a83c', backgroundColor:'rgba(224,168,60,0.12)', tension:0.25, pointRadius:0, borderWidth:2 },
+    { label:'Validação', data:[], borderColor:'#4ea1d3', backgroundColor:'rgba(78,161,211,0.12)', tension:0.25, pointRadius:0, borderWidth:2 } ]}, options: lineOpts('Loss', undefined) });
+  accChart = new Chart($('accChart'), { type:'line', data:{ labels:[], datasets:[
+    { label:'Treino', data:[], borderColor:'#e0a83c', backgroundColor:'rgba(224,168,60,0.12)', tension:0.25, pointRadius:0, borderWidth:2 },
+    { label:'Validação', data:[], borderColor:'#3F9A4B', backgroundColor:'rgba(63,154,75,0.12)', tension:0.25, pointRadius:0, borderWidth:2 } ]}, options: lineOpts('Acurácia', 1) });
+  cmpLineChart = new Chart($('cmpLineChart'), { type:'line', data:{ labels:[], datasets:[] }, options: lineOpts('Acurácia de validação', 1) });
+  cmpBarChart = new Chart($('cmpBarChart'), { type:'bar', data:{ labels:['Acurácia (teste)','F1 macro (teste)'], datasets:[] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{labels:{boxWidth:12, boxHeight:12}} },
+      scales:{ y:{ beginAtZero:true, max:1, grid:{color:'#1d2734'} }, x:{ grid:{display:false} } } } });
+}
+function updateBalanceChart(){
+  if (!balanceChart) return;
+  const names = S.req.locked ? S.req.classes : readClassNames();
+  balanceChart.data.labels = names;
+  balanceChart.data.datasets[0].data = names.map((_,i) => (S.data.items[i]||[]).length);
+  balanceChart.data.datasets[0].backgroundColor = names.map((_,i) => CLASS_COLORS[i%CLASS_COLORS.length]);
+  balanceChart.update();
+}
+function resetTrainCharts(){ [lossChart, accChart].forEach(ch => { ch.data.labels=[]; ch.data.datasets.forEach(d => d.data=[]); ch.update('none'); }); }
+
+/* =====================================================================
+   ETAPA 3 · MODELOS E TREINAMENTO
+   ===================================================================== */
+const MODEL_HELP = {
+  sg_micro: 'CNN mínima sobre o espectrograma (2 blocos conv). Treina rápido, boa para poucas amostras e demonstrações.',
+  sg_std:   'CNN com 3 blocos convolucionais e pooling global sobre o espectrograma. Equilíbrio entre capacidade e velocidade.',
+  sg_deep:  'CNN com 4 blocos convolucionais. Mais capacidade para padrões acústicos complexos, treino um pouco mais lento.'
+};
+function onModelChange(){ $('modelHelp').textContent = MODEL_HELP[$('modelSel').value]; }
+function trainParams(){
+  return {
+    kind: $('modelSel').value,
+    epochs: parseInt($('hpEpochs').value),
+    batch: parseInt(chipVal('bs')),
+    lr: parseFloat($('hpLR').value),
+    opt: chipVal('opt'),
+    dropout: parseInt($('hpDrop').value)/100,
+    dense: parseInt(chipVal('du')),
+    es: $('hpES').checked,
+    patience: Math.max(2, parseInt($('hpPatience').value)||5),
+    aug: { noise: $('augNoise').checked, shift: $('augShift').checked, spec: $('augSpec').checked }
+  };
+}
+function buildSpecCNN(kind, shape, dense, dropout, nC){
+  const m = tf.sequential();
+  const conv = (f, first) => m.add(tf.layers.conv2d(Object.assign({ filters:f, kernelSize:3, activation:'relu', padding:'same' }, first?{inputShape:shape}:{})));
+  if (kind === 'sg_micro'){
+    conv(8,true); m.add(tf.layers.maxPooling2d({poolSize:2}));
+    conv(16);     m.add(tf.layers.maxPooling2d({poolSize:2}));
+    m.add(tf.layers.flatten());
+  } else if (kind === 'sg_std'){
+    conv(16,true); m.add(tf.layers.maxPooling2d({poolSize:2}));
+    conv(32);      m.add(tf.layers.maxPooling2d({poolSize:2}));
+    conv(64);      m.add(tf.layers.globalAveragePooling2d({}));
+  } else {
+    conv(16,true); m.add(tf.layers.maxPooling2d({poolSize:2}));
+    conv(32);      m.add(tf.layers.maxPooling2d({poolSize:2}));
+    conv(64);      m.add(tf.layers.maxPooling2d({poolSize:2}));
+    conv(64);      m.add(tf.layers.globalAveragePooling2d({}));
+  }
+  if (dropout>0) m.add(tf.layers.dropout({rate:dropout}));
+  m.add(tf.layers.dense({units:dense, activation:'relu'}));
+  m.add(tf.layers.dense({units:nC, activation:'softmax'}));
+  return m;
+}
+function augmentSpecBatch(x, opts){
+  return tf.tidy(() => {
+    let a = x.clone();
+    if (opts.noise) a = a.add(tf.randomNormal(a.shape, 0, 0.05));
+    if (opts.shift){
+      const f = x.shape[1], s = Math.max(1, Math.floor(f*0.1));
+      a = tf.concat([ a.slice([0,s,0,0],[-1,-1,-1,-1]), a.slice([0,0,0,0],[-1,s,-1,-1]) ], 1);
+    }
+    if (opts.spec){
+      const T = x.shape[1], F = x.shape[2];
+      const tw = Math.max(1, Math.floor(T*0.15)), t0 = Math.floor(Math.random()*Math.max(1,T-tw));
+      const fw = Math.max(1, Math.floor(F*0.15)), f0 = Math.floor(Math.random()*Math.max(1,F-fw));
+      const tMask = tf.concat([tf.ones([t0]), tf.zeros([tw]), tf.ones([T-t0-tw])]).reshape([1,T,1,1]);
+      const fMask = tf.concat([tf.ones([f0]), tf.zeros([fw]), tf.ones([F-f0-fw])]).reshape([1,1,F,1]);
+      a = a.mul(tMask).mul(fMask);
+    }
+    return tf.clipByValue(a, 0, 1);
+  });
+}
+function makeOptimizer(p){
+  if (p.opt === 'sgd') return tf.train.momentum(p.lr, 0.9);
+  if (p.opt === 'rmsprop') return tf.train.rmsprop(p.lr);
+  return tf.train.adam(p.lr);
+}
+function summaryText(net, extra){
+  const lines = [];
+  if (extra) lines.push(extra);
+  lines.push('Camada                          Saída                 Parâmetros');
+  lines.push('----------------------------------------------------------------');
+  net.layers.forEach(l => {
+    const shape = JSON.stringify(l.outputShape).replace(/null/g,'·');
+    lines.push((l.name+' ('+l.getClassName()+')').padEnd(32).slice(0,32) + shape.padEnd(22).slice(0,22) + l.countParams().toLocaleString('pt-BR'));
+  });
+  lines.push('----------------------------------------------------------------');
+  lines.push('Total de parâmetros treináveis: ' + net.countParams().toLocaleString('pt-BR'));
+  return lines.join('\n');
+}
+async function trainModel(){
+  if (S.training) return;
+  if (!S.data.prepared){ log('Prepare os dados (etapa 2) antes de treinar.', 'err'); gotoStage(2); return; }
+  const ap = audioParams(), tp = trainParams(), nC = S.req.classes.length;
+  const shape = [ap.frames, ap.mel, 1];
+  S.training = true; S.stopFlag = false;
+  $('btnTrain').disabled = true; $('btnStop').disabled = false;
+  $('trainDot').className = 'dot training'; $('progFill').style.width = '0%';
+  resetTrainCharts(); gotoStage(3);
+  try {
+    if (S.model.net){ S.model.net.dispose(); S.model.net = null; }
+    S.model.trained = false; S.lastEval = null; $('evalBanner').innerHTML = '';
+
+    const tr = await ensureTensors('train', ap);
+    let trainX = tr.x, trainY = tr.y, tmp = null;
+    const anyAug = tp.aug.noise || tp.aug.shift || tp.aug.spec;
+    if (anyAug){
+      log('Aumento de dados (treino 2x): '+[tp.aug.noise&&'ruído', tp.aug.shift&&'deslocamento', tp.aug.spec&&'SpecAugment'].filter(Boolean).join(', ')+'.', 'info');
+      const augX = augmentSpecBatch(tr.x, tp.aug);
+      trainX = tf.concat([tr.x, augX], 0);
+      trainY = tf.concat([tr.y, tr.y], 0);
+      augX.dispose(); tmp = { trainX, trainY };
+    }
+    const va = await ensureTensors('val', ap);
+
+    const net = buildSpecCNN(tp.kind, shape, tp.dense, tp.dropout, nC);
+    net.compile({ optimizer: makeOptimizer(tp), loss:'categoricalCrossentropy', metrics:['accuracy'] });
+    $('archSummary').textContent = summaryText(net, 'Entrada: espectrograma log-mel '+ap.frames+'×'+ap.mel+'×1 (clipe '+ap.dur+'s, '+ap.mel+' bandas)');
+
+    S.model.kind = tp.kind; S.model.net = net; S.model.params = Object.assign({}, tp, ap);
+    S.model.specShape = shape; S.model.history = { loss:[], acc:[], val_loss:[], val_acc:[] };
+
+    log('Treinamento iniciado: <b>'+MODEL_LABEL[tp.kind]+'</b> · '+tp.epochs+' épocas · batch '+tp.batch+' · lr '+tp.lr+' · '+tp.opt+(tp.es?' · parada antecipada (paciência '+tp.patience+')':''), 'ok');
+    log('Treino: '+trainX.shape[0]+' amostras · Validação: '+va.x.shape[0], 'info');
+
+    const t0 = performance.now();
+    let bestVL = Infinity, wait = 0, stoppedEarly = false;
+    await net.fit(trainX, trainY, {
+      epochs: tp.epochs, batchSize: tp.batch, validationData:[va.x, va.y], shuffle:true,
+      callbacks:{ onEpochEnd: async (ep, logs) => {
+        const h = S.model.history;
+        h.loss.push(logs.loss); h.acc.push(logs.acc); h.val_loss.push(logs.val_loss); h.val_acc.push(logs.val_acc);
+        lossChart.data.labels.push(ep+1); lossChart.data.datasets[0].data.push(logs.loss); lossChart.data.datasets[1].data.push(logs.val_loss);
+        accChart.data.labels.push(ep+1); accChart.data.datasets[0].data.push(logs.acc); accChart.data.datasets[1].data.push(logs.val_acc);
+        lossChart.update('none'); accChart.update('none');
+        $('m3Epoch').textContent = (ep+1)+' / '+tp.epochs;
+        $('m3Loss').textContent = fmtNum(logs.loss,4);
+        $('m3Acc').textContent = fmtPct(logs.acc);
+        $('m3ValAcc').textContent = fmtPct(logs.val_acc);
+        const secs = (performance.now()-t0)/1000;
+        $('m3Time').textContent = String(Math.floor(secs/60)).padStart(2,'0')+':'+String(Math.floor(secs%60)).padStart(2,'0');
+        $('progFill').style.width = Math.round(((ep+1)/tp.epochs)*100)+'%';
+        log('Época '+(ep+1)+'/'+tp.epochs+' · loss '+logs.loss.toFixed(4)+' · acc '+(logs.acc*100).toFixed(1)+'% · val_loss '+logs.val_loss.toFixed(4)+' · val_acc '+(logs.val_acc*100).toFixed(1)+'%');
+        if (tp.es){ if (logs.val_loss < bestVL-1e-4){ bestVL=logs.val_loss; wait=0; } else if (++wait >= tp.patience){ stoppedEarly=true; net.stopTraining=true; log('Parada antecipada: val_loss sem melhora há '+tp.patience+' épocas.', 'warn'); } }
+        if (S.stopFlag){ net.stopTraining = true; log('Treinamento interrompido pelo usuário.', 'warn'); }
+        updateSysCard(); await tf.nextFrame();
+      } }
+    });
+
+    S.model.durationS = (performance.now()-t0)/1000;
+    S.model.totalParams = net.countParams();
+    S.model.trained = true;
+    const lastVA = S.model.history.val_acc.at(-1) ?? 0;
+    $('trainDot').className = 'dot ready';
+    $('trainStatus').textContent = 'Treinado: '+MODEL_LABEL[tp.kind]+' · '+S.model.history.loss.length+' épocas · val_acc '+fmtPct(lastVA)+(stoppedEarly?' · parada antecipada':'')+(S.stopFlag?' · interrompido':'');
+    $('progFill').style.width = '100%';
+    log('Treinamento concluído em '+S.model.durationS.toFixed(1)+'s · val_acc final '+fmtPct(lastVA)+'. Avalie o modelo na etapa 4.', 'ok');
+    updateMetaPreview(); updatePipelineBadges();
+    if (tmp){ tmp.trainX.dispose(); tmp.trainY.dispose(); }
+  } catch(err){
+    console.error(err);
+    $('trainDot').className = 'dot error'; $('trainStatus').textContent = 'Erro no treinamento.';
+    log('Erro no treinamento: '+(err.message||err), 'err');
+  } finally {
+    S.training = false; $('btnTrain').disabled = false; $('btnStop').disabled = true; updateSysCard();
+  }
+}
+function stopTraining(){ if (S.training) S.stopFlag = true; }
+function clearModel(){
+  if (S.training){ log('Pare o treinamento antes de limpar o modelo.', 'warn'); return; }
+  if (S.model.net) S.model.net.dispose();
+  S.model = { kind:null, net:null, params:null, specShape:null, trained:false, history:null, durationS:0, totalParams:0 };
+  S.lastEval = null;
+  $('archSummary').textContent = 'Selecione um modelo e inicie o treinamento para ver o resumo das camadas.';
+  $('evalBanner').innerHTML = ''; $('cmWrap').innerHTML = 'Avalie o modelo para gerar a matriz.'; $('reportWrap').innerHTML = 'Avalie o modelo para gerar o relatório.';
+  ['m3Epoch','m3Loss','m3Acc','m3ValAcc','m3Time'].forEach((id,i) => $(id).textContent = i===0?'0 / 0':(i===4?'00:00':'·'));
+  ['m4Acc','m4F1','m4Prec','m4Rec','m4N'].forEach(id => $(id).textContent = '·');
+  $('progFill').style.width = '0%';
+  $('trainDot').className = 'dot'; $('trainStatus').textContent = 'Modelo ainda não treinado.';
+  $('evalDot').className = 'dot'; $('evalStatus').textContent = 'Modelo ainda não avaliado.';
+  $('metaPreview').textContent = 'Treine um modelo para gerar os metadados.';
+  resetTrainCharts(); updatePipelineBadges(); updateSysCard();
+  log('Modelo descartado.', 'warn');
+}
+
+/* =====================================================================
+   ETAPA 4 · AVALIACAO
+   ===================================================================== */
+function shapeMismatch(){
+  if (!S.model.specShape) return false;
+  const ap = audioParams();
+  return ap.frames !== S.model.specShape[0] || ap.mel !== S.model.specShape[1];
+}
+async function getEvalPreds(setName){
+  const ap = audioParams();
+  const set = await ensureTensors(setName, ap);
+  const predsT = tf.tidy(() => S.model.net.predict(set.x).argMax(1));
+  const yPred = Array.from(await predsT.data());
+  predsT.dispose();
+  return { yTrue: set.labels.slice(), yPred };
+}
+function computeMetrics(yTrue, yPred, nC){
+  const cm = Array.from({length:nC}, () => Array(nC).fill(0));
+  yTrue.forEach((t,i) => cm[t][yPred[i]]++);
+  const perClass = []; let f1Sum=0, pSum=0, rSum=0, correct=0;
+  for (let c=0;c<nC;c++){
+    const tp = cm[c][c], support = cm[c].reduce((a,b)=>a+b,0), predCount = cm.reduce((a,row)=>a+row[c],0);
+    const prec = predCount?tp/predCount:0, rec = support?tp/support:0, f1 = (prec+rec)?2*prec*rec/(prec+rec):0;
+    perClass.push({ name:S.req.classes[c], prec, rec, f1, support });
+    f1Sum+=f1; pSum+=prec; rSum+=rec; correct+=tp;
+  }
+  const n = yTrue.length;
+  return { cm, perClass, acc:n?correct/n:0, f1:f1Sum/nC, prec:pSum/nC, rec:rSum/nC, n };
+}
+function renderCM(cm){
+  const names = S.req.classes, mx = Math.max(1, ...cm.flat());
+  let html = '<table class="cm-table"><thead><tr><th class="cm-axis">real \\ previsto</th>';
+  names.forEach(nm => html += '<th>'+nm+'</th>'); html += '</tr></thead><tbody>';
+  cm.forEach((row,i) => {
+    html += '<tr><th>'+names[i]+'</th>';
+    row.forEach((v,j) => { const alpha = v===0?0.04:0.12+0.78*(v/mx); const col = i===j?'63,154,75':'226,92,92'; html += '<td style="background:rgba('+col+','+alpha.toFixed(2)+')">'+v+'</td>'; });
+    html += '</tr>';
+  });
+  html += '</tbody></table>'; $('cmWrap').innerHTML = html;
+}
+function renderReport(m){
+  let html = '<table class="report-table"><thead><tr><th>Classe</th><th class="num">Precisão</th><th class="num">Revocação</th><th class="num">F1</th><th class="num">Suporte</th></tr></thead><tbody>';
+  m.perClass.forEach(c => html += '<tr><td>'+c.name+'</td><td class="num">'+fmtPct(c.prec)+'</td><td class="num">'+fmtPct(c.rec)+'</td><td class="num">'+fmtPct(c.f1)+'</td><td class="num">'+c.support+'</td></tr>');
+  html += '<tr><td><strong>Macro / total</strong></td><td class="num"><strong>'+fmtPct(m.prec)+'</strong></td><td class="num"><strong>'+fmtPct(m.rec)+'</strong></td><td class="num"><strong>'+fmtPct(m.f1)+'</strong></td><td class="num"><strong>'+m.n+'</strong></td></tr></tbody></table>';
+  $('reportWrap').innerHTML = html;
+}
+function renderVerdict(m, setName){
+  const metricVal = S.req.metric==='acc'?m.acc:m.f1, metricName = S.req.metric==='acc'?'acurácia':'F1 macro';
+  const pass = metricVal >= S.req.thr, onTest = setName==='test';
+  let html;
+  if (pass){
+    html = '<div class="banner ok"><span class="b-ico">✅</span><div><strong>Critério atingido:</strong> '+metricName+' de '+fmtPct(metricVal)+' ≥ '+Math.round(S.req.thr*100)+'%'+(onTest?' no conjunto de teste.':' (na validação; confirme no teste).')+' O ciclo treinamento ↔ avaliação está fechado: avance para a predição. <button class="btn-mini" onclick="gotoStage(5)">→ Ir para predição</button></div></div>';
+  } else {
+    html = '<div class="banner warn"><span class="b-ico">↺</span><div><strong>Critério não atingido:</strong> '+metricName+' de '+fmtPct(metricVal)+' < '+Math.round(S.req.thr*100)+'%. Este é o laço do AMCH: volte ao treinamento e ajuste hiperparâmetros, aumentos, modelo ou dados. <button class="btn-mini" onclick="gotoStage(3)">↺ Voltar ao treinamento</button> <button class="btn-mini" onclick="gotoStage(2)">🗂 Rever dados</button></div></div>';
+  }
+  $('evalBanner').innerHTML = html;
+  return pass;
+}
+async function evaluateModel(){
+  if (!S.model.trained){ log('Treine um modelo (etapa 3) antes de avaliar.', 'err'); gotoStage(3); return; }
+  if (shapeMismatch()){ log('Os parâmetros de áudio mudaram desde o treino (espectrograma incompatível). Treine o modelo novamente.', 'err'); return; }
+  const setName = chipVal('evset');
+  $('evalDot').className = 'dot training'; $('evalStatus').textContent = 'Avaliando no conjunto de '+(setName==='test'?'teste':'validação')+'...';
+  try {
+    const { yTrue, yPred } = await getEvalPreds(setName);
+    const m = computeMetrics(yTrue, yPred, S.req.classes.length);
+    S.lastEval = { set:setName, acc:m.acc, f1:m.f1, prec:m.prec, rec:m.rec, n:m.n, cm:m.cm, perClass:m.perClass };
+    $('m4Acc').textContent = fmtPct(m.acc); $('m4F1').textContent = fmtPct(m.f1);
+    $('m4Prec').textContent = fmtPct(m.prec); $('m4Rec').textContent = fmtPct(m.rec); $('m4N').textContent = m.n;
+    $('m4Set').textContent = 'conjunto: '+(setName==='test'?'teste':'validação');
+    renderCM(m.cm); renderReport(m);
+    const pass = renderVerdict(m, setName);
+    $('evalDot').className = 'dot '+(pass?'ready':'warn');
+    $('evalStatus').textContent = 'Avaliado ('+(setName==='test'?'teste':'validação')+'): acc '+fmtPct(m.acc)+' · F1 '+fmtPct(m.f1)+(pass?' · critério OK':' · abaixo do critério');
+    log('Avaliação ('+setName+'): acc '+fmtPct(m.acc)+' · F1 macro '+fmtPct(m.f1)+' · precisão '+fmtPct(m.prec)+' · revocação '+fmtPct(m.rec)+' · n='+m.n, pass?'ok':'warn');
+    updatePipelineBadges(); updateSysCard(); updateMetaPreview();
+  } catch(err){
+    console.error(err);
+    $('evalDot').className = 'dot error'; $('evalStatus').textContent = 'Erro na avaliação.';
+    log('Erro na avaliação: '+(err.message||err), 'err');
+  }
+}
+function updateCritInfo(){
+  $('critInfo').innerHTML = S.req.locked
+    ? 'Critério definido na etapa 1: <strong>'+(S.req.metric==='acc'?'acurácia':'F1 macro')+' ≥ '+Math.round(S.req.thr*100)+'%</strong> no conjunto de teste.'
+    : 'Defina os requisitos na etapa 1.';
+}
+
+/* =====================================================================
+   EXPERIMENTOS · estilo Weights & Biases
+   ===================================================================== */
+async function registerRun(){
+  if (!S.model.trained){ log('Treine e avalie um modelo antes de registrar o experimento.', 'err'); return; }
+  if (shapeMismatch()){ log('Parâmetros de áudio mudaram desde o treino. Treine novamente antes de registrar.', 'err'); return; }
+  let testEval = (S.lastEval && S.lastEval.set==='test') ? S.lastEval : null;
+  if (!testEval){
+    log('Avaliando automaticamente no teste para registrar o experimento...', 'info');
+    const { yTrue, yPred } = await getEvalPreds('test');
+    const m = computeMetrics(yTrue, yPred, S.req.classes.length);
+    testEval = { acc:m.acc, f1:m.f1, prec:m.prec, rec:m.rec, n:m.n };
+  }
+  const p = S.model.params;
+  S.runSeq++;
+  const run = {
+    id: Date.now()+'-'+S.runSeq,
+    name: 'run-'+String(S.runSeq).padStart(2,'0'),
+    color: RUN_COLORS[(S.runSeq-1)%RUN_COLORS.length],
+    ts: new Date().toISOString(), project: S.req.name, model: S.model.kind,
+    params: { epochs:p.epochs, batch:p.batch, lr:p.lr, opt:p.opt, dropout:p.dropout, dense:p.dense, es:p.es, dur:p.dur, fft:p.fft, mel:p.mel, aug:p.aug },
+    data: { total: S.data.counts.train+S.data.counts.val+S.data.counts.test, split: S.data.counts, classes: S.req.classes.slice(), dur:p.dur, mel:p.mel },
+    history: { val_acc:S.model.history.val_acc.slice(), val_loss:S.model.history.val_loss.slice(), loss:S.model.history.loss.slice(), acc:S.model.history.acc.slice() },
+    epochsRun: S.model.history.loss.length,
+    valAccFinal: S.model.history.val_acc.at(-1) ?? 0,
+    test: { acc:testEval.acc, f1:testEval.f1, prec:testEval.prec, rec:testEval.rec, n:testEval.n },
+    durationS: S.model.durationS, totalParams: S.model.totalParams, compare: true
+  };
+  S.runs.push(run);
+  renderRunsTable(); updateCompareCharts(); updateRunsPill();
+  log('Experimento <b>'+run.name+'</b> registrado: '+MODEL_LABEL[run.model]+' · acc teste '+fmtPct(run.test.acc)+' · F1 '+fmtPct(run.test.f1), 'ok');
+}
+function bestRunId(){ return S.runs.length ? S.runs.reduce((b,r)=> r.test.acc>b.test.acc?r:b, S.runs[0]).id : null; }
+function renderRunsTable(){
+  const tb = $('expTbody'); tb.innerHTML = '';
+  $('expEmpty').classList.toggle('hidden', S.runs.length>0);
+  $('expTable').classList.toggle('hidden', S.runs.length===0);
+  const best = bestRunId();
+  S.runs.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><input type="checkbox" data-cmp="'+r.id+'"'+(r.compare?' checked':'')+'></td>' +
+      '<td><span class="run-dot" style="background:'+r.color+'"></span>'+r.name+(r.id===best?' ★':'')+'</td>' +
+      '<td>'+MODEL_LABEL[r.model]+'</td>' +
+      '<td class="num">'+r.epochsRun+'</td>' +
+      '<td class="num">'+r.params.lr+'</td>' +
+      '<td class="num">'+r.params.batch+'</td>' +
+      '<td class="num">'+Math.round(r.params.dropout*100)+'%</td>' +
+      '<td>'+r.data.total+' clipes · '+r.data.dur+'s · '+r.data.mel+' mel'+((r.params.aug && (r.params.aug.noise||r.params.aug.shift||r.params.aug.spec))?' · aug':'')+'</td>' +
+      '<td class="num">'+fmtPct(r.valAccFinal)+'</td>' +
+      '<td class="num"><strong>'+fmtPct(r.test.acc)+'</strong></td>' +
+      '<td class="num">'+fmtPct(r.test.f1)+'</td>' +
+      '<td class="num">'+r.durationS.toFixed(1)+'s</td>' +
+      '<td><button class="clear-class-btn" data-del="'+r.id+'">✕</button></td>';
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll('[data-cmp]').forEach(cb => cb.addEventListener('change', () => { const r = S.runs.find(x=>x.id===cb.dataset.cmp); if (r) r.compare = cb.checked; updateCompareCharts(); }));
+  tb.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => deleteRun(b.dataset.del)));
+}
+function deleteRun(id){
+  const r = S.runs.find(x=>x.id===id); if (!r) return;
+  if (!confirm('Excluir o experimento '+r.name+'?')) return;
+  S.runs = S.runs.filter(x=>x.id!==id);
+  renderRunsTable(); updateCompareCharts(); updateRunsPill();
+  log('Experimento '+r.name+' excluído.', 'warn');
+}
+function clearRuns(){
+  if (!S.runs.length) return;
+  if (!confirm('Excluir TODOS os '+S.runs.length+' experimentos registrados?')) return;
+  S.runs = []; S.runSeq = 0;
+  renderRunsTable(); updateCompareCharts(); updateRunsPill();
+  log('Todos os experimentos foram excluídos.', 'warn');
+}
+function updateCompareCharts(){
+  const sel = S.runs.filter(r=>r.compare);
+  const maxEp = Math.max(0, ...sel.map(r=>r.history.val_acc.length));
+  cmpLineChart.data.labels = Array.from({length:maxEp}, (_,i)=>i+1);
+  cmpLineChart.data.datasets = sel.map(r => ({ label:r.name+' · '+MODEL_LABEL[r.model], data:r.history.val_acc, borderColor:r.color, backgroundColor:'transparent', tension:0.25, pointRadius:0, borderWidth:2 }));
+  cmpLineChart.update();
+  cmpBarChart.data.datasets = sel.map(r => ({ label:r.name, data:[r.test.acc, r.test.f1], backgroundColor:r.color+'cc', borderColor:r.color, borderWidth:1, borderRadius:4 }));
+  cmpBarChart.update();
+}
+function updateRunsPill(){ $('pillRuns').textContent = '\uD83E\uDDEA ' + S.runs.length + ' experimento' + (S.runs.length===1?'':'s'); }
+function downloadJSON(obj, filename){
+  const blob = new Blob([JSON.stringify(obj, null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function exportRuns(){
+  if (!S.runs.length){ log('Nenhum experimento para exportar.', 'warn'); return; }
+  downloadJSON({ app:'Audio.sys', version:1, exported:new Date().toISOString(), runs:S.runs }, 'audio-sys-experimentos.json');
+  log(S.runs.length+' experimento(s) exportado(s) em JSON.', 'ok');
+}
+function importRuns(file){
+  const fr = new FileReader();
+  fr.onload = () => {
+    try {
+      const obj = JSON.parse(fr.result);
+      const incoming = Array.isArray(obj) ? obj : (obj.runs || []);
+      if (!incoming.length) throw new Error('arquivo sem runs');
+      incoming.forEach(r => { S.runSeq++; r.id = Date.now()+'-'+S.runSeq+'-imp'; r.name = r.name || ('run-'+String(S.runSeq).padStart(2,'0')); r.color = RUN_COLORS[(S.runSeq-1)%RUN_COLORS.length]; r.compare = true; S.runs.push(r); });
+      renderRunsTable(); updateCompareCharts(); updateRunsPill();
+      log(incoming.length+' experimento(s) importado(s).', 'ok');
+    } catch(e){ log('Falha ao importar runs: '+e.message, 'err'); }
+  };
+  fr.readAsText(file);
+}
+
+/* =====================================================================
+   ETAPA 5 · PREDICAO (gravar/enviar -> espectrograma -> classe)
+   ===================================================================== */
+const SPEC_STOPS = [[11,15,20],[63,154,75],[224,168,60],[245,245,200]];
+function specColor(v){
+  v = Math.max(0, Math.min(1, v));
+  const seg = v*(SPEC_STOPS.length-1), i = Math.min(SPEC_STOPS.length-2, Math.floor(seg)), f = seg-i;
+  const a = SPEC_STOPS[i], b = SPEC_STOPS[i+1];
+  return 'rgb('+Math.round(a[0]+(b[0]-a[0])*f)+','+Math.round(a[1]+(b[1]-a[1])*f)+','+Math.round(a[2]+(b[2]-a[2])*f)+')';
+}
+function drawSpec(canvas, data, frames, mel){
+  const off = document.createElement('canvas'); off.width = frames; off.height = mel;
+  const octx = off.getContext('2d'), img = octx.createImageData(frames, mel);
+  for (let t=0;t<frames;t++) for (let m=0;m<mel;m++){
+    const v = data[t*mel+m];
+    const c = specColor(v).match(/\d+/g);
+    const px = ((mel-1-m)*frames + t)*4;
+    img.data[px]=+c[0]; img.data[px+1]=+c[1]; img.data[px+2]=+c[2]; img.data[px+3]=255;
+  }
+  octx.putImageData(img,0,0);
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.clientWidth || 320; canvas.height = 120;
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(off, 0, 0, frames, mel, 0, 0, canvas.width, canvas.height);
+}
+async function classifyClip(pcm, name, url){
+  const ap = audioParams(), nC = S.req.classes.length;
+  if (shapeMismatch()){ log('Parâmetros de áudio diferentes do treino. Treine novamente antes de classificar.', 'err'); return; }
+  const spec = pcmToSpec(pcm, ap);                 // [frames, mel]
+  const probsT = tf.tidy(() => S.model.net.predict(spec.expandDims(0).expandDims(-1)));
+  const probs = Array.from(await probsT.data()); probsT.dispose();
+  const specData = await spec.data(); spec.dispose();
+  let top = 0; probs.forEach((p,i)=>{ if (p>probs[top]) top=i; });
+
+  const card = document.createElement('div'); card.className = 'pred-card';
+  const cv = document.createElement('canvas'); cv.className = 'spec-canvas';
+  card.appendChild(cv);
+  const color = CLASS_COLORS[top%CLASS_COLORS.length];
+  const body = document.createElement('div');
+  let inner = '<div class="pred-name">'+name+(url?' <span style="cursor:pointer" title="Ouvir" data-play="1">🔊</span>':'')+'</div>' +
+    '<div class="pred-top"><span class="pred-class" style="color:'+color+'">'+S.req.classes[top]+'</span><span class="pred-conf">'+fmtPct(probs[top])+'</span></div>';
+  for (let c=0;c<nC;c++){
+    inner += '<div class="prob-row"><span class="p-lab">'+S.req.classes[c]+'</span><span class="p-bar"><span class="p-fill" style="width:'+(probs[c]*100).toFixed(1)+'%;background:'+CLASS_COLORS[c%CLASS_COLORS.length]+'"></span></span><span class="p-val">'+(probs[c]*100).toFixed(1)+'%</span></div>';
+  }
+  body.innerHTML = inner; card.appendChild(body);
+  $('predGrid').appendChild(card);
+  drawSpec(cv, specData, ap.frames, ap.mel);
+  if (url){ const pb = body.querySelector('[data-play]'); if (pb) pb.addEventListener('click', () => { const a = new Audio(url); a.play().catch(()=>{}); }); }
+  log('Predição: <b>'+name+'</b> → '+S.req.classes[top]+' ('+fmtPct(probs[top])+')', 'ok');
+  $('predEmpty').classList.toggle('hidden', $('predGrid').children.length>0);
+  updatePipelineBadges();
+}
+async function predictUploads(fileList){
+  if (!S.model.trained){ log('Treine um modelo antes de classificar.', 'err'); gotoStage(3); return; }
+  const files = [...fileList].filter(f => f.type.startsWith('audio/') || /\.(wav|mp3|ogg|webm|m4a|flac)$/i.test(f.name));
+  if (!files.length){ log('Nenhum arquivo de áudio reconhecido.', 'warn'); return; }
+  gotoStage(5);
+  const p = audioParams();
+  for (const f of files){
+    try { const { pcm, url } = await decodeFile(f, p.dur); await classifyClip(pcm, f.name, url); }
+    catch(e){ log('Erro ao classificar '+f.name+': '+e.message, 'err'); }
+  }
+}
+async function recordAndPredict(){
+  if (!S.model.trained){ log('Treine um modelo antes de classificar.', 'err'); gotoStage(3); return; }
+  if (S.audio.recording) return;
+  const p = audioParams();
+  const btn = $('btnRecPred');
+  S.audio.recording = true; setRecUI(true);
+  btn.classList.add('armed'); $('recPredLabel').textContent = 'Gravando '+p.dur+'s...';
+  gotoStage(5);
+  try {
+    const { pcm, url } = await recordClip(p.dur,
+      lvl => $('predLevel').style.width = (lvl*100).toFixed(0)+'%',
+      pr  => $('predProg').style.width = (pr*100).toFixed(0)+'%');
+    await classifyClip(pcm, 'gravacao_teste_'+nowHMS().replace(/:/g,'')+'.webm', url);
+  } catch(e){
+    log('Falha ao gravar: '+e.message+'. Verifique a permissão do microfone.', 'err');
+  } finally {
+    S.audio.recording = false; setRecUI(false);
+    btn.classList.remove('armed'); $('recPredLabel').textContent = '● Gravar clipe de teste';
+    $('predLevel').style.width = '0%'; $('predProg').style.width = '0%';
+  }
+}
+function clearPreds(){ $('predGrid').innerHTML = ''; $('predEmpty').classList.remove('hidden'); updatePipelineBadges(); }
+
+/* =====================================================================
+   ETAPA 6 · EXPORTACAO
+   ===================================================================== */
+function buildMeta(){
+  if (!S.model.trained) return null;
+  const p = S.model.params;
+  return {
+    app:'Audio.sys',
+    pipeline:'Aprendizado de Maquina Centrado no Ser Humano (Martins et al., 2024)',
+    exported:new Date().toISOString(),
+    project:{ name:S.req.name, description:S.req.desc, successCriterion:{ metric:S.req.metric, threshold:S.req.thr } },
+    classes:S.req.classes,
+    audio:{ sampleRate:SR, clipSeconds:p.dur, fftLength:p.fft, hopLength:p.hop, melBands:p.mel, specShape:{ frames:p.frames, mel:p.mel }, normalization:'log-mel dB, recortado em [-80,0] e escalado para [0,1]' },
+    model:{ kind:S.model.kind, label:MODEL_LABEL[S.model.kind], inputShape:S.model.specShape, totalParams:S.model.totalParams },
+    hyperparameters:{ epochs:p.epochs, epochsRun:S.model.history.loss.length, batch:p.batch, lr:p.lr, optimizer:p.opt, dropout:p.dropout, denseUnits:p.dense, earlyStopping:p.es, augmentation:p.aug },
+    data:{ counts:S.data.counts, perClass:S.req.classes.map((nm,i)=>({ class:nm, samples:(S.data.items[i]||[]).length })) },
+    results:{ finalValAcc:S.model.history.val_acc.at(-1) ?? null, lastEval:S.lastEval ? { set:S.lastEval.set, accuracy:S.lastEval.acc, f1Macro:S.lastEval.f1, precisionMacro:S.lastEval.prec, recallMacro:S.lastEval.rec, samples:S.lastEval.n } : null },
+    trainingTimeSeconds:Number(S.model.durationS.toFixed(1))
+  };
+}
+function updateMetaPreview(){ const meta = buildMeta(); $('metaPreview').textContent = meta ? JSON.stringify(meta, null, 2) : 'Treine um modelo para gerar os metadados.'; }
+async function exportModel(){
+  if (!S.model.trained){ log('Treine um modelo antes de exportar.', 'err'); return; }
+  try { await S.model.net.save('downloads://audio-sys-modelo'); log('Modelo exportado: <b>audio-sys-modelo.json</b> + pesos .bin (formato TensorFlow.js).', 'ok'); }
+  catch(e){ log('Erro ao exportar o modelo: '+e.message, 'err'); }
+}
+function exportMeta(){ const meta = buildMeta(); if (!meta){ log('Treine um modelo antes de exportar os metadados.', 'err'); return; } downloadJSON(meta, 'audio-sys-metadados.json'); log('Metadados exportados em JSON.', 'ok'); }
+function exportReport(){
+  if (!S.model.trained){ log('Treine um modelo antes de exportar o relatório.', 'err'); return; }
+  const rep = Object.assign(buildMeta(), { history:S.model.history, confusionMatrix:S.lastEval?S.lastEval.cm:null, perClassReport:S.lastEval?S.lastEval.perClass:null, registeredRuns:S.runs.map(r=>({ name:r.name, model:r.model, params:r.params, testAcc:r.test.acc, testF1:r.test.f1 })) });
+  downloadJSON(rep, 'audio-sys-relatorio.json'); log('Relatório completo exportado em JSON.', 'ok');
+}
+function fillLoadSnippet(){
+  const lines = [
+    '<span class="c">// Carregar o modelo de áudio exportado</span>',
+    '<span class="k">const</span> model = <span class="k">await</span> tf.loadLayersModel(<span class="s">\'./audio-sys-modelo.json\'</span>);',
+    '',
+    '<span class="c">// Pré-processar: 16 kHz -> STFT -> mel -> dB -> [0,1]</span>',
+    '<span class="c">// use os parâmetros do arquivo de metadados (clipe, FFT, mel)</span>',
+    '<span class="k">const</span> stft = tf.signal.stft(sinal16k, FFT, FFT/<span class="s">4</span>, FFT);',
+    '<span class="k">const</span> mel  = tf.matMul(tf.square(tf.abs(stft)), bancoMel);',
+    '<span class="k">const</span> spec = logMelParaDB(mel).expandDims(<span class="s">0</span>).expandDims(-<span class="s">1</span>);',
+    '',
+    '<span class="k">const</span> probs = <span class="k">await</span> model.predict(spec).data();'
+  ];
+  $('loadSnippet').innerHTML = lines.join('\n');
+}
+
+/* =====================================================================
+   SISTEMA E INICIALIZACAO
+   ===================================================================== */
+function updateSysCard(){
+  try {
+    if (window.tf && tf.getBackend){
+      $('sysBackend').textContent = tf.getBackend();
+      const mem = tf.memory();
+      $('sysTensors').textContent = mem.numTensors;
+      $('sysMem').textContent = (mem.numBytes/1048576).toFixed(1)+' MB';
+    }
+  } catch(e){}
+  const total = (S.data.items||[]).reduce((a,c)=>a+(c?c.length:0),0);
+  $('sysData').textContent = total ? (total+' clipes · '+(S.data.prepared?'preparado':'não preparado')) : 'vazio';
+  $('sysModel').textContent = S.model.trained ? (MODEL_LABEL[S.model.kind]+' · treinado') : (S.training ? 'treinando...' : 'nenhum');
+}
+function bindEvents(){
+  $('modelSel').addEventListener('change', onModelChange);
+  $('hpEpochs').addEventListener('input', () => $('hpEpochsVal').textContent = $('hpEpochs').value);
+  $('hpDrop').addEventListener('input', () => $('hpDropVal').textContent = (parseInt($('hpDrop').value)/100).toFixed(2).replace('.',','));
+  ['dur','fft','mel'].forEach(name => document.querySelectorAll('input[name="'+name+'"]').forEach(r => r.addEventListener('change', onAudioParamChange)));
+  $('btnTrain').addEventListener('click', trainModel);
+  $('btnStop').addEventListener('click', stopTraining);
+  $('btnClearModel').addEventListener('click', clearModel);
+  $('btnEval').addEventListener('click', evaluateModel);
+  $('btnRegister').addEventListener('click', registerRun);
+  $('btnClearPred').addEventListener('click', clearPreds);
+  $('btnRecPred').addEventListener('click', recordAndPredict);
+  $('predFiles').addEventListener('change', e => { predictUploads(e.target.files); e.target.value=''; });
+  const pd = $('predDrop');
+  pd.addEventListener('dragover', e => { e.preventDefault(); pd.classList.add('dragover'); });
+  pd.addEventListener('dragleave', () => pd.classList.remove('dragover'));
+  pd.addEventListener('drop', e => { e.preventDefault(); pd.classList.remove('dragover'); predictUploads(e.dataTransfer.files); });
+  $('btnExpModel').addEventListener('click', exportModel);
+  $('btnExpMeta').addEventListener('click', exportMeta);
+  $('btnExpReport').addEventListener('click', exportReport);
+  $('btnExpRunsJson').addEventListener('click', exportRuns);
+  $('btnImpRunsJson').addEventListener('click', () => $('impRunsFile').click());
+  $('impRunsFile').addEventListener('change', e => { if (e.target.files[0]) importRuns(e.target.files[0]); e.target.value=''; });
+  $('btnClearRuns').addEventListener('click', clearRuns);
+}
+async function init(){
+  let tries = 0;
+  while (!window.tf && tries < 100){ await new Promise(r => setTimeout(r,100)); tries++; }
+  if (!window.tf){ $('tfStatus').textContent = 'erro ao carregar TF.js · verifique a internet'; log('Não foi possível carregar o TensorFlow.js a partir da CDN.', 'err'); return; }
+  await tf.ready();
+  $('tfStatus').textContent = 'TF.js '+tf.version.tfjs+' · '+tf.getBackend();
+  $('pillBackend').textContent = tf.getBackend();
+  initCharts(); bindEvents();
+  renderClassInputs(); refreshReqSummary(); syncSplit(); onModelChange(); updateCritInfo(); fillLoadSnippet();
+  updateRunsPill(); renderRunsTable(); updateBalanceChart();
+  gotoStage(1); updateSysCard(); setInterval(updateSysCard, 1500);
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    log('Microfone indisponível neste contexto. Use o envio de arquivos de áudio (requer https para gravar).', 'warn');
+  }
+  log('<b>Audio.sys</b> iniciado · TensorFlow.js '+tf.version.tfjs+' · backend '+tf.getBackend(), 'ok');
+  log('Pipeline AMCH: requisitos → dados → treinamento ↔ avaliação → predição → exportação (Martins et al., 2024)', 'info');
+  log('Pré-processamento: gravação 16 kHz → espectrograma log-mel → CNN. Comece definindo o projeto e as classes na etapa 1.', 'info');
+}
+init();
+</script>
+</body>
+</html>

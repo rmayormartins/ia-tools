@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>IA Tools — Ferramentas Didáticas de IA</title>
+<meta name="description" content="Ferramentas interativas para aprendizado de Inteligência Artificial — Aprendizado de Máquina e Aprendizado Profundo." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg-0: #07090d;
+  --bg-1: #0c1016;
+  --bg-2: #11161f;
+  --bg-3: #161d28;
+  --bg-panel: #0e131b;
+  --border: #1e2838;
+  --border-soft: #172030;
+  --border-strong: #2a3a52;
+
+  --text-0: #e6ecf5;
+  --text-1: #b6c2d4;
+  --text-2: #6b7889;
+  --text-3: #3f4a5b;
+
+  --phos: #4ade80;
+  --phos-soft: #14532d40;
+  --phos-glow: #4ade8033;
+
+  --cyan: #38bdf8;
+  --cyan-soft: #0c4a6e40;
+  --cyan-glow: #38bdf833;
+
+  --amber: #fbbf24;
+  --amber-soft: #78350f40;
+  --amber-glow: #fbbf2433;
+
+  --rose: #fb7185;
+  --rose-soft: #7f1d1d40;
+
+  --violet: #a78bfa;
+  --violet-soft: #4c1d9540;
+  --violet-glow: #a78bfa33;
+
+  --teal: #2dd4bf;
+  --teal-soft: #0d373340;
+
+  --radius: 4px;
+  --radius-lg: 8px;
+
+  --font-display: 'Chakra Petch', sans-serif;
+  --font-serif: 'Instrument Serif', serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-body: 'Chakra Petch', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { height: 100%; }
+body {
+  min-height: 100%;
+  background:
+    radial-gradient(1200px 600px at 80% -10%, #0d2137 0%, transparent 60%),
+    radial-gradient(800px 400px at -10% 100%, #1a0d2b 0%, transparent 55%),
+    var(--bg-0);
+  color: var(--text-0);
+  font-family: var(--font-body);
+  font-size: 13px;
+  letter-spacing: 0.01em;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    linear-gradient(to right, rgba(255,255,255,0.015) 1px, transparent 1px) 0 0 / 48px 48px,
+    linear-gradient(to bottom, rgba(255,255,255,0.015) 1px, transparent 1px) 0 0 / 48px 48px;
+  pointer-events: none; z-index: 0;
+}
+
+a { text-decoration: none; color: inherit; }
+
+/* ========== header ========== */
+header.top-bar {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; gap: 20px;
+  padding: 12px 24px;
+  background: linear-gradient(180deg, rgba(10,14,20,0.97), rgba(10,14,20,0.85));
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+}
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand .logo-mark {
+  display: inline-flex; width: 32px; height: 32px;
+  align-items: center; justify-content: center; position: relative;
+}
+.brand .logo-mark::before {
+  content: ''; position: absolute; inset: 0;
+  border: 1.5px solid var(--cyan); border-radius: 6px;
+  animation: pulse-ia 3s ease-in-out infinite;
+}
+.brand .logo-mark::after {
+  content: ''; position: absolute;
+  width: 8px; height: 8px;
+  background: var(--cyan); border-radius: 50%;
+  box-shadow: 0 0 14px var(--cyan), 0 0 30px var(--cyan-glow);
+}
+@keyframes pulse-ia {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  50% { transform: scale(1.12) rotate(3deg); opacity: 0.45; }
+}
+.brand h1 {
+  font-family: var(--font-display);
+  font-weight: 700; font-size: 20px; letter-spacing: 0.2em;
+}
+.brand .tag {
+  color: var(--text-2); font-size: 10px;
+  letter-spacing: 0.25em; text-transform: uppercase;
+}
+.brand .tag em {
+  font-style: italic; font-family: var(--font-serif);
+  font-size: 14px; color: var(--cyan); letter-spacing: 0.04em;
+}
+
+.top-stats {
+  display: flex; gap: 18px; margin-left: auto;
+  font-family: var(--font-mono); font-size: 11px;
+}
+.top-stat {
+  display: flex; flex-direction: column; gap: 2px;
+  padding-right: 18px; border-right: 1px solid var(--border);
+}
+.top-stat:last-child { border-right: none; padding-right: 0; }
+.top-stat .label {
+  color: var(--text-2); font-size: 9px;
+  letter-spacing: 0.2em; text-transform: uppercase;
+}
+.top-stat .value { color: var(--text-0); font-weight: 500; }
+.top-stat.live .value { color: var(--phos); }
+.top-stat .value .unit { color: var(--text-2); margin-left: 4px; font-weight: 300; }
+
+/* ========== content ========== */
+.content {
+  position: relative; z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 28px 24px 60px;
+}
+
+/* ========== section headers ========== */
+.section-header {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 18px; margin-top: 40px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.section-header:first-child { margin-top: 0; }
+.section-header .dot {
+  display: inline-block; width: 8px; height: 8px;
+  border-radius: 50%;
+}
+.section-header .dot.cyan { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+.section-header .dot.violet { background: var(--violet); box-shadow: 0 0 8px var(--violet); }
+.section-header .dot.amber { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+.section-header h2 {
+  font-family: var(--font-display);
+  font-weight: 600; font-size: 13px;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--text-0);
+}
+.section-header .count {
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--text-2); letter-spacing: 0.06em;
+  margin-left: auto;
+}
+
+/* ========== sub-section label ========== */
+.sub-label {
+  display: flex; align-items: center; gap: 8px;
+  margin: 22px 0 12px;
+  font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--text-3);
+}
+.sub-label::after {
+  content: ''; flex: 1; height: 1px;
+  background: var(--border-soft);
+}
+
+/* ========== PRIMARY cards grid (LABs) ========== */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+}
+
+/* ========== SECONDARY cards grid (complementary) ========== */
+.cards-grid-sm {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px;
+}
+
+/* ========== PRIMARY card (LAB) ========== */
+.tool-card {
+  background: linear-gradient(180deg, var(--bg-2), var(--bg-1));
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px 16px;
+  display: flex; flex-direction: column;
+  gap: 10px;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+.tool-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--card-accent, var(--cyan)), transparent);
+  opacity: 0.6;
+  transition: opacity 0.3s;
+}
+.tool-card::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, var(--card-accent, var(--cyan-glow)) 0%, transparent 55%);
+  opacity: 0.06;
+  pointer-events: none;
+}
+.tool-card:hover {
+  border-color: color-mix(in srgb, var(--card-accent, var(--cyan)) 40%, var(--border-strong));
+  background: linear-gradient(180deg, var(--bg-3), var(--bg-2));
+  transform: translateY(-3px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 0 0 1px var(--border-strong);
+}
+.tool-card:hover::before { opacity: 1; }
+.tool-card:hover::after { opacity: 0.12; }
+
+.tool-card .card-top {
+  display: flex; align-items: center; justify-content: space-between;
+  position: relative; z-index: 1;
+}
+.tool-card .status-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--font-mono); font-size: 9px;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 3px;
+  background: var(--phos-soft);
+  border: 1px solid rgba(74, 222, 128, 0.2);
+  color: var(--phos);
+}
+.tool-card .status-badge .live-dot {
+  display: inline-block; width: 5px; height: 5px;
+  background: var(--phos); border-radius: 50%;
+  box-shadow: 0 0 6px var(--phos);
+  animation: blink 1.6s ease-in-out infinite;
+}
+.tool-card .status-badge.ref-badge {
+  background: var(--cyan-soft);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  color: var(--cyan);
+}
+@keyframes blink { 50% { opacity: 0.3; } }
+
+.lab-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: var(--font-display); font-size: 9px;
+  font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 3px;
+}
+.lab-badge.cyan-b { background: var(--cyan-soft); border: 1px solid rgba(56,189,248,0.25); color: var(--cyan); }
+.lab-badge.violet-b { background: var(--violet-soft); border: 1px solid rgba(167,139,250,0.25); color: var(--violet); }
+.lab-badge.phos-b { background: var(--phos-soft); border: 1px solid rgba(74,222,128,0.25); color: var(--phos); }
+.lab-badge.amber-b { background: var(--amber-soft); border: 1px solid rgba(251,191,36,0.25); color: var(--amber); }
+.lab-badge.teal-b { background: var(--teal-soft); border: 1px solid rgba(45,212,191,0.25); color: var(--teal); }
+
+.tool-card .card-icon {
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 6px; font-size: 18px; flex-shrink: 0;
+  position: relative; z-index: 1;
+}
+.card-icon.cyan-icon { background: var(--cyan-soft); border: 1px solid rgba(56,189,248,0.15); }
+.card-icon.violet-icon { background: var(--violet-soft); border: 1px solid rgba(167,139,250,0.15); }
+.card-icon.phos-icon { background: var(--phos-soft); border: 1px solid rgba(74,222,128,0.15); }
+.card-icon.amber-icon { background: var(--amber-soft); border: 1px solid rgba(251,191,36,0.15); }
+.card-icon.teal-icon { background: var(--teal-soft); border: 1px solid rgba(45,212,191,0.15); }
+.card-icon.rose-icon { background: var(--rose-soft); border: 1px solid rgba(251,113,133,0.15); }
+
+.tool-card h3 {
+  font-family: var(--font-display);
+  font-weight: 600; font-size: 15px;
+  letter-spacing: 0.06em;
+  color: var(--text-0);
+  line-height: 1.3;
+  position: relative; z-index: 1;
+}
+.tool-card .card-desc {
+  font-family: var(--font-body);
+  font-size: 11.5px; line-height: 1.55;
+  color: var(--text-2);
+  flex: 1;
+  position: relative; z-index: 1;
+}
+.tool-card .card-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+  margin-top: auto;
+  position: relative; z-index: 1;
+}
+.tool-card .card-author {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: 10px; color: var(--text-2);
+}
+.tool-card .card-author .avatar {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 7px; font-weight: 700; color: var(--text-2);
+}
+.tool-card .card-year {
+  font-family: var(--font-mono); font-size: 10px; color: var(--text-3);
+}
+
+/* accent colors */
+.tool-card[data-accent="cyan"] { --card-accent: var(--cyan); }
+.tool-card[data-accent="violet"] { --card-accent: var(--violet); }
+.tool-card[data-accent="phos"] { --card-accent: var(--phos); }
+.tool-card[data-accent="amber"] { --card-accent: var(--amber); }
+.tool-card[data-accent="teal"] { --card-accent: var(--teal); }
+.tool-card[data-accent="rose"] { --card-accent: var(--rose); }
+
+/* ========== featured card (cheat sheet — wider) ========== */
+.tool-card.featured {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 22px;
+  padding: 20px 24px;
+}
+.tool-card.featured .card-top {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+.tool-card.featured .card-icon {
+  width: 48px; height: 48px;
+  font-size: 24px;
+}
+.tool-card.featured .card-body { display: flex; flex-direction: column; gap: 6px; position: relative; z-index: 1; }
+.tool-card.featured h3 { font-size: 17px; }
+.tool-card.featured .card-desc { font-size: 12px; }
+.tool-card.featured .card-meta {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+  position: relative; z-index: 1;
+}
+.tool-card.featured .card-meta .stats {
+  display: flex; gap: 14px;
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--text-2);
+}
+.tool-card.featured .card-meta .stats div {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.tool-card.featured .card-meta .stats .num {
+  color: var(--cyan); font-size: 14px; font-weight: 600;
+  font-family: var(--font-display);
+}
+.tool-card.featured .card-meta .stats .lbl {
+  font-size: 8px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--text-3);
+}
+@media (max-width: 768px) {
+  .tool-card.featured {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .tool-card.featured .card-meta { align-items: flex-start; }
+}
+
+/* ========== SECONDARY card (compact row) ========== */
+.tool-card-sm {
+  background: var(--bg-0);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  display: flex; align-items: center; gap: 12px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.tool-card-sm:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+}
+.tool-card-sm .sm-icon {
+  width: 28px; height: 28px; min-width: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 5px;
+  font-size: 13px;
+}
+.tool-card-sm .sm-body {
+  flex: 1; min-width: 0;
+}
+.tool-card-sm .sm-body h4 {
+  font-family: var(--font-display);
+  font-weight: 500; font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--text-1);
+  line-height: 1.2;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tool-card-sm .sm-body p {
+  font-family: var(--font-mono); font-size: 9.5px;
+  color: var(--text-3); margin-top: 2px;
+  line-height: 1.4;
+  display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
+}
+.tool-card-sm .sm-arrow {
+  color: var(--text-3);
+  font-family: var(--font-mono); font-size: 11px;
+  transition: color 0.15s, transform 0.15s;
+  flex-shrink: 0;
+}
+.tool-card-sm:hover .sm-arrow {
+  color: var(--cyan); transform: translateX(3px);
+}
+.tool-card-sm:hover .sm-body h4 { color: var(--text-0); }
+
+/* ========== footer ========== */
+footer {
+  padding: 12px 24px;
+  background: linear-gradient(180deg, rgba(10,14,20,0.7), rgba(10,14,20,0.95));
+  border-top: 1px solid var(--border);
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--text-2);
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px; text-align: center;
+  position: relative; z-index: 1;
+}
+footer .author a { color: var(--cyan); text-decoration: none; }
+footer .author a:hover { text-decoration: underline; }
+footer .ts { color: var(--text-3); }
+footer .ts a { color: var(--text-2); text-decoration: none; }
+footer .ts a:hover { color: var(--cyan); text-decoration: underline; }
+
+/* ========== responsive ========== */
+@media (max-width: 768px) {
+  header.top-bar { flex-wrap: wrap; padding: 10px 16px; gap: 10px; }
+  .top-stats { display: none; }
+  .content { padding: 20px 16px 40px; }
+  .cards-grid { grid-template-columns: 1fr; }
+  .cards-grid-sm { grid-template-columns: 1fr; }
+  .section-header h2 { font-size: 11px; }
+  footer { padding: 10px 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ========== HEADER ========== -->
+<header class="top-bar">
+  <div class="brand">
+    <span class="logo-mark"></span>
+    <h1>IA TOOLS</h1>
+    <span class="tag">Ferramentas <em>Didáticas de IA</em></span>
+  </div>
+  <div class="top-stats">
+    <div class="top-stat live">
+      <span class="label">Status</span>
+      <span class="value">ONLINE</span>
+    </div>
+    <div class="top-stat">
+      <span class="label">Cheat Sheet</span>
+      <span class="value">1</span>
+    </div>
+    <div class="top-stat">
+      <span class="label">ML Tools</span>
+      <span class="value">9</span>
+    </div>
+    <div class="top-stat">
+      <span class="label">DL Tools</span>
+      <span class="value">10</span>
+    </div>
+    <div class="top-stat">
+      <span class="label">Total</span>
+      <span class="value">20<span class="unit">items</span></span>
+    </div>
+  </div>
+</header>
+
+<!-- ========== CONTENT ========== -->
+<div class="content">
+
+  <!-- ============================================================== -->
+  <!--                       CHEAT SHEET                              -->
+  <!-- ============================================================== -->
+  <div class="section-header">
+    <span class="dot cyan"></span>
+    <h2>Cheat Sheet</h2>
+    <span class="count">1 referência</span>
+  </div>
+
+  <div class="sub-label">Material de Referência</div>
+  <div class="cards-grid">
+
+    <a href="ai-ml-dl-cheatsheet.html" class="tool-card featured" data-accent="cyan">
+      <div class="card-top">
+        <div class="card-icon cyan-icon">📚</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="lab-badge cyan-b">REF</span>
+          <span class="status-badge ref-badge">CHEAT SHEET</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <h3>AI / ML / DL Cheat Sheet</h3>
+        <p class="card-desc">Referência abrangente cobrindo cerca de 90 técnicas de Inteligência Artificial, Aprendizado de Máquina e Aprendizado Profundo, com hiperparâmetros, requisitos de normalização e sensibilidade à distribuição dos dados por técnica.</p>
+        <div class="card-footer" style="border-top: none; padding-top: 4px;">
+          <span class="card-author"><span class="avatar">RM</span> rmayormartins</span>
+          <span class="card-year">2026</span>
+        </div>
+      </div>
+      <div class="card-meta">
+        <div class="stats">
+          <div>
+            <span class="num">~90</span>
+            <span class="lbl">Técnicas</span>
+          </div>
+          <div>
+            <span class="num">3</span>
+            <span class="lbl">Áreas</span>
+          </div>
+          <div>
+            <span class="num">HTML</span>
+            <span class="lbl">Formato</span>
+          </div>
+        </div>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- ============================================================== -->
+  <!--                  APRENDIZADO DE MÁQUINA                        -->
+  <!-- ============================================================== -->
+  <div class="section-header">
+    <span class="dot cyan"></span>
+    <h2>Aprendizado de Máquina</h2>
+    <span class="count">9 ferramentas</span>
+  </div>
+
+  <!-- ---- LABs ---- -->
+  <div class="sub-label">Laboratórios Interativos</div>
+  <div class="cards-grid">
+
+        <a href="rna-tool.html" class="tool-card" data-accent="cyan">
+      <div class="card-top">
+        <div class="card-icon cyan-icon">🧬</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="lab-badge cyan-b">LAB</span>
+          <span class="status-badge"><span class="live-dot"></span> Running</span>
+        </div>
+      </div>
+      <h3>RNA LAB</h3>
+      <p class="card-desc">Demonstração completa do funcionamento de uma Rede Neural Artificial com treinamento interativo</p>
+      <div class="card-footer">
+        <span class="card-author"><span class="avatar">RM</span> rmayormartins</span>
+        <span class="card-year">2026</span>
+      </div>
+    </a>
+    <a href="decisiontreetool.html" class="tool-card" data-accent="cyan">
+      <div class="card-top">
+        <div class="card-icon cyan-icon">🌳</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="lab-badge cyan-b">LAB</span>
+          <span class="status-badge"><span class="live-dot"></span> Running</span>
+        </div>
+      </div>
+      <h3>Decision Tree LAB</h3>
+      <p class="card-desc">Ferramenta interativa para treinar uma Árvore de Decisão e visualizar as regras de classificação</p>
+      <div class="card-footer">
+        <span class="card-author"><span class="avatar">RM</span> rmayormartins</span>
+        <span class="card-year">2025</span>
+      </div>
+    </a>
+
+    <a href="svmtool.html" class="tool-card" data-accent="cyan">
+      <div class="card-top">
+        <div class="card-icon cyan-icon">📐</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="lab-badge cyan-b">LAB</span>
+          <span class="status-badge"><span class="live-dot"></span> Running</span>
+        </div>
+      </div>
+      <h3>SVM LAB</h3>
+      <p class="card-desc">Ferramenta interativa para treinar uma Support Vector Machine e explorar margens e kernels</p>
+      <div class="card-footer">
+        <span class="card-author"><span class="avatar">RM</span> rmayormartins</span>
+        <span class="card-year">2025</span>
+      </div>
+    </a>
+
+    <a href="naive-bayes-tool.html" class="tool-card" data-accent="cyan">
+      <div class="card-top">
+        <div class="card-icon cyan-icon">📊</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="lab-badge cyan-b">LAB</span>
+          <span class="status-badge"><span class="live-dot"></span> Running</span>
+        </div>
+      </div>
+      <h3>Naive Bayes LAB</h3>
+      <p class="card-desc">Demonstração do funcionamento do classificador Naive Bayes com probabilidades condicionais</p>
+      <div class="card-footer">
+        <span class="card-author"><span class="avatar">RM</span> rmayormartins</span>
+        <span class="card-year">2026</span>
+      </div>
+    </a>
+
+    <a href="random-forest-tool.html" class="tool-card" data-accent="cyan">
+      <div class="card-top">
+        <div class="card-icon cyan-icon">🌲</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="lab-badge cyan-b">LAB</span>
+          <span class="status-badge"><span class="live-dot"></span> Running</span>
+        </div>
+      </div>
+      <h3>Random Forest LAB</h3>
+      <p class="card-desc">Demonstração do ensemble Random Forest com múltiplas árvores de decisão</p>
+      <div class="card-footer">
+        <span class="card-author"><span class="avatar">RM</span> rmayormartins</span>
+        <span class="card-year">2026</span>
+      </div>
+    </a>
+
+    <a href="knn-tool.html" class="tool-card" data-accent="cyan">
+      <div class="card-top">
+        <div class="card-icon cyan-icon">📍</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="lab-badge cyan-b">LAB</span>
+          <span class="status-badge"><span class="live-dot"></span> Running</span>
+        </div>
+      </div>
+      <h3>KNN LAB</h3>
+      <p class="card-desc">Demonstração do K-Nearest Neighbors com vizinhança e classificação por distância</p>
+      <div class="card-footer">
+        <span class="card-author"><span class="avatar">RM</span> rmayormartins</span>
+        <span class="card-year">2026</span>
+      </div>
+    </a>
+
+    <a href="kmeans-tool.html" class="tool-card" data-accent="cyan">
+      <div class="card-top">
+        <div class="card-icon cyan-icon">🎯</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="lab-badge cyan-b">LAB</span>
+          <span class="status-badge"><span class="live-dot"></span> Running</span>
+        </div>
+      </div>
+      <h3>K-Means LAB</h3>
+      <p class="card-desc">Demonstração do K-Means com agrupamento por centróides e iterações</p>
+      <div class="card-footer">
+        <span class="card-author"><span class="avatar">RM</span> rmayormartins</span>
+        <span class="card-year">2026</span>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- ---- Complementares ---- -->
+  <div class="sub-label">Visualizações Complementares</div>
+  <div class="cards-grid-sm">
+
+    <a href="datavisualization.html" class="tool-card-sm">
+      <div class="sm-icon cyan-icon">🔍</div>
+      <div class="sm-body">
+        <h4>Dataset & Perceptron Visualization</h4>
+        <p>Divisão espacial de dados e separação por hiperplanos</p>
+      </div>
+      <span class="sm-arrow">&#9654;</span>
+    </a>
+
+    <a href="perceptron.html" class="tool-card-sm">
+      <div class="sm-icon cyan-icon">⚡</div>
+      <div class="sm-body">
+        <h4>Perceptron Visualization</h4>
+        <p>Neurônio único separando dados por hiperplano</p>
+      </div>
+      <span class="sm-arrow">&#9654;</span>
+    </a>
+
+    <a href="multilayerperceptron.html" class="tool-card-sm">
+      <div class="sm-icon violet-icon">🔍</div>
+      <div class="sm-body">
+        <h4>Multilayer Perceptron Visualization</h4>
+        <p>Duas ou mais camadas separando dados não-linearmente</p>
+      </div>
+      <span class="sm-arrow">&#9654;</span>
+    </a>
+
+    <a href="activationfunctions.html" class="tool-card-sm">
+      <div class="sm-icon rose-icon">📈</div>
+      <div class="sm-body">
+        <h4>Activation Functions</h4>
+        <p>Compare ReLU, Sigmoid, Tanh, Softmax e mais</p>
+      </div>
+      <span class="sm-arrow">&#9654;</span>
+    </a>
+
+    <a href="ann_visualization.html" class="tool-card-sm">
+      <div class="sm-icon teal-icon">🧠</div>
+      <div class="sm-body">
+        <h4>Neural Network Architecture</h4>
+        <p>Arquitetura multicamada com pesos e propagação</p>
+      </div>
+      <span class="sm-arrow">&#9654;</span>
+    </a>
+
+    <a href="backpropagation.html" class="tool-card-sm">
+      <div class="sm-icon violet-icon">🔄</div>
+      <div class="sm-body">
+        <h4>Backpropagation Simulator</h4>
+        <p>Retropropagação passo a passo em rede neural</p>
+      </div>
+      <span class="sm-arrow">&#9654;</span>
+    </a>
+
+    <a href="learningrate.html" class="tool-card-sm">
+      <div class="sm-icon amber-icon">⚡</div>
+      <div class="sm-body">
+        <h4>Learning Rate Simulator</h4>
+        <p>Impacto de diferentes learning rates no treinamento</p>
+      </div>
+      <span class="sm-arrow">&#9654;</span>
+    </a>
+
+
+    <a href="kmeans.html" class="tool-card-sm">
+      <div class="sm-icon amber-icon">📊</div>
+      <div class="sm-body">
+        <h4>K-Means Clustering</h4>
+        <p>Visualização interativa de agrupamento K-Means</p>
+      </div>
+      <span class="sm-arrow">&#9654;</span>
+    </a>
+
+  </div>
+
+
+  <!-- ============================================================== -->
+  <!--                  APRENDIZADO PROFUNDO                          -->
+  <!-- ============================================================== -->
+  <div class="section-header">
+    <span class="dot violet"></span>
+    <h2>Aprendizado Profundo</h2>
+    <span class="count">10 ferramentas</span>
+  </div>
+
+  <!-- ---- LABs ---- -->
+  <div class="sub-label">Laboratórios Interativos</div>
+  <div class="cards-grid">
+
+    <a href="cnn-tool.html" class="tool-card" data-accent="cyan">
+      <div class="card-top">
+        <div class="card-icon cyan-icon">🧬</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="lab-badge cyan-b">LAB</span>
+          <span class="status-badge"><span class="live-dot"></span> Running</span>
+        </div>
+      </div>
+      <h3>CNN LAB</h3>
+      <p class="card-desc">Demonstração completa do funcionamento de uma Rede Neural Convolucional (CNN) com treinamento interativo</p>
+      <div class="card-footer">
+        <span class="card-author"><span class="avatar">RM</span> rmayormartins</span>
+        <span class="card-year">2026</span>
+      </div>
+    </a>
+        <a href="cnn-flow.html" class="tool-card" data-accent="cyan">
+      <div class="card-top">
+        <div class="card-icon cyan-icon">🧬</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="lab-badge cyan-b">FLOW</span>
+          <span class="status-badge"><span class="live-dot"></span> Running</span>
+        </div>
+      </div>
+      <h3>CNN FLOW</h3>
+      <p class="card-desc">Demonstração das camadas de uma Rede Neural Convolucional (CNN) com treinamento interativo</p>
+      <div class="card-footer">
+        <span class="card-author"><span class="avatar">RM</span> rmayormartins</span>
+        <span class="card-year">2026</span>
+      </div>
+    </a>
+     <a href="transformer-tool.html" class="tool-card" data-accent="cyan">
+      <div class="card-top">
+        <div class="card-icon cyan-icon">🤖</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="lab-badge cyan-b">LAB</span>
+          <span class="status-badge"><span class="live-dot"></span> Running</span>
+        </div>
+      </div>
+      <h3>Transformer LAB</h3>
+      <p class="card-desc">Demonstração funcionamento de um Transformer com treinamento interativo</p>
+      <div class="card-footer">
+        <span class="card-author"><span class="avatar">RM</span> rmayormartins</span>
+        <span class="card-year">2026</span>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- ---- Sistemas ---- -->
+  <div class="sub-label">Sistemas Interativos</div>
+  <div class="cards-grid">
+
+    <a href="object-sys.html" class="tool-card" data-accent="phos">
+      <div class="card-top">
+        <div class="card-icon phos-icon">🎯</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="lab-badge phos-b">SYS</span>
+          <span class="status-badge"><span class="live-dot"></span> Running</span>
+        </div>
+      </div>
+      <h3>Object SYS</h3>
+      <p class="card-desc">Sistema de detecção de objetos com pipeline completo de inferência e visualização de bounding boxes</p>
+      <div class="card-footer">
+        <span class="card-author"><span class="avatar">RM</span> rmayormartins</span>
+        <span class="card-year">2026</span>
+      </div>
+    </a>
+
+    <a href="image-sys.html" class="tool-card" data-accent="phos">
+      <div class="card-top">
+        <div class="card-icon phos-icon">🖼️</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="lab-badge phos-b">SYS</span>
+          <span class="status-badge"><span class="live-dot"></span> Running</span>
+        </div>
+      </div>
+      <h3>Image SYS</h3>
+      <p class="card-desc">Sistema de classificação e processamento de imagens com pipeline de pré-processamento e inferência</p>
+      <div class="card-footer">
+        <span class="card-author"><span class="avatar">RM</span> rmayormartins</span>
+        <span class="card-year">2026</span>
+      </div>
+    </a>
+
+    <a href="audio-sys.html" class="tool-card" data-accent="phos">
+      <div class="card-top">
+        <div class="card-icon phos-icon">🔊</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="lab-badge phos-b">SYS</span>
+          <span class="status-badge"><span class="live-dot"></span> Running</span>
+        </div>
+      </div>
+      <h3>Audio SYS</h3>
+      <p class="card-desc">Sistema de processamento e classificação de áudio com pipeline de extração de features e inferência</p>
+      <div class="card-footer">
+        <span class="card-author"><span class="avatar">RM</span> rmayormartins</span>
+        <span class="card-year">2026</span>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- ---- Complementares ---- -->
+  <div class="sub-label">Visualizações Complementares</div>
+  <div class="cards-grid-sm">
+
+     <a href="cnn1.html" class="tool-card-sm">
+      <div class="sm-icon phos-icon">🖼️</div>
+      <div class="sm-body">
+        <h4>CNN Visualizer</h4>
+        <p>Camadas convolucionais, pooling e feature maps</p>
+      </div>
+      <span class="sm-arrow">&#9654;</span>
+    </a>
+
+  </div>
+
+</div>
+
+<!-- ========== FOOTER ========== -->
+<footer>
+  <div class="author">
+    Ramon Mayor Martins, Ph.D. — <a href="https://rmayormartins.github.io" target="_blank">rmayormartins.github.io</a>
+  </div>
+  <div class="ts">
+    <a href="https://www.ifsc.edu.br" target="_blank">IFSC — Instituto Federal de Santa Catarina</a> · Área de Telecomunicações · 2025–2026
+  </div>
+</footer>
+
+</body>
+</html>
