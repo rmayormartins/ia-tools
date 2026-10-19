@@ -345,6 +345,92 @@
   .legend-item { display: flex; align-items: center; gap: 5px; }
   .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 
+  /* CHASE / TRAIL CONTROLS */
+  .iter-bar { flex-wrap: wrap; }
+  .iter-bar .play-btn {
+    background: rgba(56,139,253,.15);
+    color: var(--accent2);
+    border-color: rgba(56,139,253,.45);
+    font-weight: 600;
+    min-width: 96px;
+  }
+  .iter-bar .play-btn.playing {
+    background: rgba(247,129,102,.15);
+    color: var(--accent3);
+    border-color: rgba(247,129,102,.5);
+  }
+  .iter-bar select { width: auto; padding: 3px 6px; font-size: 11px; }
+  .iter-scrub {
+    flex: 1;
+    min-width: 120px;
+    accent-color: var(--accent2);
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+  }
+  .iter-info { margin-left: auto; font-variant-numeric: tabular-nums; }
+  #iter-label { font-variant-numeric: tabular-nums; min-width: 110px; }
+  .iter-badge {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .iter-badge.moving { color: var(--accent2); border-color: rgba(56,139,253,.45); background: rgba(56,139,253,.08); }
+  .iter-badge.stopped { color: var(--accent); border-color: rgba(46,160,67,.45); background: rgba(46,160,67,.08); }
+
+  label.toggle {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--text3);
+    cursor: pointer; user-select: none; margin: 0;
+  }
+  label.toggle input { accent-color: var(--accent2); width: auto; margin: 0; }
+
+  .info-note {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    font-size: 12px;
+    color: var(--text3);
+    line-height: 1.7;
+    margin-bottom: 14px;
+  }
+  .info-note strong { color: var(--accent2); }
+
+  .trail-legend {
+    display: flex; flex-wrap: wrap; gap: 16px;
+    font-size: 11px; color: var(--text2);
+    margin-top: 8px; padding: 0 4px;
+  }
+  .trail-legend b { color: var(--text3); font-weight: 700; }
+
+  .metric-group-title {
+    font-size: 11px; font-weight: 600; color: var(--text2);
+    text-transform: uppercase; letter-spacing: .8px;
+    margin: 4px 0 10px;
+  }
+  .metric-sub { font-size: 10px; color: var(--text2); margin-top: 4px; line-height: 1.4; opacity: .85; }
+  .metric-val small { font-size: 14px; color: var(--text2); font-weight: 600; }
+  .metric-card.hl { border-color: rgba(56,139,253,.45); }
+  .metric-card.good { border-color: rgba(46,160,67,.45); }
+  .metric-card.good .metric-val { color: var(--accent); }
+  .metric-card.warn { border-color: rgba(247,129,102,.45); }
+  .metric-card.warn .metric-val { color: var(--accent3); }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+  .cont-table td.maj { background: rgba(56,139,253,.16); color: var(--text); font-weight: 700; }
+  .cont-summary, .chart-note { font-size: 12px; color: var(--text3); line-height: 1.7; margin-top: 10px; }
+  .cont-summary strong, .chart-note strong { color: var(--accent2); }
+  #proj-note { color: var(--accent3); }
+
+  /* keep sidebar sections at full height (the sidebar scrolls instead) */
+  aside > .section { flex-shrink: 0; }
+  .tabs { overflow-x: auto; scrollbar-width: thin; }
+  .tab { white-space: nowrap; flex-shrink: 0; }
+
   footer {
     background: var(--panel);
     border-top: 1px solid var(--border);
@@ -356,7 +442,9 @@
 
   @media (max-width: 800px) {
     .layout { grid-template-columns: 1fr; height: auto; }
-    aside { border-right: none; border-bottom: 1px solid var(--border); }
+    aside { border-right: none; border-bottom: 1px solid var(--border); width: 100%; max-width: 100%; }
+    .two-col { grid-template-columns: 1fr; }
+    .iter-info { margin-left: 0; width: 100%; }
   }
 </style>
 </head>
@@ -443,7 +531,7 @@
           <input type="number" id="iter-num" min="1" max="9999" value="10" style="width:58px;max-width:58px;text-align:center;padding:3px 4px;font-size:11px;flex-shrink:0">
         </div>
         <div style="font-size:10px;color:var(--text2);margin-top:4px;line-height:1.5">
-          Slider vai até 300. Digite no campo numérico para valores maiores.
+          É um <strong>limite</strong>, não um número fixo de passos: com tolerância ativa o algoritmo para antes, assim que os centroides param. Slider vai até 300; digite no campo para valores maiores.
         </div>
       </div>
 
@@ -524,7 +612,7 @@
 
     <!-- TAB: CLUSTERS -->
     <div class="tab-content active" id="tab-clusters">
-      <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+      <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;align-items:flex-end">
         <div>
           <label style="font-size:11px">Feature eixo X</label>
           <select id="fx-sel" style="width:auto;padding:5px 8px;font-size:12px;margin-top:4px"></select>
@@ -533,20 +621,44 @@
           <label style="font-size:11px">Feature eixo Y</label>
           <select id="fy-sel" style="width:auto;padding:5px 8px;font-size:12px;margin-top:4px"></select>
         </div>
+        <div style="display:flex;flex-direction:column;gap:5px;padding-bottom:3px">
+          <label class="toggle"><input type="checkbox" id="trail-chk" checked> Trilha dos centroides</label>
+          <label class="toggle"><input type="checkbox" id="voronoi-chk" checked> Regiões de cada cluster (fundo)</label>
+        </div>
         <div id="legend-wrap" class="legend" style="margin-left:auto"></div>
       </div>
       <div class="canvas-wrap">
         <canvas id="cluster-canvas" height="400"></canvas>
       </div>
       <div class="iter-bar">
-        <button onclick="stepBack()">◀</button>
-        <span id="iter-label">Iteração —</span>
-        <div id="iter-dots" style="display:flex;gap:4px"></div>
-        <button onclick="stepForward()">▶</button>
-        <span id="inertia-label" style="margin-left:auto"></span>
+        <button onclick="stepBack()" title="Passo anterior (seta esquerda)">◀</button>
+        <button id="play-btn" class="play-btn" onclick="togglePlay()" title="Animar a perseguição (espaço)">▶ Animar</button>
+        <button onclick="stepForward()" title="Próximo passo (seta direita)">▶</button>
+        <select id="speed-sel" title="Velocidade da animação">
+          <option value="1200">Lento</option>
+          <option value="600" selected>Médio</option>
+          <option value="220">Rápido</option>
+        </select>
+        <span id="iter-label">Iteração -</span>
+        <input type="range" id="iter-scrub" class="iter-scrub" min="0" max="0" value="0" disabled title="Arraste para navegar pelas iterações">
+        <span id="step-badge" class="iter-badge" style="display:none"></span>
+        <span id="inertia-label" class="iter-info"></span>
       </div>
-      <div style="font-size:11px;color:var(--text2);margin-top:8px;padding:0 4px;line-height:1.6">
-        <strong style="color:var(--text3)">Centroides</strong> são marcados com ✦. Use os botões Passo para navegar pelas iterações do algoritmo.
+      <div class="trail-legend">
+        <span><b>✦</b> posição atual do centroide</span>
+        <span><b>◯</b> posição inicial</span>
+        <span><b>•──•</b> trilha: um ponto por iteração, setas indicam a direção</span>
+        <span><b>⊕</b> alvo: média do grupo (durante a animação)</span>
+        <span><b>○</b> ponto que trocou de grupo neste passo</span>
+        <span id="proj-note"></span>
+      </div>
+      <div class="info-note" style="margin-top:12px;margin-bottom:0">
+        <strong>O que é uma iteração?</strong> Cada iteração é <strong>um passo de perseguição</strong> dado pelos K centroides ao mesmo tempo:
+        (1) cada ponto escolhe o centroide mais próximo e ganha a cor dele; (2) cada centroide salta para a média (centro de massa) dos pontos da sua cor.
+        Como os grupos mudam quando os centroides se movem, eles continuam perseguindo até nenhum ponto trocar de grupo.
+        <strong>Máx. iterações</strong> é apenas um limite: com tolerância ativa o algoritmo para assim que os centroides param;
+        sem tolerância ele cumpre o limite, mas os passos depois da convergência têm deslocamento zero (o centroide fica parado).
+        Atalhos: <strong>espaço</strong> anima, <strong>setas</strong> avançam ou voltam um passo.
       </div>
     </div>
 
@@ -559,6 +671,11 @@
       <div class="canvas-wrap">
         <canvas id="evo-canvas" height="300"></canvas>
       </div>
+      <div style="font-size:11px;color:var(--text2);margin:16px 0 8px">🏃 Tamanho do passo de cada centroide por iteração (deslocamento)</div>
+      <div class="canvas-wrap">
+        <canvas id="shift-canvas" height="260"></canvas>
+      </div>
+      <div id="shift-note" class="chart-note"></div>
     </div>
 
     <!-- TAB: COTOVELO -->
@@ -566,25 +683,36 @@
       <div class="elbow-note">
         O <strong>método do cotovelo</strong> ajuda a escolher o K ideal. Plota a inércia para diferentes valores de K.
         O ponto onde a curva forma um "cotovelo" (redução de inércia diminui significativamente) sugere o K ótimo.
-        Busque o ponto de inflexão — onde adicionar mais clusters traz pouco ganho.
+        Busque o ponto de inflexão: a partir dele, adicionar mais clusters traz pouco ganho.
       </div>
       <div class="canvas-wrap">
         <canvas id="elbow-canvas" height="300"></canvas>
       </div>
       <div style="font-size:11px;color:var(--text2);margin-top:8px">
-        Linha <span style="color:var(--accent2)">azul</span> = inércia · <span style="color:var(--accent3)">Marcador</span> = K atual
+        Linha <span style="color:var(--accent2)">azul</span> = inércia · <span style="color:var(--accent3)">Marcador</span> = K atual · <span style="color:var(--accent)">Anel verde</span> = cotovelo detectado automaticamente
+      </div>
+      <div style="font-size:11px;color:var(--text2);margin:18px 0 8px">🔷 Silhouette médio para cada K (quanto maior, mais separados e coesos os grupos)</div>
+      <div class="canvas-wrap">
+        <canvas id="silk-canvas" height="220"></canvas>
+      </div>
+      <div style="font-size:11px;color:var(--text2);margin-top:8px">
+        Barra <span style="color:var(--accent)">verde</span> = maior silhouette (K sugerido) · contorno <span style="color:var(--accent3)">laranja</span> = K atual
       </div>
     </div>
 
     <!-- TAB: MÉTRICAS -->
     <div class="tab-content" id="tab-metrics">
-      <div class="metric-grid" id="metric-cards">
-        <div class="metric-card"><div class="metric-val">—</div><div class="metric-label">K clusters</div></div>
-        <div class="metric-card"><div class="metric-val">—</div><div class="metric-label">Inércia</div></div>
-        <div class="metric-card"><div class="metric-val">—</div><div class="metric-label">Silhouette Score</div></div>
-        <div class="metric-card"><div class="metric-val">—</div><div class="metric-label">Iterações</div></div>
+      <div class="info-note">
+        <strong>Quantas classes os centroides encontraram?</strong> O K-Means não descobre sozinho o número de classes:
+        ele sempre divide os dados em exatamente K grupos (o K é você quem escolhe). Por isso os cards abaixo mostram
+        quantos desses grupos terminaram ocupados, quantas <strong>classes reais</strong> do dataset os centroides conseguiram capturar
+        (quando o dataset tem rótulos) e qual K os critérios de <strong>silhouette</strong> e do <strong>cotovelo</strong> sugerem.
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
+      <div class="metric-group-title">🧭 Quantos grupos?</div>
+      <div class="metric-grid" id="metric-cards-groups"></div>
+      <div class="metric-group-title">⚙️ Execução e qualidade</div>
+      <div class="metric-grid" id="metric-cards"></div>
+      <div class="two-col">
         <div>
           <div style="font-size:11px;color:var(--text2);margin-bottom:8px">📊 Tamanho dos Clusters</div>
           <div class="canvas-wrap"><canvas id="size-canvas" height="200"></canvas></div>
@@ -592,6 +720,12 @@
         <div>
           <div style="font-size:11px;color:var(--text2);margin-bottom:8px">🔷 Silhouette por Cluster</div>
           <div id="sil-bars"></div>
+        </div>
+      </div>
+      <div style="margin-top:20px">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:8px">🧩 Cluster × classe real (quantos pontos de cada classe caíram em cada cluster)</div>
+        <div class="centroid-table" id="cont-table-wrap">
+          <div style="color:var(--text2);padding:20px">Execute primeiro</div>
         </div>
       </div>
     </div>
@@ -632,7 +766,8 @@ function mulberry32(a){
 function genBlobs(rng,n=200,k=3){
   const centers=[[2,2],[6,2],[4,6],[-1,5],[8,7]].slice(0,k);
   const rows=[];
-  centers.forEach((c,i)=>{ for(let j=0;j<Math.floor(n/k);j++) rows.push([c[0]+(rng()-.5)*2,c[1]+(rng()-.5)*2]); });
+  // third element = true label (used only to compare clusters with real classes)
+  centers.forEach((c,i)=>{ for(let j=0;j<Math.floor(n/k);j++) rows.push([c[0]+(rng()-.5)*2,c[1]+(rng()-.5)*2,i]); });
   return rows;
 }
 
@@ -640,11 +775,11 @@ function genMoons(rng,n=200){
   const rows=[];
   for(let i=0;i<n/2;i++){
     const t=Math.PI*i/(n/2);
-    rows.push([Math.cos(t)+(rng()-.5)*.3,Math.sin(t)+(rng()-.5)*.3]);
+    rows.push([Math.cos(t)+(rng()-.5)*.3,Math.sin(t)+(rng()-.5)*.3,0]);
   }
   for(let i=0;i<n/2;i++){
     const t=Math.PI*i/(n/2);
-    rows.push([1-Math.cos(t)+(rng()-.5)*.3,0.5-Math.sin(t)+(rng()-.5)*.3]);
+    rows.push([1-Math.cos(t)+(rng()-.5)*.3,0.5-Math.sin(t)+(rng()-.5)*.3,1]);
   }
   return rows;
 }
@@ -668,13 +803,23 @@ function genIris(){
   return rows;
 }
 
+const IRIS_ROWS=genIris();
+const BLOB_ROWS=genBlobs(mulberry32(17),150,3);
+const MOON_ROWS=genMoons(mulberry32(7));
+
 const DATASETS={
-  iris:{ features:['sepal_length','sepal_width','petal_length','petal_width'], data:genIris().map(r=>r.slice(0,4)),
-    info:'<strong>Iris:</strong> 150 amostras, 4 features<br><strong>Features:</strong> sepal_length, sepal_width, petal_length, petal_width'},
-  blobs:{ features:['x','y'], data:genBlobs(mulberry32(17),150,3),
-    info:'<strong>Blobs:</strong> 150 amostras, 2 features sintéticas<br>Clusters gaussianos bem separados'},
-  moons:{ features:['x','y'], data:genMoons(mulberry32(7)),
-    info:'<strong>Moons:</strong> 200 amostras, 2 features<br>Forma de meia-lua — desafio para K-Means (convexo)'},
+  iris:{ features:['sepal_length','sepal_width','petal_length','petal_width'],
+    data:IRIS_ROWS.map(r=>r.slice(0,4)), labels:IRIS_ROWS.map(r=>r[4]),
+    classNames:['setosa','versicolor','virginica'],
+    info:'<strong>Iris:</strong> 150 amostras, 4 features, 3 classes reais<br><strong>Features:</strong> sepal_length, sepal_width, petal_length, petal_width'},
+  blobs:{ features:['x','y'],
+    data:BLOB_ROWS.map(r=>r.slice(0,2)), labels:BLOB_ROWS.map(r=>r[2]),
+    classNames:['Blob A','Blob B','Blob C'],
+    info:'<strong>Blobs:</strong> 150 amostras, 2 features sintéticas, 3 classes reais<br>Clusters gaussianos bem separados'},
+  moons:{ features:['x','y'],
+    data:MOON_ROWS.map(r=>r.slice(0,2)), labels:MOON_ROWS.map(r=>r[2]),
+    classNames:['Lua superior','Lua inferior'],
+    info:'<strong>Moons:</strong> 200 amostras, 2 features, 2 classes reais<br>Forma de meia-lua: desafio para o K-Means, que assume grupos convexos'},
 };
 
 // ===================================================
@@ -683,13 +828,16 @@ const DATASETS={
 let state={
   ds:'iris', k:3, init:'kmeans++', maxIter:10, tol:1e-4, norm:'standard',
   features:[], X:[], Xraw:[],
-  history:[], currentStep:0,
-  elbowData:null,
+  history:[], currentStep:0, frac:0,
+  runK:0, run:null, final:null,
+  labels:null, classNames:null,
+  elbowData:null, silByK:null, elbowKnee:null, bestSilK:null,
   csvData:null,
-  manualCentroids:[],
+  manualCentroids:[], manualCapturing:false,
+  playing:false, anim:null, selKey:null,
 };
 
-const COLORS=['#388bfd','#2ea043','#f78166','#d2a8ff','#ffa657','#79c0ff','#ff8c69','#56d364'];
+const COLORS=['#388bfd','#2ea043','#f78166','#d2a8ff','#ffa657','#39c5cf','#e3b341','#ff7eb6','#9be15d','#79c0ff'];
 
 // ===================================================
 // UI INIT
@@ -700,10 +848,12 @@ document.querySelectorAll('.tab').forEach(t=>{
     document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
     t.classList.add('active');
     document.getElementById('tab-'+t.dataset.tab).classList.add('active');
+    if(t.dataset.tab!=='clusters') stopPlay();
+    if(t.dataset.tab==='clusters' && state.manualCapturing){ drawManualCaptureCanvas(); return; }
     if(state.history.length>0){
-      if(t.dataset.tab==='clusters') renderStep(state.currentStep);
-      if(t.dataset.tab==='evolution') drawEvoChart();
-      if(t.dataset.tab==='elbow' && state.elbowData) drawElbow();
+      if(t.dataset.tab==='clusters') renderStep(state.currentStep, state.frac);
+      if(t.dataset.tab==='evolution'){ drawEvoChart(); drawShiftChart(); }
+      if(t.dataset.tab==='elbow' && state.elbowData){ drawElbow(); drawSilK(); }
       if(t.dataset.tab==='metrics') renderMetrics();
       if(t.dataset.tab==='centroids') renderCentroids();
     }
@@ -787,23 +937,75 @@ function handleCSV(file){
   if(!file) return;
   const r=new FileReader();
   r.onload=e=>{
-    const lines=e.target.result.trim().split('\n');
-    const headers=lines[0].split(',').map(s=>s.trim());
-    const rows=lines.slice(1).map(l=>l.split(',').map(s=>+s.trim()));
-    state.csvData={features:headers,data:rows};
-    document.getElementById('dataset-info').innerHTML=`<strong>${file.name}:</strong> ${rows.length} amostras, ${headers.length} features`;
-    setStatus(`CSV carregado: ${rows.length} amostras · ${headers.length} features`,'ok');
+    try{
+      const parsed=parseCSV(e.target.result);
+      state.csvData=parsed;
+      let msg=`${parsed.data.length} amostras · ${parsed.features.length} features`;
+      if(parsed.labels) msg+=` · alvo "${escapeHtml(parsed.targetName)}" com ${parsed.classNames.length} classes`;
+      if(parsed.dropped.length) msg+=` · ignoradas (não numéricas): ${parsed.dropped.map(escapeHtml).join(', ')}`;
+      document.getElementById('dataset-info').innerHTML=`<strong>${escapeHtml(file.name)}:</strong> ${msg}`;
+      setStatus('CSV carregado: '+msg,'ok');
+    } catch(err){
+      setStatus('Erro ao ler CSV: '+escapeHtml(err.message),'error');
+    }
   };
   r.readAsText(file);
 }
 
-// feature selects
+// CSV: numeric columns become features; the last column is treated as the
+// target (true class) when its header looks like a label or it is not numeric.
+// Accepts "," or ";" as separator (";" with decimal comma, as Excel pt-BR exports).
+function parseCSV(text){
+  const lines=text.replace(/\r/g,'').split('\n').filter(l=>l.trim().length);
+  if(lines.length<3) throw new Error('arquivo com poucas linhas');
+  const semi=(lines[0].match(/;/g)||[]).length>(lines[0].match(/,/g)||[]).length;
+  const split=l=>l.split(semi?';':',').map(s=>s.trim().replace(/^"(.*)"$/,'$1'));
+  const headers=split(lines[0]);
+  const rows=lines.slice(1).map(split).filter(r=>r.length===headers.length);
+  if(!rows.length) throw new Error('nenhuma linha com o mesmo número de colunas do cabeçalho');
+  const num=v=>v===''?NaN:Number(semi?v.replace(',','.'):v);
+  const numFrac=c=>rows.filter(r=>Number.isFinite(num(r[c]))).length/rows.length;
+  const last=headers.length-1;
+  const targetLike=/^(target|class|classe|label|rotulo|rótulo|species|especie|espécie|y|alvo|categoria|grupo)$/i;
+  const targetCol=(headers.length>1 && (targetLike.test(headers[last]) || numFrac(last)<0.95)) ? last : -1;
+  const featCols=[], dropped=[];
+  headers.forEach((h,c)=>{
+    if(c===targetCol) return;
+    if(numFrac(c)>=0.95) featCols.push(c); else dropped.push(h);
+  });
+  if(!featCols.length) throw new Error('nenhuma coluna numérica encontrada');
+  const keep=rows.filter(r=>featCols.every(c=>Number.isFinite(num(r[c]))));
+  const data=keep.map(r=>featCols.map(c=>num(r[c])));
+  let labels=null, classNames=null;
+  if(targetCol>=0){
+    const map=new Map(); classNames=[];
+    labels=keep.map(r=>{
+      const v=r[targetCol];
+      if(!map.has(v)){ map.set(v,classNames.length); classNames.push(v); }
+      return map.get(v);
+    });
+    if(classNames.length<2||classNames.length>30){ labels=null; classNames=null; }
+  }
+  return {features:featCols.map(c=>headers[c]), data, labels, classNames,
+          targetName:targetCol>=0?headers[targetCol]:null, dropped};
+}
+
+// feature selects (keeps the user's choice when the feature set is the same)
 function populateFeatureSelects(features){
+  const key=features.join('|');
+  const same=state.selKey===key;
+  const prev=[+document.getElementById('fx-sel').value, +document.getElementById('fy-sel').value];
   ['fx-sel','fy-sel'].forEach((id,i)=>{
     const sel=document.getElementById(id);
-    sel.innerHTML=features.map((f,j)=>`<option value="${j}" ${j===(i===0?0:2%features.length)?'selected':''}>${f}</option>`).join('');
-    sel.onchange=()=>{ if(state.history.length) renderStep(state.currentStep); };
+    const def=i===0?0:(features.length>2?2:Math.min(1,features.length-1));
+    const val=(same && Number.isFinite(prev[i]) && prev[i]<features.length)?prev[i]:def;
+    sel.innerHTML=features.map((f,j)=>`<option value="${j}" ${j===val?'selected':''}>${escapeHtml(f)}</option>`).join('');
+    sel.onchange=()=>{
+      if(state.manualCapturing) drawManualCaptureCanvas();
+      else if(state.history.length) renderStep(state.currentStep, state.frac);
+    };
   });
+  state.selKey=key;
 }
 
 // ===================================================
@@ -834,7 +1036,11 @@ function normalizeData(X, method){
 // ===================================================
 // K-MEANS CORE
 // ===================================================
-function eucl(a,b){ return Math.sqrt(a.reduce((s,v,i)=>s+(v-b[i])**2,0)); }
+function eucl(a,b){
+  let s=0;
+  for(let i=0;i<a.length;i++){ const d=a[i]-b[i]; s+=d*d; }
+  return Math.sqrt(s);
+}
 
 function initCentroids(X, k, method, rng){
   if(method==='manual' && state.manualCentroids.length===k){
@@ -879,44 +1085,169 @@ function inertia(X,assignments,centroids){
   return X.reduce((s,x,i)=>s+eucl(x,centroids[assignments[i]])**2,0);
 }
 
-function silhouette(X,assignments,k){
-  if(k<2) return 0;
+// Fast silhouette: one pass over all pairs, O(n^2 * d).
+function silhouetteScores(X,asgn,k){
   const n=X.length;
-  const scores=X.map((x,i)=>{
-    const myK=assignments[i];
-    const sameClust=X.filter((_,j)=>assignments[j]===myK&&j!==i);
-    if(sameClust.length===0) return 0;
-    const a=sameClust.reduce((s,y)=>s+eucl(x,y),0)/sameClust.length;
-    let b=Infinity;
-    for(let ci=0;ci<k;ci++){
-      if(ci===myK) continue;
-      const other=X.filter((_,j)=>assignments[j]===ci);
-      if(other.length===0) continue;
-      const d=other.reduce((s,y)=>s+eucl(x,y),0)/other.length;
-      if(d<b) b=d;
+  const per=new Float64Array(n);
+  if(k<2||n<2) return {mean:0,per};
+  const counts=new Array(k).fill(0);
+  for(let i=0;i<n;i++) counts[asgn[i]]++;
+  const sums=Array.from({length:n},()=>new Float64Array(k));
+  for(let i=0;i<n;i++){
+    const xi=X[i], ai=asgn[i], si=sums[i];
+    for(let j=i+1;j<n;j++){
+      const d=eucl(xi,X[j]);
+      si[asgn[j]]+=d;
+      sums[j][ai]+=d;
     }
+  }
+  let tot=0;
+  for(let i=0;i<n;i++){
+    const ci=asgn[i];
+    if(counts[ci]<=1){ per[i]=0; continue; }
+    const a=sums[i][ci]/(counts[ci]-1);
+    let b=Infinity;
+    for(let c=0;c<k;c++){
+      if(c===ci||!counts[c]) continue;
+      const v=sums[i][c]/counts[c];
+      if(v<b) b=v;
+    }
+    if(b===Infinity){ per[i]=0; continue; }
     const m=Math.max(a,b);
-    return m===0?0:(b-a)/m;
-  });
-  return scores.reduce((a,b)=>a+b,0)/n;
+    per[i]=m===0?0:(b-a)/m;
+    tot+=per[i];
+  }
+  return {mean:tot/n,per};
 }
 
+function silhouette(X,assignments,k){ return silhouetteScores(X,assignments,k).mean; }
+
+function sampleIndices(n,max,seed){
+  if(n<=max) return null;
+  const rng=mulberry32(seed);
+  const idx=[...Array(n).keys()];
+  for(let i=n-1;i>0;i--){ const j=Math.floor(rng()*(i+1)); [idx[i],idx[j]]=[idx[j],idx[i]]; }
+  return idx.slice(0,max).sort((a,b)=>a-b);
+}
+
+function silhouetteInfo(X,asgn,k,max=2000){
+  const idx=sampleIndices(X.length,max,99);
+  const Xs=idx?idx.map(i=>X[i]):X;
+  const As=idx?idx.map(i=>asgn[i]):asgn;
+  const r=silhouetteScores(Xs,As,k);
+  const perCluster=Array.from({length:k},(_,c)=>{
+    let s=0,n=0;
+    for(let i=0;i<As.length;i++) if(As[i]===c){ s+=r.per[i]; n++; }
+    return n?s/n:0;
+  });
+  return {mean:r.mean, perCluster, sampled:!!idx, n:Xs.length};
+}
+
+// Each history entry = one chase step: centroids after the step, the point
+// assignments that produced them, and how far each centroid moved (shifts).
 function runKMeansOnData(X,k,init,maxIter,tol,rng){
   let centroids=initCentroids(X,k,init,rng);
-  const history=[{centroids:[...centroids.map(c=>[...c])],assignments:assignClusters(X,centroids),iter:0}];
+  const history=[{
+    centroids:centroids.map(c=>[...c]),
+    assignments:assignClusters(X,centroids),
+    iter:0, shift:0, shifts:new Array(k).fill(0)
+  }];
+  let converged=false;
   for(let it=1;it<=maxIter;it++){
     const asgn=assignClusters(X,centroids);
     const newC=updateCentroids(X,asgn,k);
-    const shift=centroids.reduce((s,c,i)=>s+eucl(c,newC[i]),0);
+    const shifts=centroids.map((c,i)=>eucl(c,newC[i]));
+    const shift=shifts.reduce((a,b)=>a+b,0);
     centroids=newC;
-    history.push({centroids:[...centroids.map(c=>[...c])],assignments:[...asgn],iter:it});
-    if(shift<tol) break;
+    history.push({centroids:centroids.map(c=>[...c]),assignments:[...asgn],iter:it,shift,shifts});
+    if(shift<tol){ converged=true; break; }
   }
+  history.converged=converged;
   return history;
 }
 
+const EPS=1e-9;
+
+function enrichHistory(X,history){
+  history.forEach((h,i)=>{
+    h.inertia=inertia(X,h.assignments,h.centroids);
+    if(i===0){ h.changed=0; return; }
+    const prev=history[i-1].assignments;
+    let c=0;
+    for(let j=0;j<prev.length;j++) if(h.assignments[j]!==prev[j]) c++;
+    h.changed=c;
+  });
+}
+
+function analyzeRun(history,tol,maxIter){
+  const executed=history.length-1;
+  const K=history[0].centroids.length;
+  let lastMove=0, movingSteps=0, path=0;
+  const pathPer=new Array(K).fill(0);
+  for(let i=1;i<history.length;i++){
+    const h=history[i];
+    path+=h.shift;
+    h.shifts.forEach((s,c)=>pathPer[c]+=s);
+    if(h.shift>EPS){ lastMove=i; movingSteps++; }
+  }
+  let converged, convIter;
+  if(tol>0){ converged=!!history.converged; convIter=converged?executed:null; }
+  else { converged=lastMove<executed; convIter=converged?lastMove+1:null; }
+  return {executed,converged,convIter,lastMove,movingSteps,path,pathPer,tol,maxIter};
+}
+
+// Kneedle-style elbow: point farthest below the line joining the curve's ends.
+function findKnee(data){
+  if(!data||data.length<3) return null;
+  const k0=data[0].k, k1=data[data.length-1].k;
+  const ys=data.map(d=>d.inertia);
+  const hi=Math.max(...ys), lo=Math.min(...ys);
+  if(hi===lo) return null;
+  let best=null, bd=-Infinity;
+  data.forEach(d=>{
+    const xn=(d.k-k0)/(k1-k0), yn=(d.inertia-lo)/(hi-lo);
+    const gap=(1-xn)-yn;
+    if(gap>bd){ bd=gap; best=d.k; }
+  });
+  return best;
+}
+
+function computeKSuggestions(Xn){
+  state.elbowData=[]; state.silByK=[];
+  const Kmax=Math.min(10,Xn.length-1);
+  const sIdx=sampleIndices(Xn.length,600,7);
+  const Xs=sIdx?sIdx.map(i=>Xn[i]):Xn;
+  for(let k=1;k<=Kmax;k++){
+    const h=runKMeansOnData(Xn,k,'kmeans++',30,1e-4,mulberry32(42+k));
+    const c=h[h.length-1].centroids;
+    const a=assignClusters(Xn,c);
+    state.elbowData.push({k,inertia:inertia(Xn,a,c)});
+    if(k>=2){
+      const As=sIdx?sIdx.map(i=>a[i]):a;
+      state.silByK.push({k,sil:silhouetteScores(Xs,As,k).mean});
+    }
+  }
+  state.elbowKnee=findKnee(state.elbowData);
+  state.bestSilK=state.silByK.length?state.silByK.reduce((a,b)=>b.sil>a.sil?b:a).k:null;
+}
+
+function clusterVsClass(assign,labels,K,nClass){
+  const cont=Array.from({length:K},()=>new Array(nClass).fill(0));
+  assign.forEach((a,i)=>cont[a][labels[i]]++);
+  const majorOf=cont.map(row=>{
+    const tot=row.reduce((s,v)=>s+v,0);
+    if(!tot) return -1;
+    let m=0; row.forEach((v,j)=>{ if(v>row[m]) m=j; });
+    return m;
+  });
+  const majors=new Set(majorOf.filter(m=>m>=0));
+  let hit=0;
+  cont.forEach((row,i)=>{ if(majorOf[i]>=0) hit+=row[majorOf[i]]; });
+  return {cont, majorOf, captured:majors.size, majors, purity:hit/assign.length};
+}
+
 // ===================================================
-// DEBUG BANNER (temporary — shows errors on screen)
+// DEBUG BANNER (shows errors on screen)
 // ===================================================
 function showDebugError(stage, err){
   let bar = document.getElementById('debug-bar');
@@ -930,34 +1261,157 @@ function showDebugError(stage, err){
 }
 
 // ===================================================
+// CANVAS HELPERS
+// ===================================================
+function setupCanvas(id,H){
+  const canvas=document.getElementById(id);
+  const W=canvas.offsetWidth||700;
+  const dpr=window.devicePixelRatio||1;
+  const pw=Math.round(W*dpr), ph=Math.round(H*dpr);
+  if(canvas.width!==pw||canvas.height!==ph){ canvas.width=pw; canvas.height=ph; }
+  canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,W,H);
+  return {canvas,ctx,W,H};
+}
+
+function clearCanvas(id){
+  const c=document.getElementById(id);
+  if(!c) return;
+  const ctx=c.getContext('2d');
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.clearRect(0,0,c.width,c.height);
+}
+
+function fmtNum(v){
+  const a=Math.abs(v);
+  if(a>=1000) return v.toFixed(0);
+  if(a>=100) return v.toFixed(1);
+  if(a>=10) return v.toFixed(2);
+  return v.toFixed(3);
+}
+function fmtTick(v){
+  const a=Math.abs(v);
+  if(a>=100) return v.toFixed(0);
+  if(a>=10) return v.toFixed(1);
+  return v.toFixed(2);
+}
+const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+
+// Plot window over the data plus the given centroid sets (y grows upward).
+function makeView(fx,fy,W,H,centroidSets){
+  const pad=50;
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  const acc=(x,y)=>{
+    if(!Number.isFinite(x)||!Number.isFinite(y)) return;
+    if(x<minX)minX=x; if(x>maxX)maxX=x; if(y<minY)minY=y; if(y>maxY)maxY=y;
+  };
+  state.X.forEach(r=>acc(r[fx],r[fy]));
+  centroidSets.forEach(set=>set.forEach(c=>acc(c[fx],c[fy])));
+  const mx=(maxX-minX)*0.05||0.5, my=(maxY-minY)*0.05||0.5;
+  minX-=mx; maxX+=mx; minY-=my; maxY+=my;
+  const cw=W-2*pad, ch=H-2*pad;
+  return {pad,W,H,cw,ch,minX,maxX,minY,maxY,
+    toC:(x,y)=>[pad+(x-minX)/(maxX-minX)*cw, H-pad-(y-minY)/(maxY-minY)*ch],
+    fromC:(px,py)=>[minX+(px-pad)/cw*(maxX-minX), minY+(H-pad-py)/ch*(maxY-minY)]};
+}
+
+function drawAxes(ctx,v,fx,fy){
+  const {pad,W,H,cw,ch}=v;
+  ctx.strokeStyle='rgba(48,54,61,0.5)'; ctx.lineWidth=1;
+  for(let i=1;i<=5;i++){
+    const x=pad+cw*i/5, y=H-pad-ch*i/5;
+    ctx.beginPath(); ctx.moveTo(x,pad); ctx.lineTo(x,H-pad); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad,y); ctx.lineTo(W-pad,y); ctx.stroke();
+  }
+  ctx.strokeStyle='#30363d'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pad,pad); ctx.lineTo(pad,H-pad); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad,H-pad); ctx.lineTo(W-pad,H-pad); ctx.stroke();
+  ctx.fillStyle='#8b949e'; ctx.font='10px Segoe UI'; ctx.textAlign='center';
+  for(let i=0;i<=5;i++){
+    const val=v.minX+(v.maxX-v.minX)*i/5;
+    ctx.fillText(val.toFixed(2),pad+cw*i/5,H-pad+14);
+  }
+  ctx.textAlign='right';
+  for(let i=0;i<=5;i++){
+    const val=v.minY+(v.maxY-v.minY)*i/5;
+    ctx.fillText(val.toFixed(2),pad-6,H-pad-ch*i/5+4);
+  }
+  ctx.fillStyle='#c9d1d9'; ctx.font='11px Segoe UI'; ctx.textAlign='center';
+  ctx.fillText(state.features[fx]??'',W/2,H-10);
+  ctx.save(); ctx.translate(12,H/2); ctx.rotate(-Math.PI/2); ctx.fillText(state.features[fy]??'',0,0); ctx.restore();
+}
+
+function drawStar(ctx,cx,cy,col,label){
+  const r1=14,r2=6;
+  ctx.beginPath();
+  for(let p=0;p<5;p++){
+    const a=Math.PI*2*p/5-Math.PI/2;
+    const a2=a+Math.PI/5;
+    p?ctx.lineTo(cx+r1*Math.cos(a),cy+r1*Math.sin(a)):ctx.moveTo(cx+r1*Math.cos(a),cy+r1*Math.sin(a));
+    ctx.lineTo(cx+r2*Math.cos(a2),cy+r2*Math.sin(a2));
+  }
+  ctx.closePath();
+  ctx.shadowColor=col; ctx.shadowBlur=12;
+  ctx.fillStyle=col; ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
+  if(label!==undefined){
+    ctx.fillStyle='#0d1117'; ctx.font='bold 9px Segoe UI'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(label,cx,cy+1);
+    ctx.textBaseline='alphabetic';
+  }
+}
+
+function drawArrow(ctx,x,y,ang,col,size=5.5){
+  ctx.save(); ctx.translate(x,y); ctx.rotate(ang);
+  ctx.beginPath(); ctx.moveTo(size,0); ctx.lineTo(-size*0.8,size*0.75); ctx.lineTo(-size*0.8,-size*0.75); ctx.closePath();
+  ctx.fillStyle=col; ctx.fill();
+  ctx.restore();
+}
+
+function drawTarget(ctx,x,y,col){
+  ctx.save();
+  ctx.strokeStyle=col; ctx.lineWidth=1.6;
+  ctx.beginPath(); ctx.arc(x,y,8,0,2*Math.PI); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x-12,y); ctx.lineTo(x-4,y); ctx.moveTo(x+4,y); ctx.lineTo(x+12,y);
+  ctx.moveTo(x,y-12); ctx.lineTo(x,y-4); ctx.moveTo(x,y+4); ctx.lineTo(x,y+12); ctx.stroke();
+  ctx.restore();
+}
+
+function getDataset(){
+  if(state.ds==='csv' && state.csvData) return state.csvData;
+  const ds=DATASETS[state.ds==='csv'?'iris':state.ds];
+  if(!ds) throw new Error(`Dataset "${state.ds}" not found. Available: ${Object.keys(DATASETS).join(', ')}`);
+  return ds;
+}
+
+function activateClustersTab(){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+  document.querySelector('[data-tab="clusters"]').classList.add('active');
+  document.getElementById('tab-clusters').classList.add('active');
+}
+
+// ===================================================
 // MANUAL CAPTURE MODE
 // ===================================================
 function enterManualCaptureMode(){
   try{
-    // Load data + normalize so we can draw points
-    let X, features;
-    if(state.ds==='csv' && state.csvData){
-      features=state.csvData.features; X=state.csvData.data;
-    } else {
-      const ds=DATASETS[state.ds==='csv'?'iris':state.ds];
-      features=ds.features; X=ds.data;
-    }
-    state.features=features;
-    state.Xraw=X;
-    const {Xn}=normalizeData(X,state.norm);
-    state.X=Xn;
-    populateFeatureSelects(features);
+    stopPlay();
+    const ds=getDataset();
+    state.features=ds.features;
+    state.Xraw=ds.data;
+    state.X=normalizeData(ds.data,state.norm).Xn;
+    populateFeatureSelects(ds.features);
+    state.history=[]; state.currentStep=0; state.frac=0;
+    resetIterBar();
     state.manualCentroids=[];
     state.manualCapturing=true;
-
-    // Switch to Clusters tab
-    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
-    document.querySelector('[data-tab="clusters"]').classList.add('active');
-    document.getElementById('tab-clusters').classList.add('active');
-
+    activateClustersTab();
     drawManualCaptureCanvas();
-    setStatus(`Clique ${state.k} vez(es) no gráfico — 0 / ${state.k}`, 'running');
+    setStatus(`Clique ${state.k} vez(es) no gráfico: 0 / ${state.k}`, 'running');
     document.getElementById('main-status').innerHTML=`<strong style="color:var(--accent3)">Modo manual:</strong> clique no gráfico para posicionar os centroides iniciais (${state.k} restantes)`;
   } catch(err){
     setStatus('Erro ao entrar em modo manual: '+err.message,'error');
@@ -966,45 +1420,17 @@ function enterManualCaptureMode(){
 }
 
 function drawManualCaptureCanvas(){
-  const canvas=document.getElementById('cluster-canvas');
-  const W=canvas.offsetWidth||700, H=400;
-  canvas.width=W; canvas.height=H;
-  const ctx=canvas.getContext('2d');
+  const {canvas,ctx,W,H}=setupCanvas('cluster-canvas',400);
   const fx=+document.getElementById('fx-sel').value;
   const fy=+document.getElementById('fy-sel').value;
-  const pad=50;
+  const v=makeView(fx,fy,W,H,[state.manualCentroids]);
+  const pad=v.pad;
 
-  const xs=state.X.map(r=>r[fx]), ys=state.X.map(r=>r[fy]);
-  const extraX=state.manualCentroids.map(c=>c[fx]);
-  const extraY=state.manualCentroids.map(c=>c[fy]);
-  const minX=Math.min(...xs,...extraX)-.1, maxX=Math.max(...xs,...extraX)+.1;
-  const minY=Math.min(...ys,...extraY)-.1, maxY=Math.max(...ys,...extraY)+.1;
-  const toC=(x,y)=>[(x-minX)/(maxX-minX)*(W-2*pad)+pad,(y-minY)/(maxY-minY)*(H-2*pad)+pad];
-
-  // Clear
-  ctx.clearRect(0,0,W,H);
-
-  // Axes
-  ctx.strokeStyle='#30363d'; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo(pad,pad); ctx.lineTo(pad,H-pad); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(pad,H-pad); ctx.lineTo(W-pad,H-pad); ctx.stroke();
-  ctx.fillStyle='#8b949e'; ctx.font='10px Segoe UI'; ctx.textAlign='center';
-  for(let i=0;i<=5;i++){
-    const v=minX+(maxX-minX)*i/5;
-    ctx.fillText(v.toFixed(2),pad+(W-2*pad)*i/5,H-pad+14);
-  }
-  ctx.textAlign='right';
-  for(let i=0;i<=5;i++){
-    const v=minY+(maxY-minY)*i/5;
-    ctx.fillText(v.toFixed(2),pad-6,H-pad-(H-2*pad)*i/5+4);
-  }
-  ctx.fillStyle='#c9d1d9'; ctx.font='11px Segoe UI'; ctx.textAlign='center';
-  ctx.fillText(state.features[fx],W/2,H-10);
-  ctx.save(); ctx.translate(12,H/2); ctx.rotate(-Math.PI/2); ctx.fillText(state.features[fy],0,0); ctx.restore();
+  drawAxes(ctx,v,fx,fy);
 
   // Points (all gray, unassigned)
   state.X.forEach(row=>{
-    const [cx,cy]=toC(row[fx],row[fy]);
+    const [cx,cy]=v.toC(row[fx],row[fy]);
     ctx.beginPath(); ctx.arc(cx,cy,4,0,2*Math.PI);
     ctx.fillStyle='rgba(139,148,158,0.55)';
     ctx.fill();
@@ -1012,21 +1438,8 @@ function drawManualCaptureCanvas(){
 
   // Placed centroids (stars)
   state.manualCentroids.forEach((c,i)=>{
-    const [cx,cy]=toC(c[fx],c[fy]);
-    const col=COLORS[i%COLORS.length];
-    ctx.beginPath();
-    for(let p=0;p<5;p++){
-      const a=Math.PI*2*p/5-Math.PI/2;
-      const a2=a+Math.PI/5;
-      const r1=14,r2=6;
-      p?ctx.lineTo(cx+r1*Math.cos(a),cy+r1*Math.sin(a)):ctx.moveTo(cx+r1*Math.cos(a),cy+r1*Math.sin(a));
-      ctx.lineTo(cx+r2*Math.cos(a2),cy+r2*Math.sin(a2));
-    }
-    ctx.closePath();
-    ctx.fillStyle=col; ctx.fill();
-    ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
-    ctx.fillStyle='#fff'; ctx.font='bold 10px Segoe UI'; ctx.textAlign='center';
-    ctx.fillText((i+1),cx,cy+3);
+    const [cx,cy]=v.toC(c[fx],c[fy]);
+    drawStar(ctx,cx,cy,COLORS[i%COLORS.length],i+1);
   });
 
   // Instructions overlay
@@ -1038,16 +1451,13 @@ function drawManualCaptureCanvas(){
     ctx.fillText(`👆 Clique no gráfico para posicionar o centroide ${state.manualCentroids.length+1} de ${state.k}`, W/2, pad-16);
   }
 
-  // Set up click capture
   canvas.style.cursor = state.manualCapturing && remaining>0 ? 'crosshair' : 'default';
   canvas.onclick = e => {
     if(!state.manualCapturing) return;
     if(state.manualCentroids.length>=state.k) return;
     const rect=canvas.getBoundingClientRect();
-    const mx=e.clientX-rect.left, my=e.clientY-rect.top;
-    const nx=(mx-pad)/(W-2*pad)*(maxX-minX)+minX;
-    const ny=(my-pad)/(H-2*pad)*(maxY-minY)+minY;
-    // Build full-dimensional centroid: use clicked coords for fx/fy, mean of data for other features
+    const [nx,ny]=v.fromC(e.clientX-rect.left, e.clientY-rect.top);
+    // Full-dimensional centroid: clicked coords for fx/fy, data mean for the other features
     const nf=state.X[0].length;
     const means=Array.from({length:nf},(_,f)=>state.X.reduce((s,r)=>s+r[f],0)/state.X.length);
     const newC=means.slice();
@@ -1057,7 +1467,6 @@ function drawManualCaptureCanvas(){
     setStatus(`Centroide ${state.manualCentroids.length}/${state.k} posicionado. ${left>0?`Faltam ${left}.`:'Executando...'}`,'running');
     drawManualCaptureCanvas();
 
-    // When all are placed, run kmeans
     if(state.manualCentroids.length===state.k){
       canvas.onclick=null;
       canvas.style.cursor='default';
@@ -1070,7 +1479,17 @@ function drawManualCaptureCanvas(){
 // ===================================================
 // RUN
 // ===================================================
+function runStatusMsg(){
+  const r=state.run, f=state.final;
+  let head;
+  if(r.converged && r.tol>0) head=`✔ Convergiu na iteração ${r.convIter} (o limite era ${r.maxIter})`;
+  else if(r.converged) head=`✔ ${r.executed} iterações executadas; centroides parados desde a iteração ${r.convIter}`;
+  else head=`⚠ Limite de ${r.maxIter} iterações atingido sem convergir`;
+  return `${head} · K=${state.runK} · ${f.nonEmpty} clusters encontrados · inércia ${f.inertia.toFixed(2)} · silhouette ${f.sil.toFixed(3)}`;
+}
+
 function runKMeans(){
+  stopPlay();
   // Manual init: if not enough centroids yet, enter capture mode instead of running
   if(state.init==='manual' && state.manualCentroids.length<state.k){
     return enterManualCaptureMode();
@@ -1080,17 +1499,14 @@ function runKMeans(){
     let stage='init';
     try{
       stage='load-data';
-      let X,features;
-      if(state.ds==='csv'&&state.csvData){
-        features=state.csvData.features; X=state.csvData.data;
-      } else {
-        const ds=DATASETS[state.ds==='csv'?'iris':state.ds];
-        if(!ds) throw new Error(`Dataset "${state.ds}" not found. Available: ${Object.keys(DATASETS).join(', ')}`);
-        features=ds.features; X=ds.data;
-      }
+      const ds=getDataset();
+      const X=ds.data, features=ds.features;
       if(!X || !X.length) throw new Error('Dataset vazio');
+      if(X.length<state.k) throw new Error(`o dataset tem ${X.length} amostras, menos que K=${state.k}`);
       state.features=features;
       state.Xraw=X;
+      state.labels=(ds.labels && ds.labels.length===X.length)?ds.labels:null;
+      state.classNames=state.labels?ds.classNames:null;
 
       stage='normalize';
       const {Xn}=normalizeData(X,state.norm);
@@ -1100,33 +1516,43 @@ function runKMeans(){
       populateFeatureSelects(features);
 
       stage='kmeans-main';
+      const K=state.k;
       const rng=mulberry32(Date.now()%1000);
-      state.history=runKMeansOnData(Xn,state.k,state.init,state.maxIter,state.tol,rng);
-      state.currentStep=state.history.length-1;
+      const hist=runKMeansOnData(Xn,K,state.init,state.maxIter,state.tol,rng);
+      enrichHistory(Xn,hist);
+      state.history=hist;
+      state.runK=K;
+      state.run=analyzeRun(hist,state.tol,state.maxIter);
 
-      stage='elbow';
-      state.elbowData=[];
-      for(let k=1;k<=Math.min(10,Xn.length-1);k++){
-        const h=runKMeansOnData(Xn,k,'kmeans++',15,1e-4,mulberry32(42+k));
-        const last=h[h.length-1];
-        state.elbowData.push({k,inertia:inertia(Xn,last.assignments,last.centroids)});
-      }
+      stage='final';
+      const lastC=hist[hist.length-1].centroids;
+      const assign=assignClusters(Xn,lastC);
+      const si=silhouetteInfo(Xn,assign,K);
+      const sizes=new Array(K).fill(0); assign.forEach(a=>sizes[a]++);
+      state.final={centroids:lastC, assign, sizes, nonEmpty:sizes.filter(s=>s>0).length,
+        inertia:inertia(Xn,assign,lastC), sil:si.mean, silPer:si.perCluster, silSampled:si.sampled, silN:si.n};
 
-      stage='metrics';
-      const last=state.history[state.currentStep];
-      const sil=silhouette(Xn,last.assignments,state.k);
-      const iner=inertia(Xn,last.assignments,last.centroids);
+      stage='k-suggestions';
+      computeKSuggestions(Xn);
 
-      setStatus(`✔ Convergido em ${state.history.length-1} iteração(ões) · K=${state.k} · inércia ${iner.toFixed(2)} · silhouette ${sil.toFixed(3)}`,'ok');
-      document.getElementById('main-status').innerHTML=`<strong style="color:var(--text)">${features.length} features</strong> · ${X.length} amostras · K=${state.k} clusters`;
+      setStatus(runStatusMsg(), state.run.converged?'ok':'error');
+      const nClass=state.classNames?state.classNames.length:0;
+      document.getElementById('main-status').innerHTML=`<strong style="color:var(--text)">${features.length} features</strong> · ${X.length} amostras · K=${K} clusters · ${nClass?nClass+' classes reais no dataset':'dataset sem rótulos'}`;
+      document.getElementById('proj-note').textContent=features.length>2
+        ? `⚠ ${features.length} features: os centroides se movem em ${features.length}D e o gráfico mostra só 2 eixos, então trilha e regiões são projeções (troque os eixos para ver outros ângulos).`
+        : '';
 
-      stage='render-step'; renderStep(state.currentStep);
-      stage='evo'; drawEvoChart();
-      stage='elbow-draw'; drawElbow();
-      stage='metrics-render'; renderMetrics();
-      stage='centroids'; renderCentroids();
-      stage='iter-dots'; buildIterDots();
-      stage='legend'; updateLegend();
+      stage='render';
+      const onClusters=document.querySelector('.tab.active')?.dataset.tab==='clusters';
+      state.currentStep=onClusters?0:hist.length-1;
+      state.frac=0;
+      updateLegend();
+      renderStep(state.currentStep);
+      drawEvoChart(); drawShiftChart();
+      drawElbow(); drawSilK();
+      renderMetrics();
+      renderCentroids();
+      if(onClusters && hist.length>1) startPlay();
 
     } catch(err){
       setStatus('Erro em "'+stage+'": '+err.message,'error');
@@ -1137,123 +1563,237 @@ function runKMeans(){
 }
 
 // ===================================================
-// STEP NAVIGATION
+// CHASE ANIMATION + STEP NAVIGATION
 // ===================================================
+function updatePlayBtn(){
+  const b=document.getElementById('play-btn');
+  if(!b) return;
+  const n=state.history.length;
+  const atEnd=n>1 && (state.currentStep>=n-1 || (state.run && state.currentStep>=state.run.lastMove && state.currentStep>0));
+  b.classList.toggle('playing',state.playing);
+  b.textContent=state.playing?'⏸ Pausar':(atEnd?'↻ Repetir':'▶ Animar');
+}
+
+function togglePlay(){ state.playing?stopPlay():startPlay(); }
+
+function startPlay(){
+  const H_=state.history;
+  if(H_.length<2||state.manualCapturing||!state.run) return;
+  const lastIdx=H_.length-1;
+  if(state.currentStep>=lastIdx||state.currentStep>=state.run.lastMove) state.currentStep=0;
+  state.playing=true; state.frac=0;
+  updatePlayBtn();
+  let t0=null;
+  const tick=ts=>{
+    if(!state.playing) return;
+    if(t0===null) t0=ts;
+    const s=state.currentStep, nxt=H_[s+1];
+    // Remaining steps are all stationary: jump straight to the final iteration.
+    if(!nxt||s>=state.run.lastMove){
+      state.currentStep=lastIdx; state.frac=0;
+      state.playing=false; state.anim=null;
+      renderStep(lastIdx);
+      updatePlayBtn();
+      return;
+    }
+    const base=+document.getElementById('speed-sel').value||600;
+    const dur=nxt.shift<=EPS?Math.min(80,base):base;
+    const f=(ts-t0)/dur;
+    if(f>=1){ state.currentStep=s+1; state.frac=0; t0=ts; renderStep(state.currentStep); }
+    else { state.frac=f; renderStep(s,f); }
+    state.anim=requestAnimationFrame(tick);
+  };
+  state.anim=requestAnimationFrame(tick);
+}
+
+function stopPlay(){
+  state.playing=false;
+  if(state.anim) cancelAnimationFrame(state.anim);
+  state.anim=null;
+  if(state.frac){ state.frac=0; if(state.history.length) renderStep(state.currentStep); }
+  updatePlayBtn();
+}
+
 function stepForward(){
   if(!state.history.length) return;
+  stopPlay();
   state.currentStep=Math.min(state.currentStep+1,state.history.length-1);
   renderStep(state.currentStep);
-  updateIterDots();
 }
 function stepBack(){
   if(!state.history.length) return;
+  stopPlay();
   state.currentStep=Math.max(state.currentStep-1,0);
   renderStep(state.currentStep);
-  updateIterDots();
 }
 
-function buildIterDots(){
-  const wrap=document.getElementById('iter-dots');
-  wrap.innerHTML=state.history.map((_,i)=>`<div class="iter-dot" id="idot-${i}"></div>`).join('');
-  updateIterDots();
+function resetIterBar(){
+  document.getElementById('iter-label').textContent='Iteração -';
+  const sc=document.getElementById('iter-scrub');
+  sc.max=0; sc.value=0; sc.disabled=true;
+  const badge=document.getElementById('step-badge');
+  badge.style.display='none'; badge.textContent='';
+  document.getElementById('inertia-label').textContent='';
+  updatePlayBtn();
 }
 
-function updateIterDots(){
-  state.history.forEach((_,i)=>{
-    const el=document.getElementById('idot-'+i);
-    if(!el) return;
-    el.className='iter-dot'+(i<state.currentStep?' done':i===state.currentStep?' current':'');
-  });
-  document.getElementById('iter-label').textContent=`Iteração ${state.currentStep} / ${state.history.length-1}`;
-  const step=state.history[state.currentStep];
-  const iner=inertia(state.X,step.assignments,step.centroids);
-  document.getElementById('inertia-label').textContent=`Inércia: ${iner.toFixed(2)}`;
+function updateIterInfo(s,frac){
+  const H_=state.history;
+  if(!H_.length) return;
+  const last=H_.length-1;
+  const animTo=(frac>0&&H_[s+1])?s+1:null;
+  const idx=animTo??s;
+  const h=H_[idx];
+  document.getElementById('iter-label').textContent=animTo!==null?`Iteração ${s} → ${animTo} / ${last}`:`Iteração ${s} / ${last}`;
+  const sc=document.getElementById('iter-scrub');
+  sc.disabled=false; sc.max=last; sc.value=s;
+  const badge=document.getElementById('step-badge');
+  badge.style.display='';
+  if(idx===0){ badge.className='iter-badge'; badge.textContent='posição inicial'; }
+  else if(h.shift>EPS){ badge.className='iter-badge moving'; badge.textContent='em perseguição'; }
+  else { badge.className='iter-badge stopped'; badge.textContent='parado'; }
+  document.getElementById('inertia-label').textContent=idx===0
+    ? `Inércia ${fmtNum(h.inertia)}`
+    : `Inércia ${fmtNum(h.inertia)} · passo ${h.shift.toFixed(3)} · ${h.changed} troca(s) de grupo`;
+  updatePlayBtn();
 }
 
 // ===================================================
-// DRAW CLUSTERS
+// DRAW CLUSTERS + CHASE TRAIL
 // ===================================================
-function renderStep(stepIdx){
-  const canvas=document.getElementById('cluster-canvas');
-  const W=canvas.offsetWidth||700,H=400;
-  canvas.width=W; canvas.height=H;
-  const ctx=canvas.getContext('2d');
+const CHASE_PHASE=0.3; // first 30% of a step: points pick a centroid; rest: centroid glides
+
+function renderStep(stepIdx,frac=0){
+  const H_=state.history;
+  if(!H_.length) return;
+  const s=Math.max(0,Math.min(stepIdx,H_.length-1));
+  const {ctx,W,H}=setupCanvas('cluster-canvas',400);
   const fx=+document.getElementById('fx-sel').value;
   const fy=+document.getElementById('fy-sel').value;
-  const step=state.history[stepIdx];
-  const {centroids,assignments}=step;
-  const pad=50;
+  const K=H_[0].centroids.length;
+  const cur=H_[s];
+  const nxt=(frac>0&&H_[s+1])?H_[s+1]:null;
+  const e=nxt?(frac<CHASE_PHASE?0:ease((frac-CHASE_PHASE)/(1-CHASE_PHASE))):0;
+  const cents=nxt?cur.centroids.map((c,i)=>c.map((v,f)=>v+(nxt.centroids[i][f]-v)*e)):cur.centroids;
+  const asg=nxt?nxt.assignments:cur.assignments;
+  const prevAsg=nxt?cur.assignments:(s>0?H_[s-1].assignments:null);
+  const v=makeView(fx,fy,W,H,H_.map(h=>h.centroids));
+  const X=state.X;
 
-  const allX=state.X;
-  const xs=allX.map(r=>r[fx]),ys=allX.map(r=>r[fy]);
-  const cx2=centroids.map(c=>c[fx]),cy2=centroids.map(c=>c[fy]);
-  const minX=Math.min(...xs,...cx2)-.1,maxX=Math.max(...xs,...cx2)+.1;
-  const minY=Math.min(...ys,...cy2)-.1,maxY=Math.max(...ys,...cy2)+.1;
-  const toC=(x,y)=>[(x-minX)/(maxX-minX)*(W-2*pad)+pad,(y-minY)/(maxY-minY)*(H-2*pad)+pad];
-
-  // Voronoi background (low res)
-  const step2=6;
-  for(let px=pad;px<W-pad;px+=step2){
-    for(let py=pad;py<H-pad;py+=step2){
-      const nx=(px-pad)/(W-2*pad)*(maxX-minX)+minX;
-      const ny=(py-pad)/(H-2*pad)*(maxY-minY)+minY;
-      const pt=state.X[0].map((_,f)=>f===fx?nx:f===fy?ny:0);
-      let best=0,bd=1e18;
-      centroids.forEach((c,i)=>{
-        const d=(c[fx]-nx)**2+(c[fy]-ny)**2;
-        if(d<bd){bd=d;best=i;}
-      });
-      const c=hexToRgb(COLORS[best%COLORS.length]);
-      ctx.fillStyle=`rgba(${c.r},${c.g},${c.b},0.14)`;
-      ctx.fillRect(px-step2/2,py-step2/2,step2,step2);
+  // Voronoi background (regions of the centroids being shown)
+  if(document.getElementById('voronoi-chk').checked){
+    const cell=6;
+    const fills=Array.from({length:K},(_,i)=>{ const c=hexToRgb(COLORS[i%COLORS.length]); return `rgba(${c.r},${c.g},${c.b},0.13)`; });
+    const cp=cents.map(c=>[c[fx],c[fy]]);
+    for(let px=v.pad;px<W-v.pad;px+=cell){
+      for(let py=v.pad;py<H-v.pad;py+=cell){
+        const [nx,ny]=v.fromC(px+cell/2,py+cell/2);
+        let best=0,bd=Infinity;
+        for(let i=0;i<K;i++){ const d=(cp[i][0]-nx)**2+(cp[i][1]-ny)**2; if(d<bd){bd=d;best=i;} }
+        ctx.fillStyle=fills[best];
+        ctx.fillRect(px,py,Math.min(cell,W-v.pad-px),Math.min(cell,H-v.pad-py));
+      }
     }
   }
 
-  // Axes
-  ctx.strokeStyle='#30363d'; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo(pad,pad); ctx.lineTo(pad,H-pad); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(pad,H-pad); ctx.lineTo(W-pad,H-pad); ctx.stroke();
-  ctx.fillStyle='#8b949e'; ctx.font='10px Segoe UI'; ctx.textAlign='center';
-  for(let i=0;i<=5;i++){
-    const v=minX+(maxX-minX)*i/5;
-    ctx.fillText(v.toFixed(2),pad+(W-2*pad)*i/5,H-pad+14);
-  }
-  ctx.textAlign='right';
-  for(let i=0;i<=5;i++){
-    const v=minY+(maxY-minY)*i/5;
-    ctx.fillText(v.toFixed(2),pad-6,H-pad-(H-2*pad)*i/5+4);
-  }
-  ctx.fillStyle='#c9d1d9'; ctx.font='11px Segoe UI'; ctx.textAlign='center';
-  ctx.fillText(state.features[fx],W/2,H-10);
-  ctx.save(); ctx.translate(12,H/2); ctx.rotate(-Math.PI/2); ctx.fillText(state.features[fy],0,0); ctx.restore();
+  drawAxes(ctx,v,fx,fy);
 
   // Points
-  allX.forEach((row,i)=>{
-    const [cx,cy]=toC(row[fx],row[fy]);
-    const col=COLORS[assignments[i]%COLORS.length];
-    ctx.beginPath(); ctx.arc(cx,cy,4,0,2*Math.PI);
-    ctx.fillStyle=col+'bb'; ctx.fill();
-  });
+  for(let i=0;i<X.length;i++){
+    const [px,py]=v.toC(X[i][fx],X[i][fy]);
+    ctx.beginPath(); ctx.arc(px,py,4,0,2*Math.PI);
+    ctx.fillStyle=COLORS[asg[i]%COLORS.length]+'bb'; ctx.fill();
+  }
+  // Points that switched group in this step
+  if(prevAsg){
+    ctx.strokeStyle='rgba(255,255,255,0.85)'; ctx.lineWidth=1.2;
+    for(let i=0;i<X.length;i++){
+      if(asg[i]===prevAsg[i]) continue;
+      const [px,py]=v.toC(X[i][fx],X[i][fy]);
+      ctx.beginPath(); ctx.arc(px,py,6.5,0,2*Math.PI); ctx.stroke();
+    }
+  }
+
+  if(document.getElementById('trail-chk').checked) drawTrails(ctx,v,fx,fy,s,cents,K);
+
+  // Chase target: the mean of the group each centroid is running to
+  if(nxt){
+    for(let i=0;i<K;i++){
+      const col=COLORS[i%COLORS.length];
+      const [ax,ay]=v.toC(cents[i][fx],cents[i][fy]);
+      const [tx,ty]=v.toC(nxt.centroids[i][fx],nxt.centroids[i][fy]);
+      if(Math.hypot(tx-ax,ty-ay)<4) continue;
+      ctx.save(); ctx.setLineDash([4,4]); ctx.strokeStyle=col; ctx.globalAlpha=0.85; ctx.lineWidth=1.3;
+      ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(tx,ty); ctx.stroke(); ctx.restore();
+      drawTarget(ctx,tx,ty,col);
+    }
+    // Phase caption
+    const phase1=frac<CHASE_PHASE;
+    const txt=phase1
+      ? `Iteração ${s+1} · 1) cada ponto escolhe o centroide mais próximo${nxt.changed?` (${nxt.changed} trocaram de grupo)`:''}`
+      : `Iteração ${s+1} · 2) cada centroide corre para a média do seu grupo`;
+    ctx.font='bold 11px Segoe UI';
+    const tw=ctx.measureText(txt).width;
+    ctx.fillStyle='rgba(13,17,23,0.85)'; ctx.fillRect(v.pad,8,tw+16,22);
+    ctx.strokeStyle=phase1?'rgba(247,129,102,0.7)':'rgba(56,139,253,0.7)'; ctx.lineWidth=1; ctx.strokeRect(v.pad+.5,8.5,tw+15,21);
+    ctx.fillStyle=phase1?'#f78166':'#79c0ff'; ctx.textAlign='left';
+    ctx.fillText(txt,v.pad+8,23);
+  }
 
   // Centroids
-  centroids.forEach((c,i)=>{
-    const [cx,cy]=toC(c[fx],c[fy]);
-    const col=COLORS[i%COLORS.length];
-    // Star
-    ctx.beginPath();
-    for(let p=0;p<5;p++){
-      const a=Math.PI*2*p/5-Math.PI/2;
-      const a2=a+Math.PI/5;
-      const r1=14,r2=6;
-      p?ctx.lineTo(cx+r1*Math.cos(a),cy+r1*Math.sin(a)):ctx.moveTo(cx+r1*Math.cos(a),cy+r1*Math.sin(a));
-      ctx.lineTo(cx+r2*Math.cos(a2),cy+r2*Math.sin(a2));
-    }
-    ctx.closePath();
-    ctx.fillStyle=col; ctx.fill();
-    ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
+  cents.forEach((c,i)=>{
+    const [cx,cy]=v.toC(c[fx],c[fy]);
+    drawStar(ctx,cx,cy,COLORS[i%COLORS.length],i+1);
   });
 
-  updateIterDots();
+  updateIterInfo(s,nxt?frac:0);
+}
+
+function drawTrails(ctx,v,fx,fy,s,cents,K){
+  const H_=state.history;
+  for(let i=0;i<K;i++){
+    const col=COLORS[i%COLORS.length];
+    // Positions at iterations 0..s (collapsing repeats of a parked centroid)
+    const pts=[];
+    for(let t=0;t<=s;t++){
+      const p=v.toC(H_[t].centroids[i][fx],H_[t].centroids[i][fy]);
+      const q=pts[pts.length-1];
+      if(!q||Math.hypot(p[0]-q[0],p[1]-q[1])>0.5) pts.push(p);
+    }
+    const path=pts.slice();
+    const curP=v.toC(cents[i][fx],cents[i][fy]);
+    const q=path[path.length-1];
+    if(Math.hypot(curP[0]-q[0],curP[1]-q[1])>0.5) path.push(curP);
+
+    // Starting position
+    const p0=pts[0];
+    ctx.save(); ctx.setLineDash([3,3]); ctx.strokeStyle=col; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.arc(p0[0],p0[1],8,0,2*Math.PI); ctx.stroke(); ctx.restore();
+    if(path.length<2) continue;
+
+    // Dark halo for contrast
+    ctx.lineJoin='round'; ctx.lineCap='round';
+    ctx.strokeStyle='rgba(13,17,23,0.85)'; ctx.lineWidth=5;
+    ctx.beginPath(); path.forEach((p,j)=>j?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.stroke();
+
+    // Colored segments: older steps fade, recent steps are solid
+    const n=path.length-1;
+    for(let j=1;j<path.length;j++){
+      ctx.globalAlpha=0.35+0.65*(j/n);
+      ctx.strokeStyle=col; ctx.lineWidth=2.2;
+      ctx.beginPath(); ctx.moveTo(path[j-1][0],path[j-1][1]); ctx.lineTo(path[j][0],path[j][1]); ctx.stroke();
+      const dx=path[j][0]-path[j-1][0], dy=path[j][1]-path[j-1][1];
+      if(Math.hypot(dx,dy)>22) drawArrow(ctx,(path[j-1][0]+path[j][0])/2,(path[j-1][1]+path[j][1])/2,Math.atan2(dy,dx),col);
+    }
+    ctx.globalAlpha=1;
+
+    // One dot per iteration
+    for(let j=1;j<pts.length;j++){
+      ctx.beginPath(); ctx.arc(pts[j][0],pts[j][1],2.8,0,2*Math.PI);
+      ctx.fillStyle=col; ctx.fill();
+      ctx.strokeStyle='#0d1117'; ctx.lineWidth=1; ctx.stroke();
+    }
+  }
 }
 
 function hexToRgb(hex){
@@ -1262,7 +1802,8 @@ function hexToRgb(hex){
 }
 
 function updateLegend(){
-  document.getElementById('legend-wrap').innerHTML=Array.from({length:state.k},(_,i)=>`
+  const K=state.runK||state.k;
+  document.getElementById('legend-wrap').innerHTML=Array.from({length:K},(_,i)=>`
     <div class="legend-item">
       <div class="legend-dot" style="background:${COLORS[i%COLORS.length]}"></div>
       <span>Cluster ${i+1}</span>
@@ -1270,20 +1811,29 @@ function updateLegend(){
 }
 
 // ===================================================
-// EVO CHART
+// EVO CHARTS (inertia + step size)
 // ===================================================
+function drawConvMarker(ctx,x,top,bottom,label){
+  ctx.save();
+  ctx.setLineDash([5,4]); ctx.strokeStyle='rgba(46,160,67,0.85)'; ctx.lineWidth=1.3;
+  ctx.beginPath(); ctx.moveTo(x,top); ctx.lineTo(x,bottom); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#2ea043'; ctx.font='bold 10px Segoe UI';
+  ctx.textAlign=x>ctx.canvas.clientWidth*0.75?'right':'left';
+  ctx.fillText(label,x+(ctx.textAlign==='right'?-5:5),top+10);
+  ctx.restore();
+}
+
 function drawEvoChart(){
   if(!state.history.length) return;
-  const canvas=document.getElementById('evo-canvas');
-  const W=canvas.offsetWidth||700,H=300;
-  canvas.width=W; canvas.height=H;
-  const ctx=canvas.getContext('2d');
+  const {ctx,W,H}=setupCanvas('evo-canvas',300);
   const pad={t:30,r:40,b:50,l:70};
   const cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
-
-  const iners=state.history.map(s=>inertia(state.X,s.assignments,s.centroids));
+  const iners=state.history.map(h=>h.inertia);
   const minI=Math.min(...iners),maxI=Math.max(...iners);
   const n=iners.length;
+  const toX=i=>pad.l+i/(n-1||1)*cw;
+  const toY=v=>H-pad.b-(v-minI)/(maxI-minI||1)*ch;
 
   ctx.strokeStyle='#21262d'; ctx.lineWidth=1;
   [0,.25,.5,.75,1].forEach(t=>{
@@ -1291,30 +1841,31 @@ function drawEvoChart(){
     const y=H-pad.b-t*ch;
     ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
     ctx.fillStyle='#8b949e'; ctx.font='10px Segoe UI'; ctx.textAlign='right';
-    ctx.fillText(v.toFixed(0),pad.l-6,y+4);
+    ctx.fillText(fmtTick(v),pad.l-6,y+4);
   });
 
   ctx.strokeStyle='#30363d'; ctx.lineWidth=1.5;
   ctx.beginPath(); ctx.moveTo(pad.l,pad.t); ctx.lineTo(pad.l,H-pad.b); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(pad.l,H-pad.b); ctx.lineTo(W-pad.r,H-pad.b); ctx.stroke();
 
-  // Curve
+  const r=state.run;
+  if(r && r.converged && r.convIter!==null) drawConvMarker(ctx,toX(r.convIter),pad.t,H-pad.b,r.tol>0?`convergiu (it. ${r.convIter})`:`parou de se mover (it. ${r.convIter})`);
+
   ctx.beginPath(); ctx.strokeStyle='#388bfd'; ctx.lineWidth=2.5;
-  iners.forEach((v,i)=>{
-    const x=pad.l+i/(n-1||1)*cw;
-    const y=H-pad.b-(v-minI)/(maxI-minI||1)*ch;
-    i?ctx.lineTo(x,y):ctx.moveTo(x,y);
-  });
+  iners.forEach((v,i)=>{ i?ctx.lineTo(toX(i),toY(v)):ctx.moveTo(toX(i),toY(v)); });
   ctx.stroke();
 
-  // Dots
+  const every=Math.ceil(n/20);
   iners.forEach((v,i)=>{
-    const x=pad.l+i/(n-1||1)*cw;
-    const y=H-pad.b-(v-minI)/(maxI-minI||1)*ch;
-    ctx.beginPath(); ctx.arc(x,y,4,0,2*Math.PI);
-    ctx.fillStyle=i===state.currentStep?'#f78166':'#388bfd'; ctx.fill();
-    ctx.fillStyle='#8b949e'; ctx.font='9px Segoe UI'; ctx.textAlign='center';
-    ctx.fillText('I'+i,x,H-pad.b+14);
+    const x=toX(i), y=toY(v);
+    if(n<=150||i===state.currentStep){
+      ctx.beginPath(); ctx.arc(x,y,i===state.currentStep?5:3.5,0,2*Math.PI);
+      ctx.fillStyle=i===state.currentStep?'#f78166':'#388bfd'; ctx.fill();
+    }
+    if(i%every===0||i===n-1){
+      ctx.fillStyle='#8b949e'; ctx.font='9px Segoe UI'; ctx.textAlign='center';
+      ctx.fillText(String(i),x,H-pad.b+14);
+    }
   });
 
   ctx.fillStyle='#c9d1d9'; ctx.font='11px Segoe UI'; ctx.textAlign='center';
@@ -1322,22 +1873,93 @@ function drawEvoChart(){
   ctx.save(); ctx.translate(14,H/2); ctx.rotate(-Math.PI/2); ctx.fillText('Inércia',0,0); ctx.restore();
 }
 
+function drawShiftChart(){
+  const note=document.getElementById('shift-note');
+  if(!state.history.length||!state.run){ if(note) note.innerHTML=''; return; }
+  const {ctx,W,H}=setupCanvas('shift-canvas',260);
+  const H_=state.history, K=H_[0].centroids.length, n=H_.length-1;
+  const pad={t:34,r:40,b:46,l:70};
+  const cw=W-pad.l-pad.r, ch=H-pad.t-pad.b;
+  if(n<1) return;
+  let maxS=0;
+  for(let i=1;i<=n;i++) H_[i].shifts.forEach(v=>{ if(v>maxS) maxS=v; });
+  const top=maxS||1;
+  const toX=i=>pad.l+(n===1?cw/2:(i-1)/(n-1)*cw);
+  const toY=v=>H-pad.b-v/top*ch;
+
+  ctx.strokeStyle='#21262d'; ctx.lineWidth=1;
+  [0,.25,.5,.75,1].forEach(t=>{
+    const y=H-pad.b-t*ch;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
+    ctx.fillStyle='#8b949e'; ctx.font='10px Segoe UI'; ctx.textAlign='right';
+    ctx.fillText(fmtTick(top*t),pad.l-6,y+4);
+  });
+  ctx.strokeStyle='#30363d'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(pad.l,pad.t); ctx.lineTo(pad.l,H-pad.b); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad.l,H-pad.b); ctx.lineTo(W-pad.r,H-pad.b); ctx.stroke();
+
+  const r=state.run;
+  if(r.converged && r.convIter!==null) drawConvMarker(ctx,toX(r.convIter),pad.t,H-pad.b,r.tol>0?`parou (it. ${r.convIter})`:`deslocamento zero (it. ${r.convIter})`);
+  if(state.currentStep>=1){
+    ctx.strokeStyle='rgba(247,129,102,0.6)'; ctx.lineWidth=1;
+    const x=toX(state.currentStep);
+    ctx.beginPath(); ctx.moveTo(x,pad.t); ctx.lineTo(x,H-pad.b); ctx.stroke();
+  }
+
+  for(let c=0;c<K;c++){
+    const col=COLORS[c%COLORS.length];
+    ctx.beginPath(); ctx.strokeStyle=col; ctx.lineWidth=2; ctx.globalAlpha=0.9;
+    for(let i=1;i<=n;i++){ const x=toX(i), y=toY(H_[i].shifts[c]); i>1?ctx.lineTo(x,y):ctx.moveTo(x,y); }
+    ctx.stroke(); ctx.globalAlpha=1;
+    if(n<=60){
+      for(let i=1;i<=n;i++){
+        ctx.beginPath(); ctx.arc(toX(i),toY(H_[i].shifts[c]),2.6,0,2*Math.PI);
+        ctx.fillStyle=col; ctx.fill();
+      }
+    }
+  }
+
+  const every=Math.ceil(n/20);
+  ctx.fillStyle='#8b949e'; ctx.font='9px Segoe UI'; ctx.textAlign='center';
+  for(let i=1;i<=n;i++) if((i-1)%every===0||i===n) ctx.fillText(String(i),toX(i),H-pad.b+14);
+
+  // Legend
+  let lx=pad.l;
+  ctx.font='10px Segoe UI'; ctx.textAlign='left';
+  for(let c=0;c<K;c++){
+    ctx.fillStyle=COLORS[c%COLORS.length]; ctx.fillRect(lx,12,10,10);
+    ctx.fillStyle='#c9d1d9'; ctx.fillText('C'+(c+1),lx+14,21);
+    lx+=44;
+  }
+
+  ctx.fillStyle='#c9d1d9'; ctx.font='11px Segoe UI'; ctx.textAlign='center';
+  ctx.fillText('Iteração',W/2,H-8);
+  ctx.save(); ctx.translate(14,H/2); ctx.rotate(-Math.PI/2); ctx.fillText('Deslocamento',0,0); ctx.restore();
+
+  let maxIdx=1;
+  for(let i=1;i<=n;i++) if(H_[i].shift>H_[maxIdx].shift) maxIdx=i;
+  const space=state.norm==='none'?'espaço original':'espaço normalizado';
+  let txt=`Cada ponto é o tamanho de um passo de perseguição. Os ${K} centroides percorreram juntos <strong>${r.path.toFixed(3)}</strong> unidades (${space}); o maior passo foi na iteração <strong>${maxIdx}</strong>.`;
+  if(r.converged && r.tol>0) txt+=` Na iteração <strong>${r.convIter}</strong> o deslocamento total ficou abaixo da tolerância (${r.tol}) e o algoritmo parou, sem precisar chegar ao limite de ${r.maxIter}.`;
+  else if(r.converged) txt+=` A partir da iteração <strong>${r.convIter}</strong> o deslocamento é zero: das ${r.executed} iterações executadas, ${r.executed-r.convIter+1} foram passos parados, que não mudam nada.`;
+  else txt+=` Na última iteração os centroides ainda estavam se movendo: aumente "Máx. iterações" ou use uma tolerância maior.`;
+  note.innerHTML=txt;
+}
+
 // ===================================================
-// ELBOW
+// ELBOW + SILHOUETTE BY K
 // ===================================================
 function drawElbow(){
-  if(!state.elbowData) return;
-  const canvas=document.getElementById('elbow-canvas');
-  const W=canvas.offsetWidth||700,H=300;
-  canvas.width=W; canvas.height=H;
-  const ctx=canvas.getContext('2d');
+  if(!state.elbowData||!state.elbowData.length) return;
+  const {ctx,W,H}=setupCanvas('elbow-canvas',300);
   const pad={t:30,r:40,b:50,l:70};
   const cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
   const ks=state.elbowData.map(d=>d.k);
   const iners=state.elbowData.map(d=>d.inertia);
   const minI=Math.min(...iners),maxI=Math.max(...iners);
   const n=ks.length;
-  const toX=i=>pad.l+i/(n-1)*cw;
+  const K=state.runK||state.k;
+  const toX=i=>pad.l+(n>1?i/(n-1)*cw:cw/2);
   const toY=v=>H-pad.b-(v-minI)/(maxI-minI||1)*ch;
 
   ctx.strokeStyle='#21262d'; ctx.lineWidth=1;
@@ -1345,7 +1967,7 @@ function drawElbow(){
     const y=H-pad.b-t*ch;
     ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
     ctx.fillStyle='#8b949e'; ctx.font='10px Segoe UI'; ctx.textAlign='right';
-    ctx.fillText((minI+(maxI-minI)*t).toFixed(0),pad.l-6,y+4);
+    ctx.fillText(fmtTick(minI+(maxI-minI)*t),pad.l-6,y+4);
   });
 
   ctx.strokeStyle='#30363d'; ctx.lineWidth=1.5;
@@ -1359,8 +1981,14 @@ function drawElbow(){
   ks.forEach((k,i)=>{
     ctx.fillStyle='#8b949e'; ctx.font='10px Segoe UI'; ctx.textAlign='center';
     ctx.fillText('K='+k,toX(i),H-pad.b+14);
-    ctx.beginPath(); ctx.arc(toX(i),toY(iners[i]),k===state.k?7:4,0,2*Math.PI);
-    ctx.fillStyle=k===state.k?'#f78166':'#388bfd'; ctx.fill();
+    if(k===state.elbowKnee){
+      ctx.beginPath(); ctx.arc(toX(i),toY(iners[i]),12,0,2*Math.PI);
+      ctx.strokeStyle='#2ea043'; ctx.lineWidth=2; ctx.stroke();
+      ctx.fillStyle='#2ea043'; ctx.font='bold 10px Segoe UI';
+      ctx.fillText('cotovelo',toX(i),toY(iners[i])-18);
+    }
+    ctx.beginPath(); ctx.arc(toX(i),toY(iners[i]),k===K?7:4,0,2*Math.PI);
+    ctx.fillStyle=k===K?'#f78166':'#388bfd'; ctx.fill();
   });
 
   ctx.fillStyle='#c9d1d9'; ctx.font='11px Segoe UI'; ctx.textAlign='center';
@@ -1368,36 +1996,109 @@ function drawElbow(){
   ctx.save(); ctx.translate(14,H/2); ctx.rotate(-Math.PI/2); ctx.fillText('Inércia',0,0); ctx.restore();
 }
 
+function drawSilK(){
+  const data=state.silByK;
+  const {ctx,W,H}=setupCanvas('silk-canvas',220);
+  if(!data||!data.length){
+    ctx.fillStyle='#8b949e'; ctx.font='12px Segoe UI'; ctx.textAlign='center';
+    ctx.fillText('Execute para calcular',W/2,H/2);
+    return;
+  }
+  const pad={t:26,r:30,b:42,l:60};
+  const cw=W-pad.l-pad.r, ch=H-pad.t-pad.b;
+  const vals=data.map(d=>d.sil);
+  const lo=Math.min(0,...vals), hi=Math.max(0.05,...vals);
+  const toY=v=>H-pad.b-(v-lo)/(hi-lo)*ch;
+  const zeroY=toY(0);
+  const slot=cw/data.length, bw=Math.min(46,slot*0.6);
+  const K=state.runK||state.k;
+
+  ctx.strokeStyle='#21262d'; ctx.lineWidth=1;
+  [0,.5,1].forEach(t=>{
+    const v=lo+(hi-lo)*t, y=toY(v);
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
+    ctx.fillStyle='#8b949e'; ctx.font='10px Segoe UI'; ctx.textAlign='right';
+    ctx.fillText(v.toFixed(2),pad.l-6,y+4);
+  });
+  ctx.strokeStyle='#30363d'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(pad.l,zeroY); ctx.lineTo(W-pad.r,zeroY); ctx.stroke();
+
+  data.forEach((d,i)=>{
+    const cx=pad.l+(i+0.5)*slot;
+    const y=toY(d.sil);
+    const best=d.k===state.bestSilK;
+    ctx.fillStyle=best?'rgba(46,160,67,0.85)':'rgba(56,139,253,0.55)';
+    ctx.fillRect(cx-bw/2,Math.min(y,zeroY),bw,Math.abs(zeroY-y));
+    if(d.k===K){
+      ctx.strokeStyle='#f78166'; ctx.lineWidth=2;
+      ctx.strokeRect(cx-bw/2-2,Math.min(y,zeroY)-2,bw+4,Math.abs(zeroY-y)+4);
+    }
+    ctx.fillStyle=best?'#2ea043':'#c9d1d9'; ctx.font=(best?'bold ':'')+'10px Segoe UI'; ctx.textAlign='center';
+    ctx.fillText(d.sil.toFixed(3),cx,(d.sil>=0?y-5:y+12));
+    ctx.fillStyle='#8b949e'; ctx.font='10px Segoe UI';
+    ctx.fillText('K='+d.k,cx,H-pad.b+14);
+  });
+
+  ctx.fillStyle='#c9d1d9'; ctx.font='11px Segoe UI'; ctx.textAlign='center';
+  ctx.fillText('Número de clusters K',W/2,H-8);
+  ctx.save(); ctx.translate(14,H/2); ctx.rotate(-Math.PI/2); ctx.fillText('Silhouette',0,0); ctx.restore();
+}
+
 // ===================================================
 // METRICS
 // ===================================================
-function renderMetrics(){
-  const last=state.history[state.history.length-1];
-  const {assignments,centroids}=last;
-  const iner=inertia(state.X,assignments,centroids);
-  const sil=silhouette(state.X,assignments,state.k);
+function metricCard(val,label,sub,cls=''){
+  return `<div class="metric-card ${cls}"><div class="metric-val">${val}</div><div class="metric-label">${label}</div>${sub?`<div class="metric-sub">${sub}</div>`:''}</div>`;
+}
 
+function placeholderMetrics(){
+  document.getElementById('metric-cards-groups').innerHTML=['K configurado','Clusters encontrados','Classes reais capturadas','Pureza','K sugerido (silhouette)','K sugerido (cotovelo)']
+    .map(l=>metricCard('-',l)).join('');
+  document.getElementById('metric-cards').innerHTML=['Inércia','Silhouette Score','Iterações executadas','Convergência','Passos de perseguição','Distância percorrida']
+    .map(l=>metricCard('-',l)).join('');
+}
+
+function renderMetrics(){
+  if(!state.history.length||!state.final) return;
+  const K=state.runK, f=state.final, r=state.run;
+  const names=state.classNames;
+  const cmp=(state.labels&&names)?clusterVsClass(f.assign,state.labels,K,names.length):null;
+  const kRange=state.silByK&&state.silByK.length?`K=2 a K=${state.silByK[state.silByK.length-1].k}`:'';
+
+  document.getElementById('metric-cards-groups').innerHTML=[
+    metricCard(K,'K configurado','o K-Means sempre cria exatamente K grupos'),
+    metricCard(`${f.nonEmpty}<small> / ${K}</small>`,'Clusters encontrados','grupos que terminaram com pontos',f.nonEmpty<K?'warn':'hl'),
+    cmp ? metricCard(`${cmp.captured}<small> / ${names.length}</small>`,'Classes reais capturadas','classes que são maioria em algum cluster',cmp.captured===names.length?'good':'warn')
+        : metricCard('-','Classes reais','dataset sem rótulos para comparar'),
+    cmp ? metricCard(`${(cmp.purity*100).toFixed(1)}%`,'Pureza','pontos na classe majoritária do seu cluster') : '',
+    metricCard(state.bestSilK??'-','K sugerido (silhouette)',kRange?`maior silhouette entre ${kRange}`:'',state.bestSilK===K?'good':''),
+    metricCard(state.elbowKnee??'-','K sugerido (cotovelo)','maior curvatura da curva de inércia',state.elbowKnee===K?'good':''),
+  ].join('');
+
+  const space=state.norm==='none'?'espaço original':'espaço normalizado';
   document.getElementById('metric-cards').innerHTML=[
-    [state.k,state.k,'K clusters'],
-    [1-iner/1e6,iner.toFixed(1),'Inércia'],
-    [sil,sil.toFixed(3),'Silhouette Score'],
-    [1,state.history.length-1,'Iterações']
-  ].map(([v,s,l])=>`<div class="metric-card"><div class="metric-val" style="color:var(--accent2)">${s}</div><div class="metric-label">${l}</div></div>`).join('');
+    metricCard(fmtNum(f.inertia),'Inércia','soma das distâncias² ao centroide'),
+    metricCard(f.sil.toFixed(3),'Silhouette Score',f.silSampled?`amostra de ${f.silN} pontos`:'de -1 a 1 (maior é melhor)'),
+    metricCard(r.executed,'Iterações executadas',`limite configurado: ${r.maxIter}`),
+    metricCard(r.converged?r.convIter:'não','Convergência',
+      r.converged?(r.tol>0?'iteração em que parou (abaixo da tolerância)':'1ª iteração com deslocamento zero'):'ainda se movendo no limite',
+      r.converged?'good':'warn'),
+    metricCard(r.movingSteps,'Passos de perseguição','iterações em que algum centroide se moveu'),
+    metricCard(r.path.toFixed(2),'Distância percorrida',`soma das trilhas dos ${K} centroides (${space})`),
+  ].join('');
 
   // Cluster sizes bar chart
-  const sizes=Array.from({length:state.k},(_,i)=>assignments.filter(a=>a===i).length);
-  const canvas=document.getElementById('size-canvas');
-  const W=canvas.offsetWidth||340,H=200;
-  canvas.width=W; canvas.height=H;
-  const ctx=canvas.getContext('2d');
-  const pad=30, bw=(W-2*pad)/(state.k+1);
-  const maxS=Math.max(...sizes);
+  const sizes=f.sizes;
+  const {ctx,W,H}=setupCanvas('size-canvas',200);
+  const pad=30, gap=6;
+  const bw=Math.min(70,(W-2*pad-(K-1)*gap)/K);
+  const x0=(W-(K*bw+(K-1)*gap))/2;
+  const maxS=Math.max(1,...sizes);
   sizes.forEach((s,i)=>{
     const bh=(s/maxS)*(H-2*pad);
-    const x=pad+i*(bw+4);
-    const col=COLORS[i%COLORS.length];
-    const {r,g,b}=hexToRgb(col);
-    ctx.fillStyle=`rgba(${r},${g},${b},0.7)`;
+    const x=x0+i*(bw+gap);
+    const {r:cr,g,b}=hexToRgb(COLORS[i%COLORS.length]);
+    ctx.fillStyle=`rgba(${cr},${g},${b},0.7)`;
     ctx.fillRect(x,H-pad-bh,bw,bh);
     ctx.fillStyle='#8b949e'; ctx.font='10px Segoe UI'; ctx.textAlign='center';
     ctx.fillText('C'+(i+1),x+bw/2,H-pad+14);
@@ -1406,58 +2107,56 @@ function renderMetrics(){
   });
 
   // Silhouette per cluster
-  if(state.k>=2){
-    const silPerC=Array.from({length:state.k},(_,ci)=>{
-      const pts=state.X.filter((_,j)=>assignments[j]===ci);
-      if(pts.length<2) return 0;
-      const allA=state.X.map((x,j)=>{
-        if(assignments[j]!==ci) return null;
-        const same=state.X.filter((_,k)=>assignments[k]===ci&&k!==j);
-        if(same.length===0) return 0;
-        return same.reduce((s,y)=>s+eucl(x,y),0)/same.length;
-      }).filter(x=>x!==null);
-      const allB=state.X.map((x,j)=>{
-        if(assignments[j]!==ci) return null;
-        let b=Infinity;
-        for(let c2=0;c2<state.k;c2++){
-          if(c2===ci) continue;
-          const other=state.X.filter((_,k)=>assignments[k]===c2);
-          if(!other.length) continue;
-          const d=other.reduce((s,y)=>s+eucl(x,y),0)/other.length;
-          if(d<b) b=d;
-        }
-        return b===Infinity?0:b;
-      }).filter(x=>x!==null);
-      const sc=allA.map((a,i)=>{const m=Math.max(a,allB[i]);return m===0?0:(allB[i]-a)/m;});
-      return sc.reduce((a,b)=>a+b,0)/sc.length;
-    });
-    document.getElementById('sil-bars').innerHTML=silPerC.map((s,i)=>`
-      <div class="dist-bar-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px">
-        <div style="min-width:60px;color:${COLORS[i%COLORS.length]}">Cluster ${i+1}</div>
-        <div style="flex:1;height:10px;background:var(--border);border-radius:4px;overflow:hidden">
-          <div style="height:100%;width:${Math.max(0,s*100).toFixed(0)}%;background:${COLORS[i%COLORS.length]};border-radius:4px;transition:width .4s"></div>
-        </div>
-        <div style="min-width:40px;text-align:right;color:var(--text3)">${s.toFixed(3)}</div>
-      </div>`).join('');
+  document.getElementById('sil-bars').innerHTML=K>=2?f.silPer.map((s,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px">
+      <div style="min-width:60px;color:${COLORS[i%COLORS.length]}">Cluster ${i+1}</div>
+      <div style="flex:1;height:10px;background:var(--border);border-radius:4px;overflow:hidden">
+        <div style="height:100%;width:${Math.max(0,s*100).toFixed(0)}%;background:${COLORS[i%COLORS.length]};border-radius:4px;transition:width .4s"></div>
+      </div>
+      <div style="min-width:40px;text-align:right;color:var(--text3)">${s.toFixed(3)}</div>
+    </div>`).join(''):'';
+
+  renderContingency(cmp,names,K);
+}
+
+function renderContingency(cmp,names,K){
+  const wrap=document.getElementById('cont-table-wrap');
+  if(!cmp){
+    wrap.innerHTML='<div style="color:var(--text2);padding:14px;font-size:12px;line-height:1.6">Este dataset não tem rótulos (classe real), então não dá para comparar os clusters com classes verdadeiras. No CSV, coloque a classe na última coluna com um cabeçalho como <code>target</code>, <code>classe</code> ou <code>species</code>.</div>';
+    return;
   }
+  const rows=cmp.cont.map((row,i)=>{
+    const tot=row.reduce((a,b)=>a+b,0);
+    const m=cmp.majorOf[i];
+    return `<tr><td style="color:${COLORS[i%COLORS.length]}">Cluster ${i+1}</td>${row.map((v,j)=>`<td class="${j===m?'maj':''}">${v}</td>`).join('')}<td>${tot}</td><td style="text-align:left">${m>=0?`${escapeHtml(names[m])} (${(row[m]/tot*100).toFixed(0)}%)`:'vazio'}</td></tr>`;
+  }).join('');
+  const missing=names.filter((_,j)=>!cmp.majors.has(j));
+  const split=names.filter((_,j)=>cmp.majorOf.filter(m=>m===j).length>1);
+  let summary=`Com K=${K}, os centroides capturaram <strong>${cmp.captured} de ${names.length}</strong> classes reais (pureza de ${(cmp.purity*100).toFixed(1)}%).`;
+  if(missing.length) summary+=` ${missing.length>1?'As classes':'A classe'} <strong>${missing.map(escapeHtml).join(', ')}</strong> não ${missing.length>1?'são':'é'} maioria em nenhum cluster: ${missing.length>1?'ficaram misturadas':'ficou misturada'} dentro de outro grupo.`;
+  if(split.length) summary+=` ${split.length>1?'As classes':'A classe'} <strong>${split.map(escapeHtml).join(', ')}</strong> ${split.length>1?'foram divididas':'foi dividida'} em mais de um cluster.`;
+  if(!missing.length&&!split.length) summary+=' Cada classe real virou um cluster próprio.';
+  wrap.innerHTML=`<table class="cont-table">
+    <tr><th>Cluster</th>${names.map(n=>`<th>${escapeHtml(n)}</th>`).join('')}<th>Total</th><th>Classe majoritária</th></tr>
+    ${rows}
+  </table>
+  <div class="cont-summary">${summary}</div>`;
 }
 
 // ===================================================
 // CENTROIDS TABLE
 // ===================================================
 function renderCentroids(){
-  const last=state.history[state.history.length-1];
-  const {centroids}=last;
-  const nf=state.features.length;
+  if(!state.final) return;
+  const centroids=state.final.centroids;
 
   const html=(cents,label)=>`<table>
-    <tr><th>${label}</th>${state.features.map(f=>`<th>${f}</th>`).join('')}</tr>
+    <tr><th>${label}</th>${state.features.map(f=>`<th>${escapeHtml(f)}</th>`).join('')}</tr>
     ${cents.map((c,i)=>`<tr><td style="color:${COLORS[i%COLORS.length]}">Cluster ${i+1}</td>${c.map(v=>`<td>${(+v).toFixed(4)}</td>`).join('')}</tr>`).join('')}
   </table>`;
 
   document.getElementById('centroid-table-wrap').innerHTML=html(centroids,'Centroide');
 
-  // Denormalize if possible
   if(state.norm!=='none' && state.Xraw.length){
     const {params}=normalizeData(state.Xraw,state.norm);
     const orig=centroids.map(c=>c.map((v,f)=>{
@@ -1478,35 +2177,66 @@ function setStatus(msg,type){
   el.innerHTML=msg; el.className=type||'';
 }
 
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
 function resetAll(){
-  state.history=[]; state.currentStep=0; state.elbowData=null;
+  stopPlay();
+  state.history=[]; state.currentStep=0; state.frac=0;
+  state.run=null; state.final=null; state.runK=0;
+  state.elbowData=null; state.silByK=null; state.elbowKnee=null; state.bestSilK=null;
   state.manualCentroids=[]; state.manualCapturing=false;
   const cvs=document.getElementById('cluster-canvas');
   if(cvs){ cvs.onclick=null; cvs.style.cursor='default'; }
   setStatus('Pronto para executar','');
-  document.getElementById('main-status').textContent='Configure K e os parâmetros, depois clique em Executar K-Means.';
-  ['cluster-canvas','evo-canvas','elbow-canvas','size-canvas'].forEach(id=>{
-    const c=document.getElementById(id);
-    if(c){const ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);}
-  });
-  document.getElementById('iter-dots').innerHTML='';
-  document.getElementById('iter-label').textContent='Iteração —';
-  document.getElementById('inertia-label').textContent='';
+  document.getElementById('main-status').innerHTML='Configure K e os parâmetros, depois clique em <strong style="color:var(--text)">Executar K-Means</strong>.';
+  ['cluster-canvas','evo-canvas','shift-canvas','elbow-canvas','silk-canvas','size-canvas'].forEach(clearCanvas);
+  resetIterBar();
   document.getElementById('legend-wrap').innerHTML='';
-  document.getElementById('metric-cards').innerHTML=['K clusters','Inércia','Silhouette Score','Iterações'].map(l=>`<div class="metric-card"><div class="metric-val">—</div><div class="metric-label">${l}</div></div>`).join('');
+  placeholderMetrics();
   document.getElementById('centroid-table-wrap').innerHTML='<div style="color:var(--text2);padding:20px">Execute primeiro</div>';
   document.getElementById('centroid-table-orig').innerHTML='<div style="color:var(--text2);padding:20px">Execute primeiro</div>';
+  document.getElementById('cont-table-wrap').innerHTML='<div style="color:var(--text2);padding:20px">Execute primeiro</div>';
   document.getElementById('sil-bars').innerHTML='';
+  document.getElementById('shift-note').innerHTML='';
+  document.getElementById('proj-note').textContent='';
 }
 
+// Iteration scrubber, overlay toggles and keyboard shortcuts
+document.getElementById('iter-scrub').addEventListener('input',function(){
+  if(!state.history.length) return;
+  stopPlay();
+  state.currentStep=+this.value;
+  renderStep(state.currentStep);
+});
+['trail-chk','voronoi-chk'].forEach(id=>{
+  document.getElementById(id).addEventListener('change',()=>{
+    if(state.history.length && !state.manualCapturing) renderStep(state.currentStep,state.frac);
+  });
+});
+document.addEventListener('keydown',e=>{
+  const tag=(e.target.tagName||'').toLowerCase();
+  if(['input','select','textarea'].includes(tag)) return;
+  if(tag==='button' && (e.key===' '||e.key==='Enter')) return; // native click already handles it
+  if(document.querySelector('.tab.active')?.dataset.tab!=='clusters'||!state.history.length) return;
+  if(e.key==='ArrowRight'){ stepForward(); e.preventDefault(); }
+  else if(e.key==='ArrowLeft'){ stepBack(); e.preventDefault(); }
+  else if(e.key===' '){ togglePlay(); e.preventDefault(); }
+});
+
 window.addEventListener('resize',()=>{
+  if(state.manualCapturing){ drawManualCaptureCanvas(); return; }
   if(!state.history.length) return;
   const active=document.querySelector('.tab.active')?.dataset.tab;
-  if(active==='clusters') renderStep(state.currentStep);
-  if(active==='evolution') drawEvoChart();
-  if(active==='elbow') drawElbow();
+  if(active==='clusters') renderStep(state.currentStep,state.frac);
+  if(active==='evolution'){ drawEvoChart(); drawShiftChart(); }
+  if(active==='elbow'){ drawElbow(); drawSilK(); }
   if(active==='metrics') renderMetrics();
 });
+
+placeholderMetrics();
+updatePlayBtn();
 </script>
 </body>
 </html>
