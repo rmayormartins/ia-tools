@@ -1,0 +1,2824 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CNN.machine · IA Tools · IFSC</title>
+<meta name="description" content="CNN.machine: crie o seu próprio classificador de imagens no navegador, no estilo Teachable Machine, com MobileNet, EfficientNet ou uma CNN do zero, seguindo as etapas do ML centrado no ser humano.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📸</text></svg>">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/4.22.0/tf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root{
+    --bg-0:#0b0f14;
+    --bg-1:#10161d;
+    --bg-2:#161e27;
+    --bg-3:#1c2631;
+    --border:#243140;
+    --border-soft:#1d2734;
+    --text-0:#e6edf3;
+    --text-1:#9aa6b2;
+    --text-2:#6b7785;
+    --accent:#3F9A4B;
+    --accent-2:#32A041;
+    --accent-soft:rgba(63,154,75,0.12);
+    --accent-glow:rgba(63,154,75,0.35);
+    --warn:#e0a83c;
+    --error:#e25c5c;
+    --info:#4ea1d3;
+    --purple:#a874e8;
+    --mono:"JetBrains Mono","Fira Code","Consolas",monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{min-height:100%}
+  body{
+    background:var(--bg-0);
+    color:var(--text-0);
+    font-family:"Inter","Segoe UI",system-ui,sans-serif;
+    font-size:14px;
+    line-height:1.5;
+    overflow-x:hidden;
+  }
+  a{color:var(--accent)}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-track{background:var(--bg-1)}
+  ::-webkit-scrollbar-thumb{background:var(--bg-3);border-radius:6px}
+  ::-webkit-scrollbar-thumb:hover{background:#2d3a48}
+  [hidden]{display:none !important}
+
+  /* ---------- HEADER ---------- */
+  header.top{
+    background:linear-gradient(180deg,var(--bg-1) 0%,var(--bg-0) 100%);
+    border-bottom:1px solid var(--border);
+    padding:16px 28px;
+    display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:center;gap:16px;min-width:0}
+  .brand-icon{
+    width:54px;height:54px;flex:0 0 54px;
+    border-radius:14px;
+    background:linear-gradient(135deg,var(--accent) 0%,var(--accent-2) 100%);
+    display:flex;align-items:center;justify-content:center;
+    font-size:28px;
+    box-shadow:0 4px 18px var(--accent-glow);
+  }
+  .brand h1{font-size:22px;font-weight:700;letter-spacing:-0.02em}
+  .brand h1 span{color:var(--accent)}
+  .brand .sub{font-size:12px;color:var(--text-1);margin-top:1px;letter-spacing:0.02em}
+  .sig{font-size:11.5px;color:var(--text-2);margin-top:3px;font-family:var(--mono);letter-spacing:0.01em}
+  .sig a{color:var(--text-1);text-decoration:none}
+  .sig a:hover{color:var(--accent)}
+  .sig svg{vertical-align:-2px;margin-right:2px}
+  .header-meta{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text-1);flex-wrap:wrap}
+  .pill{
+    padding:5px 12px;border-radius:999px;
+    background:var(--accent-soft);color:var(--accent);
+    font-weight:600;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;
+    border:1px solid rgba(63,154,75,0.25);
+    display:inline-flex;align-items:center;gap:6px;text-decoration:none;white-space:nowrap;
+  }
+  .pill::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent)}
+  .pill.dim{background:var(--bg-2);color:var(--text-1);border-color:var(--border)}
+  .pill.dim::before{background:var(--text-2);box-shadow:none}
+  .pill.warn{background:rgba(224,168,60,0.12);color:var(--warn);border-color:rgba(224,168,60,0.3)}
+  .pill.warn::before{background:var(--warn);box-shadow:0 0 8px var(--warn)}
+  .pill.err{background:rgba(226,92,92,0.12);color:var(--error);border-color:rgba(226,92,92,0.3)}
+  .pill.err::before{background:var(--error);box-shadow:0 0 8px var(--error)}
+  a.pill.dim:hover{border-color:var(--accent);color:var(--text-0)}
+  a.pill.nodot::before{display:none}
+
+  /* ---------- PIPELINE ---------- */
+  .pipeline-wrap{background:var(--bg-1);border-bottom:1px solid var(--border);padding:12px 28px 6px}
+  .pipeline-wrap svg{display:block;margin:0 auto;max-width:1080px;width:100%;height:auto}
+  .pipeline-caption{text-align:center;font-size:11px;color:var(--text-2);padding:4px 0 4px;font-style:italic}
+  .stg{cursor:pointer;outline:none}
+  .stg .chev{fill:var(--bg-2);stroke:var(--border);stroke-width:1.5;transition:fill .2s,stroke .2s}
+  .stg text{fill:var(--text-1);font-family:"Inter","Segoe UI",system-ui,sans-serif;font-size:12.5px;font-weight:600;pointer-events:none;transition:fill .2s}
+  .stg:hover .chev,.stg:focus-visible .chev{stroke:var(--accent)}
+  .stg.done .chev{fill:var(--accent-soft);stroke:rgba(63,154,75,0.45)}
+  .stg.done text{fill:var(--text-0)}
+  .stg.active .chev{fill:var(--accent);stroke:var(--accent-2);filter:drop-shadow(0 0 10px var(--accent-glow))}
+  .stg.active text{fill:#fff}
+  .stg .badge{opacity:0;transition:opacity .2s}
+  .stg.done .badge{opacity:1}
+  .loop-path{fill:none;stroke:var(--accent);stroke-width:2;opacity:.75}
+  .loop-arrow{fill:var(--accent)}
+  .loop-label{fill:var(--text-2);font-size:10.5px;font-family:var(--mono);letter-spacing:.08em}
+
+  /* ---------- LAYOUT ---------- */
+  main.layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;min-height:calc(100vh - 260px)}
+  section.stage-area{padding:22px 28px 30px;min-width:0}
+  aside.rail{background:var(--bg-1);border-left:1px solid var(--border);padding:18px;min-width:0}
+  .rail-inner{position:sticky;top:12px}
+  .view{display:none;animation:fade .25s ease}
+  .view.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .view-head{margin-bottom:16px}
+  .eyebrow{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.14em;text-transform:uppercase}
+  .view-head h2{font-size:21px;font-weight:700;letter-spacing:-0.01em;margin:2px 0 4px}
+  .view-head p{color:var(--text-1);font-size:13px;max-width:900px}
+  .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  .grid2 > .card{margin-bottom:0}
+  .grid2 + .card,.card + .grid2,.grid2 + .grid2{margin-top:14px}
+  .view-nav{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:18px;flex-wrap:wrap}
+
+  /* ---------- CARDS ---------- */
+  .card{background:var(--bg-2);border:1px solid var(--border-soft);border-radius:12px;padding:16px;margin-bottom:14px;min-width:0}
+  .card h3{font-size:13px;font-weight:700;color:var(--text-0);margin-bottom:12px;display:flex;align-items:center;gap:8px;letter-spacing:.02em}
+  .card h3 .ico{font-size:16px}
+  .card h3 .right{margin-left:auto;display:flex;gap:6px;align-items:center}
+  .card h4{font-size:11px;color:var(--text-1);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:6px}
+  .card-help{font-size:11.5px;color:var(--text-2);margin-top:10px;line-height:1.55}
+  .card-help b{color:var(--text-1);font-weight:600}
+  .muted{color:var(--text-2)}
+  .mono{font-family:var(--mono)}
+
+  /* ---------- INPUTS ---------- */
+  label.field{display:block;font-size:11px;color:var(--text-1);margin:12px 0 5px;letter-spacing:.03em;text-transform:uppercase;font-weight:600}
+  .card > h3 + label.field{margin-top:0}
+  label.field .hint{text-transform:none;letter-spacing:0;font-weight:400;color:var(--text-2);margin-left:4px}
+  select,input[type="text"],input[type="number"],textarea{
+    width:100%;background:var(--bg-3);border:1px solid var(--border);color:var(--text-0);
+    padding:8px 10px;border-radius:8px;font-size:13px;font-family:inherit;outline:none;transition:border-color .15s;
+  }
+  textarea{resize:vertical;min-height:62px}
+  select:focus,input[type="text"]:focus,input[type="number"]:focus,textarea:focus{border-color:var(--accent)}
+  .range-row{display:flex;align-items:center;gap:8px}
+  .range-row input[type="range"]{flex:1;accent-color:var(--accent);min-width:0}
+  .range-val{min-width:54px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600;color:var(--accent);font-size:12px;font-family:var(--mono)}
+  .check{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-0);cursor:pointer;margin-top:10px}
+  .check input{accent-color:var(--accent);width:15px;height:15px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+  .chips label{
+    cursor:pointer;flex:1;background:var(--bg-3);border:1px solid var(--border);color:var(--text-1);
+    padding:6px 10px;border-radius:8px;font-size:12px;text-align:center;transition:all .15s;user-select:none;min-width:48px;white-space:nowrap;
+  }
+  .chips label:hover{border-color:var(--accent)}
+  .chips input{display:none}
+  .chips label:has(input:checked){background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+  .chips label.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .row > input[type="text"]{flex:1;min-width:120px;width:auto}
+
+  /* ---------- BUTTONS ---------- */
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    background:var(--bg-3);border:1px solid var(--border);color:var(--text-0);
+    padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;font-family:inherit;
+    cursor:pointer;transition:all .15s;white-space:nowrap;text-decoration:none;user-select:none;
+  }
+  .btn:hover:not(:disabled){border-color:var(--accent);color:#fff}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));border-color:var(--accent-2);color:#fff;box-shadow:0 2px 12px var(--accent-glow)}
+  .btn.primary:hover:not(:disabled){filter:brightness(1.1)}
+  .btn.danger{color:var(--error);border-color:rgba(226,92,92,.35)}
+  .btn.danger:hover:not(:disabled){background:rgba(226,92,92,.12);border-color:var(--error);color:var(--error)}
+  .btn.ghost{background:transparent}
+  .btn.sm{padding:5px 10px;font-size:11.5px}
+  .btn.xs{padding:2px 8px;font-size:10.5px;border-radius:6px}
+  .btn.big{padding:11px 22px;font-size:14px}
+  .btn input[type=file]{display:none}
+
+  /* ---------- REQUISITOS ---------- */
+  .req-class{display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--bg-3);border:1px solid var(--border);border-radius:8px;margin-bottom:6px}
+  .req-class input{background:transparent;border:none;padding:2px 4px;font-weight:600}
+  .req-class input:focus{background:var(--bg-2)}
+  .dot{width:10px;height:10px;border-radius:50%;flex:0 0 10px;box-shadow:0 0 6px currentColor}
+  .rec-box{margin-top:12px;padding:12px;border-radius:10px;border:1px dashed rgba(63,154,75,.45);background:var(--accent-soft);font-size:12.5px}
+  .rec-box b{color:var(--accent)}
+  .checklist li{list-style:none;font-size:13px;padding:4px 0;display:flex;gap:8px;align-items:flex-start;color:var(--text-1)}
+  .checklist li .ck{width:18px;flex:0 0 18px;text-align:center}
+  .checklist li.ok{color:var(--text-0)}
+  .checklist li.ok .ck{color:var(--accent)}
+  .checklist li.no .ck{color:var(--warn)}
+
+  /* ---------- CLASSES / DADOS ---------- */
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .class-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;margin-bottom:14px}
+  .class-card{background:var(--bg-2);border:1px solid var(--border-soft);border-radius:12px;padding:12px;position:relative;transition:border-color .15s,box-shadow .15s;min-width:0}
+  .class-card.drag{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow)}
+  .class-card .cc-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .class-card .cc-name{flex:1;background:transparent;border:1px solid transparent;font-weight:700;font-size:14px;padding:4px 6px}
+  .class-card .cc-name:hover{border-color:var(--border)}
+  .class-card .cc-count{font-family:var(--mono);font-size:11px;color:var(--text-1);background:var(--bg-3);padding:2px 8px;border-radius:999px;white-space:nowrap}
+  .class-card .cc-actions{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .class-card .cc-actions .btn{flex:1}
+  .thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:4px;max-height:156px;overflow-y:auto;padding:6px;background:var(--bg-0);border-radius:8px;border:1px solid var(--border-soft);min-height:62px}
+  .thumbs .empty{grid-column:1/-1;color:var(--text-2);font-size:11.5px;text-align:center;align-self:center;padding:8px}
+  .thumb{position:relative;aspect-ratio:1;border-radius:5px;overflow:hidden;background:var(--bg-3);cursor:pointer}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .thumb::after{content:"✕";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(226,92,92,.75);color:#fff;font-weight:700;opacity:0;transition:opacity .12s}
+  .thumb:hover::after{opacity:1}
+  .cc-foot{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:11px;color:var(--text-2)}
+  .add-class-card{border:1px dashed var(--border);background:transparent;display:flex;align-items:center;justify-content:center;min-height:120px;color:var(--text-1);cursor:pointer;font-weight:600;border-radius:12px;font-size:14px;transition:all .15s;font-family:inherit}
+  .add-class-card:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+  .aug-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+  .aug-grid canvas{width:100%;aspect-ratio:1;border-radius:6px;background:var(--bg-0);display:block}
+  .aug-grid .lbl{font-size:10px;color:var(--text-2);text-align:center;font-family:var(--mono)}
+  .warn-list{display:flex;flex-direction:column;gap:6px}
+  .wl{font-size:12.5px;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-3);display:flex;gap:8px}
+  .wl.ok{border-color:rgba(63,154,75,.35);color:var(--text-0)}
+  .wl.warn{border-color:rgba(224,168,60,.35);color:var(--warn)}
+  .wl.err{border-color:rgba(226,92,92,.35);color:var(--error)}
+
+  /* ---------- TABLES ---------- */
+  .tbl-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border-soft)}
+  table.tbl{width:100%;border-collapse:collapse;font-size:12px}
+  .tbl th,.tbl td{padding:7px 10px;border-bottom:1px solid var(--border-soft);text-align:left;white-space:nowrap}
+  .tbl th{background:var(--bg-3);color:var(--text-1);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em}
+  .tbl td{background:var(--bg-0);font-variant-numeric:tabular-nums}
+  .tbl tr:last-child td{border-bottom:none}
+  .tbl td.num,.tbl th.num{text-align:right}
+  .tbl tr.best td{background:rgba(63,154,75,.08)}
+  .tbl tfoot td{background:var(--bg-3);font-weight:700}
+
+  /* ---------- BACKBONES ---------- */
+  .bb-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+  @media (max-width:1400px){.bb-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+  @media (max-width:560px){.bb-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  .bb{background:var(--bg-3);border:1px solid var(--border);border-radius:10px;padding:11px;cursor:pointer;transition:all .15s;position:relative;text-align:left;font-family:inherit;color:inherit}
+  .bb:hover{border-color:var(--accent)}
+  .bb.sel{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 1px var(--accent) inset}
+  .bb .bb-name{font-weight:700;font-size:13.5px}
+  .bb .bb-meta{font-size:11px;color:var(--text-1);margin-top:3px;font-family:var(--mono)}
+  .bb .bb-tag{position:absolute;top:8px;right:8px;font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:5px;background:var(--bg-1);color:var(--text-2);border:1px solid var(--border)}
+  .bb .bb-tag.rec{color:var(--accent);border-color:rgba(63,154,75,.5)}
+  .bb .bb-ico{font-size:18px;margin-bottom:4px}
+  .bb-detail{margin-top:12px;font-size:12.5px;color:var(--text-1);background:var(--bg-0);border:1px solid var(--border-soft);border-radius:10px;padding:12px}
+  .bb-detail b{color:var(--text-0)}
+  .kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:10px}
+  .kv div{background:var(--bg-2);border-radius:8px;padding:7px 9px}
+  .kv span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2)}
+  .kv strong{font-family:var(--mono);font-size:12.5px;color:var(--text-0);font-weight:600}
+
+  /* ---------- ARQUITETURA ---------- */
+  .arch{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:14px;padding:12px;background:var(--bg-0);border-radius:10px;border:1px solid var(--border-soft)}
+  .arch .blk{padding:6px 9px;border-radius:7px;font-size:11px;font-family:var(--mono);border:1px solid var(--border);background:var(--bg-3);line-height:1.35;text-align:center}
+  .arch .blk small{display:block;color:var(--text-2);font-size:10px}
+  .arch .blk.frozen{border-color:rgba(78,161,211,.5);background:rgba(78,161,211,.1);color:#a9d4ee}
+  .arch .blk.train{border-color:rgba(63,154,75,.55);background:var(--accent-soft);color:#bfe6c4}
+  .arch .blk.io{border-color:var(--border);color:var(--text-1)}
+  .arch .arr{color:var(--text-2);font-size:12px}
+  .legend-mini{display:flex;gap:14px;font-size:11px;color:var(--text-2);margin-top:8px}
+  .legend-mini i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+  /* ---------- TREINO ---------- */
+  .train-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .progress{height:8px;background:var(--bg-0);border-radius:999px;overflow:hidden;margin-top:14px;border:1px solid var(--border-soft)}
+  .progress > div{height:100%;width:0;background:linear-gradient(90deg,var(--accent),#6fd07c);transition:width .2s}
+  .prog-text{font-family:var(--mono);font-size:11.5px;color:var(--text-1);margin-top:6px;min-height:18px}
+  .chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+  .chart-box{background:var(--bg-0);border:1px solid var(--border-soft);border-radius:10px;padding:10px 12px;height:240px;position:relative;display:flex;flex-direction:column}
+  .chart-box .cb-canvas{position:relative;flex:1;min-height:0;min-width:0;overflow:hidden}
+  .chart-box{min-width:0}
+  .epoch-line{font-family:var(--mono);font-size:11.5px;color:var(--text-1);margin-top:10px}
+  .epoch-line b{color:var(--text-0)}
+
+  /* ---------- AVALIAÇÃO ---------- */
+  .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+  .tile{background:var(--bg-2);border:1px solid var(--border-soft);border-radius:12px;padding:12px 14px}
+  .tile span{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-2);font-weight:600}
+  .tile strong{display:block;font-size:24px;font-weight:700;font-family:var(--mono);letter-spacing:-0.02em;margin-top:2px}
+  .tile em{font-style:normal;font-size:11px;color:var(--text-2)}
+  .tile.good strong{color:var(--accent)}
+  .tile.bad strong{color:var(--warn)}
+  .criteria{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-bottom:14px}
+  .crit{border-radius:10px;padding:11px 13px;border:1px solid var(--border);background:var(--bg-2);font-size:12.5px;display:flex;gap:10px;align-items:center}
+  .crit .ci{font-size:20px}
+  .crit.ok{border-color:rgba(63,154,75,.5);background:var(--accent-soft)}
+  .crit.no{border-color:rgba(224,168,60,.5);background:rgba(224,168,60,.08)}
+  .cm{border-collapse:separate;border-spacing:3px;font-size:12px;margin:0 auto}
+  .cm th{font-size:10.5px;color:var(--text-1);font-weight:600;padding:4px 6px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cm td{width:58px;height:44px;text-align:center;border-radius:6px;font-family:var(--mono);font-weight:700;font-size:13px}
+  .cm .axis{font-size:10px;color:var(--text-2);font-weight:400;text-transform:uppercase;letter-spacing:.06em}
+  .err-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}
+  .err{background:var(--bg-0);border:1px solid var(--border-soft);border-radius:9px;overflow:hidden;font-size:11px}
+  .err img{width:100%;aspect-ratio:1;object-fit:cover;display:block}
+  .err div{padding:5px 7px;line-height:1.35}
+  .err .t{color:var(--text-1)}
+  .err .p{color:var(--error);font-weight:600}
+  .loop-box{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px;border-radius:12px;border:1px dashed rgba(63,154,75,.45);background:var(--accent-soft);margin-top:14px}
+  .loop-box .lb-t{font-weight:700;color:var(--accent);font-size:13px;margin-right:4px}
+  .seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .seg button{background:var(--bg-3);color:var(--text-1);border:none;padding:6px 12px;font-size:12px;font-family:inherit;cursor:pointer;font-weight:600}
+  .seg button + button{border-left:1px solid var(--border)}
+  .seg button.on{background:var(--accent-soft);color:var(--accent)}
+
+  /* ---------- PREDIÇÃO ---------- */
+  .cam-wrap{position:relative;background:#000;border-radius:10px;overflow:hidden;aspect-ratio:1;max-width:420px;margin:0 auto;border:1px solid var(--border)}
+  .cam-wrap video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block}
+  .cam-off{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text-2);font-size:13px;text-align:center;padding:20px}
+  .cam-hud{position:absolute;left:8px;top:8px;font-family:var(--mono);font-size:11px;background:rgba(11,15,20,.7);color:var(--text-0);padding:3px 8px;border-radius:6px}
+  .rec-dot{position:absolute;right:10px;top:10px;width:12px;height:12px;border-radius:50%;background:var(--error);box-shadow:0 0 10px var(--error);opacity:0}
+  .rec-dot.on{opacity:1;animation:blink 1s infinite}
+  @keyframes blink{50%{opacity:.25}}
+  .countdown{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:72px;font-weight:800;color:#fff;text-shadow:0 0 20px rgba(0,0,0,.8);pointer-events:none}
+  .bars{display:flex;flex-direction:column;gap:9px}
+  .bar-row{display:grid;grid-template-columns:minmax(70px,130px) 1fr 54px;gap:10px;align-items:center;font-size:12.5px}
+  .bar-row .bn{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar-row .bt{height:22px;background:var(--bg-0);border-radius:6px;overflow:hidden;border:1px solid var(--border-soft)}
+  .bar-row .bf{height:100%;width:0;border-radius:5px;transition:width .15s}
+  .bar-row .bv{font-family:var(--mono);text-align:right;font-size:12px}
+  .top-pred{margin-top:16px;padding:14px;border-radius:10px;background:var(--bg-0);border:1px solid var(--border-soft);text-align:center}
+  .top-pred .tp-l{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-2)}
+  .top-pred .tp-n{font-size:26px;font-weight:800;margin-top:2px}
+  .top-pred .tp-c{font-family:var(--mono);font-size:12px;color:var(--text-1)}
+  .drop{display:block;border:2px dashed var(--border);border-radius:12px;padding:26px;text-align:center;color:var(--text-1);cursor:pointer;transition:all .15s;font-size:13px}
+  .drop:hover,.drop.drag{border-color:var(--accent);background:var(--accent-soft);color:var(--text-0)}
+  .pred-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:12px}
+  .pcard{display:flex;gap:10px;background:var(--bg-0);border:1px solid var(--border-soft);border-radius:10px;padding:8px}
+  .pcard img{width:78px;height:78px;object-fit:cover;border-radius:7px;flex:0 0 78px}
+  .pcard .pc-body{flex:1;min-width:0}
+  .pcard .pc-top{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pcard .mini{display:grid;grid-template-columns:1fr 40px;gap:4px 6px;font-size:10.5px;margin-top:4px;align-items:center}
+  .pcard .mini .mt{height:7px;background:var(--bg-3);border-radius:4px;overflow:hidden}
+  .pcard .mini .mt i{display:block;height:100%}
+  .pcard .mini .ml{font-family:var(--mono);text-align:right;color:var(--text-1)}
+  .pcard .mini .mn{grid-column:1/-1;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:-3px}
+  .banner{padding:10px 12px;border-radius:10px;font-size:12.5px;margin-bottom:12px;border:1px solid rgba(224,168,60,.4);background:rgba(224,168,60,.08);color:var(--warn)}
+  .banner.info{border-color:rgba(78,161,211,.4);background:rgba(78,161,211,.08);color:#a9d4ee}
+
+  /* ---------- EXPORTAÇÃO ---------- */
+  .file-list{list-style:none;margin-top:10px;font-size:12.5px}
+  .file-list li{display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--border-soft)}
+  .file-list li:last-child{border-bottom:none}
+  .file-list code{font-family:var(--mono);color:var(--accent);min-width:170px}
+  .file-list span{color:var(--text-1)}
+  .btn-col{display:flex;flex-direction:column;gap:8px;align-items:stretch}
+  .code-tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  pre.code{background:var(--bg-0);border:1px solid var(--border-soft);border-radius:10px;padding:14px;font-family:var(--mono);font-size:12px;line-height:1.6;color:#cfe3d2;overflow-x:auto;white-space:pre;max-height:440px}
+
+  /* ---------- RAIL ---------- */
+  .rail .card{background:var(--bg-2)}
+  .rp-name{font-weight:700;font-size:14px;margin-bottom:8px;word-break:break-word}
+  .rp-cls{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:3px 0}
+  .rp-cls .n{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rp-cls .c{font-family:var(--mono);color:var(--text-1);font-size:11.5px}
+  .rp-status{margin-top:10px;padding-top:10px;border-top:1px solid var(--border-soft);font-size:12px;color:var(--text-1)}
+  .rp-status b{color:var(--text-0)}
+  .sys-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .sys-grid div{background:var(--bg-0);border-radius:8px;padding:6px 8px;border:1px solid var(--border-soft)}
+  .sys-grid span{display:block;font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-2)}
+  .sys-grid strong{font-family:var(--mono);font-size:12px;font-weight:600;word-break:break-all}
+  .console{background:#070a0e;border:1px solid var(--border-soft);border-radius:8px;padding:8px;height:210px;overflow-y:auto;font-family:var(--mono);font-size:11px;line-height:1.55}
+  .console .ln{color:var(--text-1);word-break:break-word}
+  .console .ln .ts{color:var(--text-2);margin-right:6px}
+  .console .ln.ok{color:#7fd48b}
+  .console .ln.warn{color:var(--warn)}
+  .console .ln.error{color:var(--error)}
+  .console .ln.info{color:#8cc7ea}
+
+  /* ---------- MODAL ---------- */
+  .modal{position:fixed;inset:0;background:rgba(3,6,9,.78);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+  .modal-box{background:var(--bg-1);border:1px solid var(--border);border-radius:14px;width:100%;max-width:820px;max-height:calc(100vh - 32px);overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+  .modal-head{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border)}
+  .modal-head h3{font-size:15px;flex:1}
+  .modal-body{padding:18px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:18px}
+  .hold-btn{width:100%;padding:14px;font-size:14px;margin-top:12px;touch-action:none}
+  .hold-btn.rec{background:var(--error);border-color:var(--error);box-shadow:0 0 18px rgba(226,92,92,.45)}
+  .strip{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:12px}
+  .strip img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:5px}
+  .big-count{font-size:40px;font-weight:800;font-family:var(--mono);color:var(--accent);line-height:1}
+
+  /* ---------- TOAST / FOOTER ---------- */
+  .toasts{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:80;max-width:360px}
+  .toast{background:var(--bg-2);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:9px;padding:10px 14px;font-size:12.5px;box-shadow:0 8px 24px rgba(0,0,0,.45);animation:fade .2s ease}
+  .toast.warn{border-left-color:var(--warn)}
+  .toast.error{border-left-color:var(--error)}
+  footer{padding:14px 28px;text-align:center;border-top:1px solid var(--border);color:var(--text-2);font-size:11px;background:var(--bg-1)}
+  footer a{color:var(--text-1);text-decoration:none}
+  footer a:hover{color:var(--accent)}
+
+  /* ---------- RESPONSIVO ---------- */
+  @media (max-width:1150px){
+    main.layout{grid-template-columns:1fr}
+    aside.rail{border-left:none;border-top:1px solid var(--border)}
+    .rail-inner{position:static;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+    .rail-inner .card{margin-bottom:0}
+  }
+  @media (max-width:860px){
+    .grid2,.chart-grid,.modal-body{grid-template-columns:1fr}
+    section.stage-area{padding:18px 16px 24px}
+    header.top,.pipeline-wrap,aside.rail{padding-left:16px;padding-right:16px}
+  }
+  @media (max-width:520px){
+    .brand h1{font-size:19px}
+    .sig{font-size:10.5px}
+    .tile strong{font-size:20px}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <div class="brand-icon">📸</div>
+    <div>
+      <h1>CNN<span>.machine</span></h1>
+      <div class="sub">Crie o seu próprio classificador de imagens no navegador · transferência de aprendizado com CNNs</div>
+      <div class="sig">Author <a href="https://rmayormartins.github.io" target="_blank" rel="noopener">Ramon Mayor Martins, Ph.D.</a> // <a href="https://github.com/rmayormartins" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>@rmayormartins</a> // IFSC SJ - Área de Telecomunicações</div>
+    </div>
+  </div>
+  <div class="header-meta">
+    <a class="pill dim nodot" href="./">← IA Tools</a>
+    <span class="pill dim" id="pillBackend">backend: ?</span>
+    <span class="pill warn" id="tfStatus">Carregando TF.js</span>
+  </div>
+</header>
+
+<!-- ============ PIPELINE (ML centrado no ser humano) ============ -->
+<div class="pipeline-wrap">
+  <svg viewBox="0 0 1080 152" xmlns="http://www.w3.org/2000/svg" role="navigation" aria-label="Etapas do processo de desenvolvimento do modelo">
+    <defs>
+      <marker id="arrowG" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" class="loop-arrow"/>
+      </marker>
+    </defs>
+    <!-- ciclo: preparação de dados -> treinamento -> avaliação -> volta -->
+    <path class="loop-path" d="M 350 40 L 350 16 L 622 16 L 622 38" marker-end="url(#arrowG)"/>
+    <path class="loop-path" d="M 622 108 L 622 136 L 278 136 L 278 110" marker-end="url(#arrowG)"/>
+    <text class="loop-label" x="486" y="12" text-anchor="middle">ITERAR</text>
+    <text class="loop-label" x="450" y="149" text-anchor="middle">AJUSTAR DADOS OU HIPERPARÂMETROS</text>
+
+    <g class="stg" id="stg1" data-stage="1" tabindex="0">
+      <title>Etapa 1 · Análise dos requisitos</title>
+      <polygon class="chev" points="20,44 162,44 180,74 162,104 20,104 38,74"/>
+      <text x="106" y="70" text-anchor="middle"><tspan x="106" dy="0">Análise dos</tspan><tspan x="106" dy="16">requisitos</tspan></text>
+      <g class="badge"><circle cx="166" cy="50" r="8" fill="#3F9A4B"/><text x="166" y="54" text-anchor="middle" style="fill:#fff;font-size:10px">✓</text></g>
+    </g>
+    <g class="stg" id="stg2" data-stage="2" tabindex="0">
+      <title>Etapa 2 · Preparação de dados</title>
+      <polygon class="chev" points="192,44 334,44 352,74 334,104 192,104 210,74"/>
+      <text x="278" y="70" text-anchor="middle"><tspan x="278" dy="0">Preparação</tspan><tspan x="278" dy="16">de dados</tspan></text>
+      <g class="badge"><circle cx="338" cy="50" r="8" fill="#3F9A4B"/><text x="338" y="54" text-anchor="middle" style="fill:#fff;font-size:10px">✓</text></g>
+    </g>
+    <g class="stg" id="stg3" data-stage="3" tabindex="0">
+      <title>Etapa 3 · Treinamento do modelo</title>
+      <polygon class="chev" points="364,44 506,44 524,74 506,104 364,104 382,74"/>
+      <text x="450" y="70" text-anchor="middle"><tspan x="450" dy="0">Treinamento</tspan><tspan x="450" dy="16">do modelo</tspan></text>
+      <g class="badge"><circle cx="510" cy="50" r="8" fill="#3F9A4B"/><text x="510" y="54" text-anchor="middle" style="fill:#fff;font-size:10px">✓</text></g>
+    </g>
+    <g class="stg" id="stg4" data-stage="4" tabindex="0">
+      <title>Etapa 4 · Avaliação do modelo</title>
+      <polygon class="chev" points="536,44 678,44 696,74 678,104 536,104 554,74"/>
+      <text x="622" y="70" text-anchor="middle"><tspan x="622" dy="0">Avaliação do</tspan><tspan x="622" dy="16">modelo</tspan></text>
+      <g class="badge"><circle cx="682" cy="50" r="8" fill="#3F9A4B"/><text x="682" y="54" text-anchor="middle" style="fill:#fff;font-size:10px">✓</text></g>
+    </g>
+    <g class="stg" id="stg5" data-stage="5" tabindex="0">
+      <title>Etapa 5 · Predição</title>
+      <polygon class="chev" points="708,44 850,44 868,74 850,104 708,104 726,74"/>
+      <text x="794" y="79" text-anchor="middle">Predição</text>
+      <g class="badge"><circle cx="854" cy="50" r="8" fill="#3F9A4B"/><text x="854" y="54" text-anchor="middle" style="fill:#fff;font-size:10px">✓</text></g>
+    </g>
+    <g class="stg" id="stg6" data-stage="6" tabindex="0">
+      <title>Etapa 6 · Exportação</title>
+      <polygon class="chev" points="880,44 1022,44 1040,74 1022,104 880,104 898,74"/>
+      <text x="966" y="79" text-anchor="middle">Exportação</text>
+      <g class="badge"><circle cx="1026" cy="50" r="8" fill="#3F9A4B"/><text x="1026" y="54" text-anchor="middle" style="fill:#fff;font-size:10px">✓</text></g>
+    </g>
+  </svg>
+  <div class="pipeline-caption">Etapas do Aprendizado de Máquina Centrado no Ser Humano · Fonte: Martins et al. (2024) · clique em uma etapa para navegar</div>
+</div>
+
+<main class="layout">
+<section class="stage-area">
+
+  <!-- ==================== ETAPA 1 ==================== -->
+  <div class="view" id="view1">
+    <div class="view-head">
+      <div class="eyebrow">Etapa 1 de 6</div>
+      <h2>Análise dos requisitos</h2>
+      <p>Antes de coletar qualquer imagem, defina o problema, quem vai usar o modelo, quais classes ele deve reconhecer e o que conta como sucesso. Essas decisões orientam todas as etapas seguintes e serão registradas na ficha do modelo.</p>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <h3><span class="ico">📋</span> Projeto</h3>
+        <label class="field" for="projName">Nome do projeto</label>
+        <input type="text" id="projName" maxlength="60">
+        <label class="field" for="projGoal">Objetivo <span class="hint">qual decisão o modelo vai apoiar?</span></label>
+        <textarea id="projGoal" placeholder="Ex.: identificar se uma peça da linha de montagem está com defeito antes da embalagem."></textarea>
+        <label class="field" for="projUsers">Usuários e contexto <span class="hint">quem usa, onde, com qual câmera?</span></label>
+        <input type="text" id="projUsers" placeholder="Ex.: estudantes do técnico, celular, luz natural da sala">
+      </div>
+      <div class="card">
+        <h3><span class="ico">🏷️</span> Classes <span class="right"><span class="muted" id="reqClassCount"></span></span></h3>
+        <div id="reqClassList"></div>
+        <div class="row" style="margin-top:8px">
+          <input type="text" id="newClassName" placeholder="Nome da nova classe" maxlength="40">
+          <button class="btn" id="btnAddClassReq">+ Adicionar</button>
+        </div>
+        <div class="card-help">Cada <b>classe</b> é uma categoria que o modelo vai aprender a separar. São necessárias pelo menos 2. Prefira classes mutuamente exclusivas e visualmente distinguíveis; considere uma classe "fundo" ou "nenhum" se o modelo vai ver cenas vazias.</div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn sm" id="btnExample1">🔷 Carregar exemplo: formas geométricas</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3><span class="ico">🎯</span> Critérios de sucesso</h3>
+        <label class="field">Acurácia mínima no conjunto de teste</label>
+        <div class="range-row"><input type="range" id="tgtAcc" min="50" max="100" step="1"><span class="range-val" id="tgtAccV"></span></div>
+        <label class="field">Latência máxima por imagem</label>
+        <div class="range-row"><input type="range" id="tgtLat" min="10" max="1000" step="10"><span class="range-val" id="tgtLatV"></span></div>
+        <div class="card-help">Os critérios são verificados automaticamente na <b>Avaliação</b>. Definir a meta antes de treinar evita "mover a trave" depois de ver o resultado.</div>
+      </div>
+      <div class="card">
+        <h3><span class="ico">🖥️</span> Contexto de uso e restrições</h3>
+        <label class="field">Fonte das imagens</label>
+        <div class="chips" id="chSource">
+          <label><input type="radio" name="src" value="webcam">Webcam</label>
+          <label><input type="radio" name="src" value="arquivos">Arquivos</label>
+          <label><input type="radio" name="src" value="ambos">Ambos</label>
+        </div>
+        <label class="field">Dispositivo alvo</label>
+        <div class="chips" id="chDevice">
+          <label><input type="radio" name="dev" value="pc">Computador</label>
+          <label><input type="radio" name="dev" value="celular">Celular</label>
+        </div>
+        <label class="field">Prioridade</label>
+        <div class="chips" id="chPriority">
+          <label><input type="radio" name="pri" value="leveza">Leveza</label>
+          <label><input type="radio" name="pri" value="equilibrio">Equilíbrio</label>
+          <label><input type="radio" name="pri" value="precisao">Precisão</label>
+        </div>
+        <div class="rec-box" id="recBox"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h3><span class="ico">✅</span> Checklist da etapa</h3>
+      <ul class="checklist" id="reqChecklist"></ul>
+    </div>
+    <div class="view-nav"><span></span><button class="btn primary" data-go="2">Avançar: Preparação de dados →</button></div>
+  </div>
+
+  <!-- ==================== ETAPA 2 ==================== -->
+  <div class="view" id="view2">
+    <div class="view-head">
+      <div class="eyebrow">Etapa 2 de 6</div>
+      <h2>Preparação de dados</h2>
+      <p>Colete exemplos de cada classe pela webcam ou por arquivos, arraste imagens sobre um cartão, importe uma pasta (uma subpasta por classe) ou um .zip. Depois defina a divisão treino/validação/teste e o aumento de dados.</p>
+    </div>
+    <div class="toolbar">
+      <button class="btn" id="btnAddClass">+ Classe</button>
+      <label class="btn">📁 Importar pasta<input type="file" id="inpFolder" webkitdirectory directory multiple></label>
+      <label class="btn">🗜️ Importar .zip<input type="file" id="inpZip" accept=".zip,application/zip"></label>
+      <button class="btn" id="btnExample2">🔷 Dataset de exemplo</button>
+      <button class="btn" id="btnExportDs">⬇ Baixar dataset .zip</button>
+      <button class="btn danger" id="btnClearAll">Limpar tudo</button>
+    </div>
+    <div class="class-grid" id="classGrid"></div>
+    <div class="grid2">
+      <div class="card">
+        <h3><span class="ico">✂️</span> Divisão dos dados</h3>
+        <label class="field">Validação <span class="hint">acompanha o treino e o early stopping</span></label>
+        <div class="range-row"><input type="range" id="spVal" min="0" max="40" step="5"><span class="range-val" id="spValV"></span></div>
+        <label class="field">Teste <span class="hint">usado só na avaliação final</span></label>
+        <div class="range-row"><input type="range" id="spTest" min="0" max="40" step="5"><span class="range-val" id="spTestV"></span></div>
+        <label class="field">Semente aleatória</label>
+        <input type="number" id="spSeed" min="0" max="99999">
+        <div id="splitTable" style="margin-top:12px"></div>
+        <div class="card-help">A divisão é <b>estratificada</b> (mesma proporção em cada classe) e determinística pela semente, para que experimentos diferentes sejam comparáveis. Treino recebe o restante.</div>
+      </div>
+      <div class="card">
+        <h3><span class="ico">🖼️</span> Pré-processamento e aumento de dados</h3>
+        <label class="field">Ajuste ao tamanho de entrada</label>
+        <div class="chips" id="chMode">
+          <label><input type="radio" name="mode" value="crop">Corte central</label>
+          <label><input type="radio" name="mode" value="stretch">Esticar</label>
+          <label><input type="radio" name="mode" value="pad">Preencher bordas</label>
+        </div>
+        <label class="check"><input type="checkbox" id="augFlip"> Espelhamento horizontal aleatório</label>
+        <label class="field">Rotação máxima</label>
+        <div class="range-row"><input type="range" id="augRot" min="0" max="45" step="1"><span class="range-val" id="augRotV"></span></div>
+        <label class="field">Zoom máximo</label>
+        <div class="range-row"><input type="range" id="augZoom" min="0" max="40" step="1"><span class="range-val" id="augZoomV"></span></div>
+        <label class="field">Deslocamento máximo</label>
+        <div class="range-row"><input type="range" id="augShift" min="0" max="25" step="1"><span class="range-val" id="augShiftV"></span></div>
+        <label class="field">Variação de brilho</label>
+        <div class="range-row"><input type="range" id="augBright" min="0" max="50" step="1"><span class="range-val" id="augBrightV"></span></div>
+        <label class="field">Cópias aumentadas por imagem de treino</label>
+        <div class="range-row"><input type="range" id="augCopies" min="0" max="6" step="1"><span class="range-val" id="augCopiesV"></span></div>
+        <div class="row" style="margin-top:12px"><button class="btn sm" id="btnAugPreview">👁 Prévia do aumento</button><span class="muted" style="font-size:11.5px" id="augHint"></span></div>
+        <div class="aug-grid" id="augPreview"></div>
+        <div class="card-help">O <b>aumento de dados</b> cria variações sintéticas só no conjunto de treino, ensinando o modelo a ignorar posição, iluminação e orientação. Validação e teste usam as imagens originais.</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h3><span class="ico">🩺</span> Diagnóstico do conjunto</h3>
+      <div class="grid2">
+        <div class="warn-list" id="dsWarnings"></div>
+        <div class="chart-box" style="height:220px"><div class="cb-canvas"><canvas id="chartBalance"></canvas></div></div>
+      </div>
+    </div>
+    <div class="view-nav"><button class="btn ghost" data-go="1">← Requisitos</button><button class="btn primary" data-go="3">Avançar: Treinamento →</button></div>
+  </div>
+
+  <!-- ==================== ETAPA 3 ==================== -->
+  <div class="view" id="view3">
+    <div class="view-head">
+      <div class="eyebrow">Etapa 3 de 6</div>
+      <h2>Treinamento do modelo</h2>
+      <p>Escolha o modelo base, a arquitetura da cabeça de classificação e os hiperparâmetros. Com um modelo pré-treinado, a rede convolucional funciona como extratora de características (congelada) e apenas a cabeça aprende, exatamente como no Teachable Machine.</p>
+    </div>
+    <div class="card">
+      <h3><span class="ico">🧠</span> Modelo base (backbone)</h3>
+      <div class="bb-grid" id="bbGrid"></div>
+      <div id="alphaWrap" style="margin-top:12px">
+        <label class="field">Multiplicador de largura <span style="text-transform:none">α</span> <span class="hint">menor = mais leve e rápido, maior = mais preciso</span></label>
+        <div class="chips" id="chAlpha"></div>
+      </div>
+      <div class="bb-detail" id="bbDetail"></div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <h3><span class="ico">🧩</span> Arquitetura</h3>
+        <div id="cnnOpts">
+          <label class="field">Tamanho da entrada</label>
+          <div class="chips" id="chCnnSize">
+            <label><input type="radio" name="csz" value="32">32</label>
+            <label><input type="radio" name="csz" value="48">48</label>
+            <label><input type="radio" name="csz" value="64">64</label>
+            <label><input type="radio" name="csz" value="96">96</label>
+          </div>
+          <label class="field">Blocos convolucionais <span class="hint">conv + ReLU + max pooling</span></label>
+          <div class="range-row"><input type="range" id="cnnBlocks" min="1" max="4" step="1"><span class="range-val" id="cnnBlocksV"></span></div>
+          <label class="field">Filtros no primeiro bloco <span class="hint">dobra a cada bloco</span></label>
+          <div class="chips" id="chCnnFilters">
+            <label><input type="radio" name="cfl" value="8">8</label>
+            <label><input type="radio" name="cfl" value="16">16</label>
+            <label><input type="radio" name="cfl" value="32">32</label>
+          </div>
+          <label class="field">Kernel</label>
+          <div class="chips" id="chCnnKernel">
+            <label><input type="radio" name="ckn" value="3">3×3</label>
+            <label><input type="radio" name="ckn" value="5">5×5</label>
+          </div>
+          <label class="field">Achatamento</label>
+          <div class="chips" id="chCnnPool">
+            <label><input type="radio" name="cpl" value="gap">Global Average Pooling</label>
+            <label><input type="radio" name="cpl" value="flatten">Flatten</label>
+          </div>
+          <label class="check"><input type="checkbox" id="cnnBn"> Batch Normalization após cada convolução</label>
+        </div>
+        <label class="field">Neurônios na camada densa oculta</label>
+        <div class="chips" id="chUnits">
+          <label><input type="radio" name="units" value="0">nenhuma</label>
+          <label><input type="radio" name="units" value="32">32</label>
+          <label><input type="radio" name="units" value="64">64</label>
+          <label><input type="radio" name="units" value="128">128</label>
+          <label><input type="radio" name="units" value="256">256</label>
+        </div>
+        <label class="field">Dropout</label>
+        <div class="range-row"><input type="range" id="hDrop" min="0" max="0.7" step="0.05"><span class="range-val" id="hDropV"></span></div>
+        <div class="arch" id="archDiagram"></div>
+        <div class="legend-mini"><span><i style="background:rgba(78,161,211,.5)"></i>congelado</span><span><i style="background:rgba(63,154,75,.6)"></i>treinável</span></div>
+      </div>
+      <div class="card">
+        <h3><span class="ico">🎛️</span> Hiperparâmetros</h3>
+        <label class="field">Épocas <span class="hint">passagens completas pelo treino</span></label>
+        <div class="range-row"><input type="range" id="hpEpochs" min="1" max="200" step="1"><span class="range-val" id="hpEpochsV"></span></div>
+        <label class="field">Tamanho do lote (batch)</label>
+        <div class="chips" id="chBatch">
+          <label><input type="radio" name="bs" value="8">8</label>
+          <label><input type="radio" name="bs" value="16">16</label>
+          <label><input type="radio" name="bs" value="32">32</label>
+          <label><input type="radio" name="bs" value="64">64</label>
+        </div>
+        <label class="field">Taxa de aprendizado</label>
+        <select id="hpLr">
+          <option value="0.0001">0,0001</option>
+          <option value="0.0005">0,0005</option>
+          <option value="0.001">0,001</option>
+          <option value="0.003">0,003</option>
+          <option value="0.01">0,01</option>
+          <option value="0.03">0,03</option>
+          <option value="0.1">0,1</option>
+        </select>
+        <label class="field">Otimizador</label>
+        <select id="hpOpt">
+          <option value="adam">Adam</option>
+          <option value="rmsprop">RMSprop</option>
+          <option value="sgd">SGD</option>
+          <option value="momentum">SGD + momentum (0,9)</option>
+          <option value="adagrad">Adagrad</option>
+        </select>
+        <label class="field">Regularização L2</label>
+        <select id="hpL2">
+          <option value="0">sem regularização</option>
+          <option value="0.0001">0,0001</option>
+          <option value="0.001">0,001</option>
+          <option value="0.01">0,01</option>
+        </select>
+        <label class="field">Early stopping: paciência <span class="hint">0 desliga</span></label>
+        <div class="range-row"><input type="range" id="hpPat" min="0" max="30" step="1"><span class="range-val" id="hpPatV"></span></div>
+        <label class="check"><input type="checkbox" id="hpRestore"> Restaurar os pesos da melhor época</label>
+        <label class="check"><input type="checkbox" id="hpCw"> Balancear pesos das classes (class weight)</label>
+        <div class="card-help" id="hpHelp"><b>Taxa de aprendizado</b> controla o tamanho do passo do gradiente: alta demais oscila, baixa demais demora. <b>Early stopping</b> interrompe quando a perda de validação para de melhorar, um antídoto contra o sobreajuste.</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h3><span class="ico">🚀</span> Treinamento</h3>
+      <div class="train-actions">
+        <button class="btn primary big" id="btnTrain">▶ Treinar modelo</button>
+        <button class="btn danger" id="btnStop" disabled>■ Parar</button>
+        <span class="muted" id="trainHint" style="font-size:12px"></span>
+      </div>
+      <div class="progress"><div id="progBar"></div></div>
+      <div class="prog-text" id="progText">Aguardando.</div>
+      <div class="chart-grid">
+        <div class="chart-box"><h4>Perda (entropia cruzada)</h4><div class="cb-canvas"><canvas id="chartLoss"></canvas></div></div>
+        <div class="chart-box"><h4>Acurácia</h4><div class="cb-canvas"><canvas id="chartAcc"></canvas></div></div>
+      </div>
+      <div class="epoch-line" id="epochLine"></div>
+    </div>
+    <div class="card">
+      <h3><span class="ico">🏗️</span> Resumo do modelo treinado</h3>
+      <div id="modelSummary"><span class="muted">Treine um modelo para ver as camadas e a contagem de parâmetros.</span></div>
+    </div>
+    <div class="view-nav"><button class="btn ghost" data-go="2">← Dados</button><button class="btn primary" data-go="4" id="btnGoEval" disabled>Avançar: Avaliação →</button></div>
+  </div>
+
+  <!-- ==================== ETAPA 4 ==================== -->
+  <div class="view" id="view4">
+    <div class="view-head">
+      <div class="eyebrow">Etapa 4 de 6</div>
+      <h2>Avaliação do modelo</h2>
+      <p>Meça o desempenho em imagens que o modelo nunca viu, compare com os critérios definidos na Etapa 1 e decida: avançar ou voltar para melhorar os dados e os hiperparâmetros. Cada treino fica registrado no histórico de experimentos.</p>
+    </div>
+    <div id="evalEmpty" class="banner info">Nenhum modelo treinado ainda. Volte à Etapa 3 e treine um modelo.</div>
+    <div id="evalBody" hidden>
+      <div class="row" style="margin-bottom:12px">
+        <span class="muted" style="font-size:12px">Conjunto avaliado:</span>
+        <div class="seg" id="segEval">
+          <button data-set="test">Teste</button><button data-set="val">Validação</button><button data-set="train">Treino</button>
+        </div>
+        <span class="muted" style="font-size:12px" id="evalNote"></span>
+      </div>
+      <div class="tiles" id="evalTiles"></div>
+      <div class="criteria" id="criteriaBox"></div>
+      <div class="grid2">
+        <div class="card"><h3><span class="ico">🧮</span> Matriz de confusão</h3><div class="tbl-wrap" style="border:none;padding:4px 0" id="cmBox"></div><div class="card-help">Linhas: classe real. Colunas: classe prevista. A diagonal concentra os acertos; fora dela estão as confusões.</div></div>
+        <div class="card"><h3><span class="ico">📑</span> Relatório por classe</h3><div class="tbl-wrap" id="reportBox"></div><div class="card-help"><b>Precisão</b>: das vezes que o modelo disse "X", quantas eram X. <b>Revocação</b>: dos X reais, quantos ele encontrou. <b>F1</b>: média harmônica das duas.</div></div>
+      </div>
+      <div class="card" style="margin-top:14px"><h3><span class="ico">🔍</span> Erros de classificação <span class="right muted" id="errCount" style="font-weight:400;font-size:12px"></span></h3><div class="err-grid" id="errGallery"></div></div>
+      <div class="card"><h3><span class="ico">🧪</span> Histórico de experimentos</h3><div class="tbl-wrap" id="runsTable"></div><div class="chart-box" style="height:220px;margin-top:12px"><div class="cb-canvas"><canvas id="chartRuns"></canvas></div></div></div>
+    </div>
+    <div class="loop-box">
+      <span class="lb-t">↺ Iterar</span>
+      <button class="btn sm" data-go="2">Voltar à preparação de dados</button>
+      <button class="btn sm" data-go="3">Ajustar hiperparâmetros e retreinar</button>
+      <span style="flex:1"></span>
+      <button class="btn primary" data-go="5">Avançar: Predição →</button>
+    </div>
+  </div>
+
+  <!-- ==================== ETAPA 5 ==================== -->
+  <div class="view" id="view5">
+    <div class="view-head">
+      <div class="eyebrow">Etapa 5 de 6</div>
+      <h2>Predição</h2>
+      <p>Use o modelo em situações reais: ao vivo pela webcam ou com imagens de arquivo (arraste, escolha ou cole com Ctrl+V). Observe quando ele fica inseguro, isso revela os limites do conjunto de dados.</p>
+    </div>
+    <div class="banner" id="predStale" hidden></div>
+    <div class="banner info" id="predEmpty">Nenhum modelo treinado ainda. Treine um modelo na Etapa 3.</div>
+    <div class="grid2">
+      <div class="card">
+        <h3><span class="ico">🎥</span> Webcam ao vivo</h3>
+        <div class="cam-wrap"><video id="predVideo" playsinline muted></video><div class="cam-off" id="predCamOff">Câmera desligada</div><div class="cam-hud" id="predHud" hidden></div></div>
+        <div class="row" style="margin-top:10px;justify-content:center">
+          <button class="btn primary" id="btnPredCam">Ligar webcam</button>
+          <button class="btn" id="btnPredSwitch">↻ Trocar câmera</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3><span class="ico">📊</span> Saída do modelo</h3>
+        <div class="bars" id="liveBars"></div>
+        <div class="top-pred" id="topPred"><div class="tp-l">Predição</div><div class="tp-n">aguardando</div><div class="tp-c">ligue a webcam ou envie uma imagem</div></div>
+        <label class="field" style="margin-top:14px">Limiar de confiança <span class="hint">abaixo dele a resposta é "incerto"</span></label>
+        <div class="range-row"><input type="range" id="predThr" min="0" max="0.95" step="0.05"><span class="range-val" id="predThrV"></span></div>
+        <div class="card-help">A saída <b>softmax</b> soma 100% entre as classes conhecidas. O modelo sempre escolhe uma delas, mesmo diante de algo totalmente novo; por isso o limiar e uma classe "fundo" ajudam.</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h3><span class="ico">🖼️</span> Imagens de arquivo <span class="right"><button class="btn xs" id="btnPredClear">limpar</button></span></h3>
+      <label class="drop" id="predDrop">Arraste imagens aqui, clique para escolher ou cole com Ctrl+V<input type="file" id="inpPred" accept="image/*" multiple hidden></label>
+      <div class="pred-grid" id="predResults"></div>
+    </div>
+    <div class="view-nav"><button class="btn ghost" data-go="4">← Avaliação</button><button class="btn primary" data-go="6">Avançar: Exportação →</button></div>
+  </div>
+
+  <!-- ==================== ETAPA 6 ==================== -->
+  <div class="view" id="view6">
+    <div class="view-head">
+      <div class="eyebrow">Etapa 6 de 6</div>
+      <h2>Exportação</h2>
+      <p>Leve o modelo para fora do laboratório: um pacote TensorFlow.js com metadados, uma página de demonstração pronta, a ficha do modelo e o histórico de experimentos.</p>
+    </div>
+    <div class="banner info" id="expEmpty">Nenhum modelo treinado ainda. Treine um modelo na Etapa 3.</div>
+    <div class="grid2">
+      <div class="card">
+        <h3><span class="ico">📦</span> Pacote do modelo</h3>
+        <div id="exportInfo" class="muted" style="font-size:12.5px"></div>
+        <ul class="file-list" id="zipList"></ul>
+        <div class="row" style="margin-top:14px"><button class="btn primary" id="btnExportZip" disabled>⬇ Baixar pacote completo (.zip)</button></div>
+      </div>
+      <div class="card">
+        <h3><span class="ico">🧾</span> Documentação e dados</h3>
+        <div class="btn-col">
+          <button class="btn" id="btnModelCard" disabled>⬇ Ficha do modelo (.md)</button>
+          <button class="btn" id="btnReportJson" disabled>⬇ Relatório da avaliação (.json)</button>
+          <button class="btn" id="btnRunsCsv" disabled>⬇ Histórico de experimentos (.csv)</button>
+          <button class="btn" id="btnExportDs2">⬇ Dataset rotulado (.zip)</button>
+        </div>
+        <div class="card-help">A <b>ficha do modelo</b> (model card) documenta objetivo, dados, desempenho por classe e limitações conhecidas. É a peça central para que outras pessoas usem o modelo com responsabilidade.</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h3><span class="ico">💻</span> Como usar o modelo exportado <span class="right"><button class="btn xs" id="btnCopyCode">copiar</button></span></h3>
+      <div class="code-tabs seg" id="segCode"><button data-code="js">JavaScript (TF.js)</button><button data-code="py">Python (Keras)</button></div>
+      <pre class="code" id="codeBox"></pre>
+    </div>
+    <div class="view-nav"><button class="btn ghost" data-go="5">← Predição</button><button class="btn ghost" data-go="1">↺ Novo ciclo: requisitos</button></div>
+  </div>
+
+</section>
+
+<!-- ==================== RAIL ==================== -->
+<aside class="rail">
+  <div class="rail-inner">
+    <div class="card">
+      <h3><span class="ico">📌</span> Projeto</h3>
+      <div id="railProject"></div>
+    </div>
+    <div class="card">
+      <h3><span class="ico">🖥️</span> Sistema</h3>
+      <div class="sys-grid" id="sysGrid"></div>
+    </div>
+    <div class="card">
+      <h3><span class="ico">🧾</span> Console <span class="right"><button class="btn xs" id="btnClearLog">limpar</button></span></h3>
+      <div class="console" id="console"></div>
+    </div>
+  </div>
+</aside>
+</main>
+
+<footer>
+  CNN.machine · v<span id="verFoot">1.0</span> · 2026 · <a href="mailto:ramon.mayor@ifsc.edu.br">ramon.mayor@ifsc.edu.br</a> · <a href="https://rmayormartins.github.io" target="_blank" rel="noopener">Prof. Ramon Mayor Martins</a> · Construído com TensorFlow.js · AMCH: Martins et al. (2024)
+</footer>
+
+<!-- ==================== MODAL WEBCAM ==================== -->
+<div class="modal" id="camModal" hidden>
+  <div class="modal-box">
+    <div class="modal-head">
+      <span class="dot" id="camDot"></span>
+      <h3>Webcam · capturando para <span id="camClassName" style="color:var(--accent)"></span></h3>
+      <button class="btn sm" id="btnCamClose">Fechar ✕</button>
+    </div>
+    <div class="modal-body">
+      <div>
+        <div class="cam-wrap"><video id="camVideo" playsinline muted></video><div class="cam-off" id="camOff">Solicitando acesso à câmera...</div><div class="rec-dot" id="recDot"></div><div class="countdown" id="countdown"></div></div>
+        <button class="btn primary hold-btn" id="btnHold">● Segure para gravar</button>
+        <div class="row" style="margin-top:8px;justify-content:center"><button class="btn sm" id="btnSnap">📷 Capturar 1</button><button class="btn sm" id="btnTimed">⏱ Gravação temporizada</button><button class="btn sm" id="btnCamSwitch">↻ Trocar câmera</button></div>
+      </div>
+      <div>
+        <div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:.07em">Imagens nesta classe</div>
+        <div class="big-count" id="camCount">0</div>
+        <label class="field" style="margin-top:14px">Quadros por segundo</label>
+        <div class="range-row"><input type="range" id="camFps" min="1" max="24" step="1" value="8"><span class="range-val" id="camFpsV">8</span></div>
+        <label class="field">Atraso da gravação temporizada</label>
+        <div class="range-row"><input type="range" id="camDelay" min="0" max="10" step="1" value="3"><span class="range-val" id="camDelayV">3 s</span></div>
+        <label class="field">Duração da gravação temporizada</label>
+        <div class="range-row"><input type="range" id="camDur" min="1" max="20" step="1" value="4"><span class="range-val" id="camDurV">4 s</span></div>
+        <div class="strip" id="camStrip"></div>
+        <div class="card-help">Varie posição, distância, ângulo e iluminação enquanto grava. Diversidade vale mais do que quantidade.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* =====================================================================
+   CNN.machine · laboratório de classificação de imagens no navegador
+   Transferência de aprendizado (MobileNet V1/V2, EfficientNet B0-B2)
+   ou CNN treinada do zero, com TensorFlow.js.
+   ===================================================================== */
+
+const VERSION = '1.0';
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const PALETTE = ['#32A041','#4ea1d3','#e0a83c','#a874e8','#e25c5c','#3fc1b0','#f07fbf','#9bd34c','#7f8cff','#ff9f5a','#c9b458','#58c4e0'];
+const nf = (x, d = 1) => Number(x).toLocaleString('pt-BR', {minimumFractionDigits: d, maximumFractionDigits: d});
+const pct = (x, d = 1) => (x == null || isNaN(x)) ? '-' : nf(x * 100, d) + '%';
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+let UID = 1; const uid = () => UID++;
+const IMG_EXT = /\.(jpe?g|png|gif|bmp|webp|avif)$/i;
+const CANCEL = '__cancelado__';
+
+function mulberry32(a){
+  return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+function slugify(s){ return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase().slice(0, 50); }
+function fmtParams(n){ if (n == null) return '-'; if (n >= 1e6) return nf(n / 1e6, 2) + ' mi'; if (n >= 1e3) return nf(n / 1e3, 1) + ' mil'; return String(n); }
+function download(blob, name){ const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); }
+function nowStamp(){ const d = new Date(); return d.toLocaleString('pt-BR'); }
+
+/* ---------------------------- ESTADO ---------------------------- */
+const S = {
+  stage: 1,
+  done: {1:false, 2:false, 3:false, 4:false, 5:false, 6:false},
+  project: {name: 'Meu classificador', goal: '', users: '', targetAcc: 0.85, maxLat: 150, source: 'ambos', device: 'pc', priority: 'equilibrio'},
+  classes: [],
+  dsVersion: 0,
+  split: {val: 0.15, test: 0.15, seed: 42},
+  prep: {mode: 'crop'},
+  aug: {flip: true, rot: 10, zoom: 10, shift: 5, bright: 15, copies: 2},
+  bb: {kind: 'mnv2', alpha: 0.35},
+  cnn: {size: 64, blocks: 3, filters: 16, kernel: 3, bn: true, pool: 'gap'},
+  head: {units: 128, dropout: 0.25},
+  hp: {epochs: 30, batch: 16, lr: 0.001, opt: 'adam', l2: 0, patience: 6, restore: true, classWeight: false},
+  trained: null,
+  cacheD: null,
+  runs: [],
+  lastEval: null,
+  evalSet: 'test',
+  training: false,
+  stopReq: false,
+  codeTab: 'js',
+  predThr: 0.6,
+};
+
+/* --------------------------- BACKBONES --------------------------- */
+const BB = {
+  cnn:   {label: 'CNN do zero', icon: '🧱', family: 'cnn', tag: 'sem download', ref: 'LeCun et al. (1998)',
+          desc: 'Rede convolucional montada por você e treinada do zero: todos os pesos são ajustados no seu conjunto. Ótima para entender convolução, pooling e camadas densas, mas precisa de mais dados e mais épocas para generalizar.'},
+  mnv1:  {label: 'MobileNet V1', icon: '📱', family: 'mobilenet', version: 1, alphas: [0.25, 0.5, 0.75, 1], input: 224, norm: 'pm1', tag: 'ImageNet', ref: 'Howard et al. (2017)',
+          mb: {0.25: 1.9, 0.5: 5.4, 0.75: 10.4, 1: 16.9}, feat: {0.25: 256, 0.5: 512, 0.75: 768, 1: 1024},
+          desc: 'Substitui a convolução comum por convoluções separáveis em profundidade (depthwise + pointwise), reduzindo muito o custo. Foi a base do Teachable Machine original. Corte na camada conv_pw_13_relu + Global Average Pooling.'},
+  mnv2:  {label: 'MobileNet V2', icon: '📲', family: 'mobilenet', version: 2, alphas: [0.35, 0.5, 0.75, 1], input: 224, norm: 'pm1', tag: 'ImageNet', ref: 'Sandler et al. (2018)',
+          mb: {0.35: 1.7, 0.5: 2.8, 0.75: 5.5, 1: 9.1}, feat: {0.35: 1280, 0.5: 1280, 0.75: 1280, 1: 1280},
+          desc: 'Blocos residuais invertidos com gargalo linear: expande, filtra em profundidade e projeta de volta. É o backbone usado hoje pelo Teachable Machine (mesmos pesos). Corte na camada out_relu + Global Average Pooling.'},
+  effb0: {label: 'EfficientNet B0', icon: '⚡', family: 'efficientnet', b: 0, input: 224, norm: '01', tag: 'ImageNet', ref: 'Tan e Le (2019)', mb: 21.3, featDim: 1280,
+          desc: 'Família obtida por busca de arquitetura e escalonamento composto (profundidade, largura e resolução juntas), com blocos MBConv e squeeze-and-excitation. Mais precisa que as MobileNets, porém mais pesada.'},
+  effb1: {label: 'EfficientNet B1', icon: '⚡', family: 'efficientnet', b: 1, input: 240, norm: '01', tag: 'ImageNet', ref: 'Tan e Le (2019)', mb: 31.3, featDim: 1280,
+          desc: 'Versão escalonada da B0 (entrada 240×240). Ganho de precisão com custo moderado.'},
+  effb2: {label: 'EfficientNet B2', icon: '⚡', family: 'efficientnet', b: 2, input: 260, norm: '01', tag: 'ImageNet', ref: 'Tan e Le (2019)', mb: 36.6, featDim: 1408,
+          desc: 'Entrada 260×260 e mais canais. A opção mais precisa do laboratório; recomendada para computador, não para celular.'},
+};
+const BB_ORDER = ['cnn', 'mnv1', 'mnv2', 'effb0', 'effb1', 'effb2'];
+
+function mobilenetUrl(version, alpha){
+  if (version === 1){ let s = alpha.toFixed(2); if (s === '1.00') s = '1.0'; return `https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_${s}_224/model.json`; }
+  return `https://storage.googleapis.com/teachable-machine-models/mobilenet_v2_weights_tf_dim_ordering_tf_kernels_${alpha.toFixed(2)}_224_no_top/model.json`;
+}
+const effUrl = b => `https://raw.githubusercontent.com/ntedgi/efficientnet-tensorflowjs-binaries/main/models/B${b}/model.json`;
+function bbName(kind, alpha){ const d = BB[kind]; if (!d) return kind; return d.family === 'mobilenet' ? `${d.label} α${nf(alpha, 2)}` : d.label; }
+function bbKey(kind, alpha){ return BB[kind].family === 'mobilenet' ? `${kind}_${alpha}` : kind; }
+function bbInput(kind){ return kind === 'cnn' ? S.cnn.size : BB[kind].input; }
+function bbFeat(kind, alpha){ const d = BB[kind]; if (d.family === 'mobilenet') return d.feat[alpha]; return d.featDim; }
+function bbMB(kind, alpha){ const d = BB[kind]; if (d.family === 'mobilenet') return d.mb[alpha]; return d.mb || 0; }
+
+const bbCache = {};
+async function loadBackbone(kind, alpha){
+  const key = bbKey(kind, alpha);
+  if (bbCache[key]) return bbCache[key];
+  const def = BB[kind];
+  const name = bbName(kind, alpha);
+  log(`Baixando ${name} pré-treinado no ImageNet (~${nf(bbMB(kind, alpha), 1)} MB)...`, 'info');
+  const onProgress = p => setProgress(p, `Baixando ${name}: ${Math.round(p * 100)}%`);
+  let entry;
+  if (def.family === 'mobilenet'){
+    const url = mobilenetUrl(def.version, alpha);
+    const full = await tf.loadLayersModel(url, {onProgress});
+    const cut = full.getLayer(def.version === 1 ? 'conv_pw_13_relu' : 'out_relu');
+    const gapOut = tf.layers.globalAveragePooling2d({name: 'cnnm_gap'}).apply(cut.output);
+    const base = tf.model({inputs: full.inputs, outputs: gapOut, name: 'backbone'});
+    base.trainable = false;
+    entry = {key, kind, alpha, name, url, type: 'layers', input: 224, norm: 'pm1', base, cutLayer: cut.name,
+             params: base.countParams(), infer: x => base.predict(x)};
+  } else {
+    const url = effUrl(def.b);
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`não foi possível obter ${url} (HTTP ${resp.status})`);
+    const mj = await resp.json();
+    const featNode = mj.modelTopology.node.map(n => n.name).find(n => /top_pool\/Mean$/.test(n));
+    if (!featNode) throw new Error('nó de características (top_pool) não encontrado no grafo');
+    const gm = await tf.loadGraphModel(url, {onProgress});
+    let params = 0; for (const arr of Object.values(gm.weights)) for (const t of arr) params += t.size;
+    entry = {key, kind, alpha: null, name, url, type: 'graph', input: def.input, norm: '01', gm, featNode, cutLayer: featNode,
+             params, infer: x => gm.execute(x, featNode)};
+  }
+  const f = tf.tidy(() => entry.infer(tf.zeros([1, entry.input, entry.input, 3])));
+  entry.featDim = f.shape[f.shape.length - 1];
+  f.dispose();
+  bbCache[key] = entry;
+  log(`${name} pronto: ${fmtParams(entry.params)} parâmetros congelados, vetor de ${entry.featDim} características.`, 'ok');
+  return entry;
+}
+
+/* ------------------------ PRÉ-PROCESSAMENTO ------------------------ */
+function srcSize(src){
+  return {w: src.videoWidth || src.naturalWidth || src.width, h: src.videoHeight || src.naturalHeight || src.height};
+}
+function drawToCanvas(src, size, mode, aug, cv){
+  const {w: sw, h: sh} = srcSize(src);
+  cv.width = size; cv.height = size;
+  const ctx = cv.getContext('2d', {willReadFrequently: true});
+  ctx.save();
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, size, size);
+  ctx.translate(size / 2, size / 2);
+  if (aug){
+    ctx.translate(aug.dx * size, aug.dy * size);
+    if (aug.flip) ctx.scale(-1, 1);
+    if (aug.rot) ctx.rotate(aug.rot * Math.PI / 180);
+    if (aug.zoom && aug.zoom !== 1) ctx.scale(aug.zoom, aug.zoom);
+  }
+  let sx = 0, sy = 0, sW = sw, sH = sh, dW = size, dH = size;
+  if (mode === 'crop'){ const s = Math.min(sw, sh); sx = (sw - s) / 2; sy = (sh - s) / 2; sW = sH = s; }
+  else if (mode === 'pad'){ const r = Math.min(size / sw, size / sh); dW = sw * r; dH = sh * r; }
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(src, sx, sy, sW, sH, -dW / 2, -dH / 2, dW, dH);
+  ctx.restore();
+  return cv;
+}
+function randAug(a){
+  return {
+    flip: a.flip && Math.random() < 0.5,
+    rot: (Math.random() * 2 - 1) * a.rot,
+    zoom: 1 + Math.random() * a.zoom / 100,
+    dx: (Math.random() * 2 - 1) * a.shift / 100,
+    dy: (Math.random() * 2 - 1) * a.shift / 100,
+    bright: 1 + (Math.random() * 2 - 1) * a.bright / 100,
+  };
+}
+function canvasToInput(cv, norm, bright){
+  return tf.tidy(() => {
+    let x = tf.browser.fromPixels(cv).toFloat();
+    if (bright && bright !== 1) x = x.mul(bright).clipByValue(0, 255);
+    return norm === 'pm1' ? x.div(127.5).sub(1) : x.div(255);
+  });
+}
+async function getBitmap(sample){
+  try { return await createImageBitmap(sample.blob); }
+  catch (e){
+    return await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = sample.url; });
+  }
+}
+function closeBmp(b){ if (b && typeof b.close === 'function') b.close(); }
+function canvasToBlob(cv, q = 0.9){ return new Promise(r => cv.toBlob(r, 'image/jpeg', q)); }
+async function fileToBlob(file, maxSide = 320){
+  let bmp;
+  try { bmp = await createImageBitmap(file); }
+  catch (e){
+    const url = URL.createObjectURL(file);
+    bmp = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = url; });
+  }
+  const {w, h} = srcSize(bmp);
+  const r = Math.min(1, maxSide / Math.max(w, h));
+  const cv = document.createElement('canvas');
+  cv.width = Math.max(1, Math.round(w * r)); cv.height = Math.max(1, Math.round(h * r));
+  cv.getContext('2d').drawImage(bmp, 0, 0, cv.width, cv.height);
+  closeBmp(bmp);
+  return await canvasToBlob(cv, 0.9);
+}
+
+/* ------------------------------ LOG / UI ------------------------------ */
+function log(msg, type = ''){
+  const c = $('#console'); if (!c) return;
+  const d = new Date();
+  const ts = d.toTimeString().slice(0, 8);
+  const el = document.createElement('div');
+  el.className = 'ln ' + type;
+  el.innerHTML = `<span class="ts">${ts}</span>${esc(msg)}`;
+  c.appendChild(el);
+  while (c.children.length > 400) c.firstChild.remove();
+  c.scrollTop = c.scrollHeight;
+}
+function toast(msg, type = ''){
+  const el = document.createElement('div');
+  el.className = 'toast ' + type; el.textContent = msg;
+  $('#toasts').appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(() => el.remove(), 320); }, type === 'error' ? 6000 : 3200);
+}
+function setProgress(f, text){
+  $('#progBar').style.width = (clamp(f, 0, 1) * 100).toFixed(1) + '%';
+  if (text != null) $('#progText').textContent = text;
+}
+
+/* ------------------------------ CLASSES ------------------------------ */
+function nextColor(){
+  const used = new Set(S.classes.map(c => c.color));
+  return PALETTE.find(p => !used.has(p)) || PALETTE[S.classes.length % PALETTE.length];
+}
+function addClass(name){
+  const nm = (name || '').trim() || `Classe ${S.classes.length + 1}`;
+  const c = {id: uid(), name: nm, color: nextColor(), samples: []};
+  S.classes.push(c);
+  S.dsVersion++;
+  renderAllClasses();
+  return c;
+}
+function removeClass(id){
+  const i = S.classes.findIndex(c => c.id === id); if (i < 0) return;
+  const c = S.classes[i];
+  if (c.samples.length && !confirm(`Remover a classe "${c.name}" e suas ${c.samples.length} imagens?`)) return;
+  c.samples.forEach(s => URL.revokeObjectURL(s.url));
+  S.classes.splice(i, 1);
+  S.dsVersion++;
+  renderAllClasses();
+}
+function clearClass(id){
+  const c = S.classes.find(c => c.id === id); if (!c || !c.samples.length) return;
+  if (!confirm(`Apagar as ${c.samples.length} imagens de "${c.name}"?`)) return;
+  c.samples.forEach(s => URL.revokeObjectURL(s.url));
+  c.samples = [];
+  S.dsVersion++;
+  renderAllClasses();
+}
+function findOrCreateClass(name){
+  const n = name.trim() || 'Classe';
+  let c = S.classes.find(c => c.name.toLowerCase() === n.toLowerCase());
+  if (!c){
+    const emptyDefault = S.classes.find(c => !c.samples.length && /^Classe \d+$/.test(c.name));
+    if (emptyDefault){ emptyDefault.name = n; c = emptyDefault; }
+    else c = addClass(n);
+  }
+  return c;
+}
+function addSample(cls, blob, src){
+  const s = {id: uid(), blob, url: URL.createObjectURL(blob), src};
+  cls.samples.push(s);
+  S.dsVersion++;
+  return s;
+}
+function removeSample(cls, sid){
+  const i = cls.samples.findIndex(s => s.id === sid); if (i < 0) return;
+  URL.revokeObjectURL(cls.samples[i].url);
+  cls.samples.splice(i, 1);
+  S.dsVersion++;
+}
+let _renderQ = false;
+function scheduleDataRender(){
+  if (_renderQ) return; _renderQ = true;
+  requestAnimationFrame(() => { _renderQ = false; renderDataSide(); });
+}
+
+/* ------------------------- DIVISÃO DOS DADOS ------------------------- */
+function computeSplit(){
+  const rnd = mulberry32(S.split.seed | 0);
+  const tr = [], va = [], te = [];
+  S.classes.forEach((c, ci) => {
+    const idx = c.samples.map((_, i) => i);
+    for (let i = idx.length - 1; i > 0; i--){ const j = Math.floor(rnd() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+    const n = idx.length;
+    let nTe = Math.round(n * S.split.test), nVa = Math.round(n * S.split.val);
+    while (n - nTe - nVa < 1 && (nTe > 0 || nVa > 0)){ if (nVa >= nTe && nVa > 0) nVa--; else nTe--; }
+    idx.forEach((k, j) => {
+      const it = {ci, s: c.samples[k]};
+      if (j < nTe) te.push(it); else if (j < nTe + nVa) va.push(it); else tr.push(it);
+    });
+  });
+  return {tr, va, te};
+}
+function splitCounts(){
+  const sp = computeSplit();
+  const per = S.classes.map(() => ({tr: 0, va: 0, te: 0}));
+  sp.tr.forEach(i => per[i.ci].tr++); sp.va.forEach(i => per[i.ci].va++); sp.te.forEach(i => per[i.ci].te++);
+  return {sp, per};
+}
+function validateData(){
+  const issues = [];
+  if (S.classes.length < 2) issues.push({lvl: 'err', msg: 'São necessárias pelo menos 2 classes.'});
+  const names = S.classes.map(c => c.name.trim().toLowerCase());
+  if (names.some(n => !n)) issues.push({lvl: 'err', msg: 'Há classe sem nome.'});
+  if (new Set(names).size !== names.length) issues.push({lvl: 'err', msg: 'Há classes com nomes repetidos.'});
+  const empties = S.classes.filter(c => c.samples.length < 2);
+  if (empties.length) issues.push({lvl: 'err', msg: `Classes com menos de 2 imagens: ${empties.map(c => c.name).join(', ')}.`});
+  const ok = !issues.some(i => i.lvl === 'err');
+  const counts = S.classes.map(c => c.samples.length);
+  if (ok){
+    const small = S.classes.filter(c => c.samples.length < 15);
+    if (small.length) issues.push({lvl: 'warn', msg: `Poucas imagens (menos de 15) em: ${small.map(c => c.name).join(', ')}. O modelo pode não generalizar.`});
+    const mx = Math.max(...counts), mn = Math.min(...counts);
+    if (mn > 0 && mx / mn > 3) issues.push({lvl: 'warn', msg: `Conjunto desbalanceado (razão ${nf(mx / mn, 1)}:1). Considere coletar mais exemplos da classe menor ou balancear os pesos das classes.`});
+    const {sp} = splitCounts();
+    if (!sp.te.length) issues.push({lvl: 'warn', msg: 'Conjunto de teste vazio: a avaliação final usará a validação ou o treino.'});
+    else if (sp.te.length < S.classes.length * 3) issues.push({lvl: 'warn', msg: `Apenas ${sp.te.length} imagens de teste: as métricas terão alta incerteza.`});
+    if (!issues.length) issues.push({lvl: 'ok', msg: 'Conjunto pronto para o treinamento.'});
+  }
+  return {ok, issues};
+}
+
+/* ------------------------- EXTRAÇÃO DOS DADOS ------------------------- */
+// Converte itens {ci, s} em tensores. Para backbones pré-treinados, passa as
+// imagens pela rede congelada e guarda apenas o vetor de características.
+async function extractSet(bb, items, augment, label, onProg){
+  const copies = augment ? S.aug.copies : 0;
+  const total = items.length * (1 + copies);
+  const parts = [], ys = [], refs = [];
+  let batch = [], bY = [], bR = [], done = 0;
+  const cv = document.createElement('canvas');
+  const B = bb.type === 'none' ? 32 : 16;
+  const flush = async () => {
+    if (!batch.length) return;
+    const out = tf.tidy(() => bb.infer(tf.stack(batch)));
+    batch.forEach(t => t.dispose());
+    parts.push(out); ys.push(...bY); refs.push(...bR);
+    batch = []; bY = []; bR = [];
+    await tf.nextFrame();
+  };
+  for (const it of items){
+    if (S.stopReq) { batch.forEach(t => t.dispose()); parts.forEach(t => t.dispose()); throw new Error(CANCEL); }
+    const bmp = await getBitmap(it.s);
+    const variants = [null];
+    for (let k = 0; k < copies; k++) variants.push(randAug(S.aug));
+    for (const a of variants){
+      drawToCanvas(bmp, bb.input, S.prep.mode, a, cv);
+      batch.push(canvasToInput(cv, bb.norm, a ? a.bright : 1));
+      bY.push(it.ci); bR.push({ci: it.ci, s: it.s, aug: !!a});
+      done++;
+      if (batch.length >= B) await flush();
+    }
+    closeBmp(bmp);
+    onProg && onProg(done / total, `${label}: ${done}/${total}`);
+  }
+  await flush();
+  const X = parts.length ? (parts.length === 1 ? parts[0] : tf.concat(parts)) : null;
+  if (parts.length > 1) parts.forEach(t => t.dispose());
+  return {X, y: ys, refs};
+}
+function disposeD(D){
+  if (!D) return;
+  for (const k of ['tr', 'va', 'te']) if (D[k] && D[k].X) { D[k].X.dispose(); D[k].X = null; }
+}
+
+/* ------------------------------ MODELOS ------------------------------ */
+function makeOpt(){
+  const lr = S.hp.lr;
+  switch (S.hp.opt){
+    case 'sgd': return tf.train.sgd(lr);
+    case 'momentum': return tf.train.momentum(lr, 0.9);
+    case 'rmsprop': return tf.train.rmsprop(lr);
+    case 'adagrad': return tf.train.adagrad(lr);
+    default: return tf.train.adam(lr);
+  }
+}
+function reg(){ return S.hp.l2 > 0 ? tf.regularizers.l2({l2: S.hp.l2}) : null; }
+function addHeadLayers(m, nC, firstInputShape){
+  const opts = s => firstInputShape && !m.layers.length ? Object.assign(s, {inputShape: firstInputShape}) : s;
+  if (S.head.units > 0){
+    m.add(tf.layers.dense(opts({units: S.head.units, activation: 'relu', kernelRegularizer: reg(), name: 'cnnm_densa'})));
+    if (S.head.dropout > 0) m.add(tf.layers.dropout({rate: S.head.dropout, name: 'cnnm_dropout'}));
+  } else if (S.head.dropout > 0){
+    m.add(tf.layers.dropout(opts({rate: S.head.dropout, name: 'cnnm_dropout'})));
+  }
+  m.add(tf.layers.dense(opts({units: nC, activation: 'softmax', kernelRegularizer: reg(), name: 'cnnm_saida'})));
+}
+function buildHead(featDim, nC){
+  const m = tf.sequential({name: 'cabeca'});
+  addHeadLayers(m, nC, [featDim]);
+  return m;
+}
+function buildCNN(nC){
+  const c = S.cnn;
+  const m = tf.sequential({name: 'cnn_do_zero'});
+  let f = c.filters;
+  for (let b = 0; b < c.blocks; b++){
+    const cfg = {filters: f, kernelSize: c.kernel, padding: 'same', activation: c.bn ? 'linear' : 'relu', kernelRegularizer: reg(), name: `conv${b + 1}`};
+    if (b === 0) cfg.inputShape = [c.size, c.size, 3];
+    m.add(tf.layers.conv2d(cfg));
+    if (c.bn){ m.add(tf.layers.batchNormalization({name: `bn${b + 1}`})); m.add(tf.layers.activation({activation: 'relu', name: `relu${b + 1}`})); }
+    m.add(tf.layers.maxPooling2d({poolSize: 2, name: `pool${b + 1}`}));
+    f *= 2;
+  }
+  m.add(c.pool === 'gap' ? tf.layers.globalAveragePooling2d({name: 'gap'}) : tf.layers.flatten({name: 'flatten'}));
+  addHeadLayers(m, nC, null);
+  return m;
+}
+function cnnShapes(){
+  const c = S.cnn; let s = c.size, f = c.filters; const out = [];
+  for (let b = 0; b < c.blocks; b++){ out.push({s, f}); s = Math.floor(s / 2); f *= 2; }
+  return {blocks: out, last: {s, f: f / 2}};
+}
+
+/* ------------------------------ TREINAMENTO ------------------------------ */
+let chLoss = null, chAcc = null, chBal = null, chRuns = null;
+function initCharts(){
+  Chart.defaults.color = '#9aa6b2';
+  Chart.defaults.borderColor = '#1d2734';
+  Chart.defaults.font.family = '"Inter","Segoe UI",system-ui,sans-serif';
+  Chart.defaults.font.size = 11;
+  const lineOpts = (yMax) => ({
+    responsive: true, maintainAspectRatio: false, animation: false,
+    interaction: {mode: 'index', intersect: false},
+    plugins: {legend: {labels: {boxWidth: 10, boxHeight: 10}}},
+    scales: {x: {title: {display: true, text: 'época'}, grid: {color: '#18212b'}}, y: Object.assign({grid: {color: '#18212b'}, beginAtZero: true}, yMax ? {max: yMax} : {})},
+  });
+  const ds = (label, color, dash) => ({label, data: [], borderColor: color, backgroundColor: color, borderWidth: 2, pointRadius: 0, tension: 0.25, borderDash: dash || []});
+  chLoss = new Chart($('#chartLoss'), {type: 'line', data: {labels: [], datasets: [ds('treino', '#3F9A4B'), ds('validação', '#4ea1d3', [5, 4])]}, options: lineOpts()});
+  chAcc = new Chart($('#chartAcc'), {type: 'line', data: {labels: [], datasets: [ds('treino', '#3F9A4B'), ds('validação', '#4ea1d3', [5, 4])]}, options: lineOpts(1)});
+  chBal = new Chart($('#chartBalance'), {type: 'bar', data: {labels: [], datasets: [
+      {label: 'treino', data: [], backgroundColor: '#3F9A4B'},
+      {label: 'validação', data: [], backgroundColor: '#4ea1d3'},
+      {label: 'teste', data: [], backgroundColor: '#a874e8'}]},
+    options: {responsive: true, maintainAspectRatio: false, animation: false, plugins: {legend: {labels: {boxWidth: 10, boxHeight: 10}}},
+      scales: {x: {stacked: true, grid: {display: false}}, y: {stacked: true, beginAtZero: true, grid: {color: '#18212b'}, ticks: {precision: 0}}}}});
+  chRuns = new Chart($('#chartRuns'), {type: 'bar', data: {labels: [], datasets: [
+      {label: 'acurácia (avaliação)', data: [], backgroundColor: '#3F9A4B'},
+      {label: 'F1 macro', data: [], backgroundColor: '#4ea1d3'}]},
+    options: {responsive: true, maintainAspectRatio: false, animation: false, plugins: {legend: {labels: {boxWidth: 10, boxHeight: 10}}},
+      scales: {y: {beginAtZero: true, max: 1, grid: {color: '#18212b'}}, x: {grid: {display: false}}}}});
+}
+function resetTrainCharts(){
+  [chLoss, chAcc].forEach(c => { c.data.labels = []; c.data.datasets.forEach(d => d.data = []); c.update(); });
+}
+
+function cacheKeyFor(bbk){
+  return [bbk, S.prep.mode, JSON.stringify(S.aug), S.dsVersion, S.split.val, S.split.test, S.split.seed].join('|');
+}
+function classWeights(y, nC){
+  const cnt = Array(nC).fill(0); y.forEach(v => cnt[v]++);
+  const N = y.length, w = {};
+  cnt.forEach((c, i) => { w[i] = c ? N / (nC * c) : 1; });
+  return w;
+}
+
+async function train(){
+  if (S.training) return;
+  const v = validateData();
+  if (!v.ok){ toast(v.issues.filter(i => i.lvl === 'err').map(i => i.msg).join(' '), 'error'); setStage(2); return; }
+  S.training = true; S.stopReq = false;
+  setTrainUI(true);
+  resetTrainCharts();
+  $('#epochLine').textContent = '';
+  stopPredCam();
+  const t0 = performance.now();
+  const kind = S.bb.kind, alpha = S.bb.alpha, isCNN = kind === 'cnn';
+  const classNames = S.classes.map(c => c.name.trim());
+  const colors = S.classes.map(c => c.color);
+  const nC = classNames.length;
+  let D = null, model = null, newD = false;
+  try {
+    let bb;
+    if (isCNN) bb = {key: 'cnn' + S.cnn.size, kind: 'cnn', name: 'CNN do zero', type: 'none', input: S.cnn.size, norm: '01', params: 0, infer: x => x};
+    else bb = await loadBackbone(kind, alpha);
+
+    // Fase 1: dados (características em cache quando nada mudou)
+    const key = cacheKeyFor(bb.key);
+    const split = computeSplit();
+    if (S.cacheD && S.cacheD.key === key){
+      D = S.cacheD;
+      log('Dados e aumento inalterados: reaproveitando ' + (isCNN ? 'os tensores de imagem' : 'as características') + ' em cache.', 'info');
+      setProgress(1, 'Características em cache.');
+    } else {
+      newD = true;
+      D = {key, bbKey: bb.key};
+      const lbl = isCNN ? 'Preparando imagens' : 'Extraindo características';
+      log(`Fase 1/2: ${lbl.toLowerCase()} (${split.tr.length} treino × ${1 + S.aug.copies} com aumento, ${split.va.length} validação, ${split.te.length} teste).`, 'info');
+      const tot = split.tr.length * (1 + S.aug.copies) + split.va.length + split.te.length;
+      let off = 0;
+      const prog = (base, n) => (f, t) => setProgress((base + f * n) / tot, `Fase 1/2 · ${lbl} · ${t}`);
+      D.tr = await extractSet(bb, split.tr, true, 'treino', prog(off, split.tr.length * (1 + S.aug.copies)));
+      off += split.tr.length * (1 + S.aug.copies);
+      D.va = split.va.length ? await extractSet(bb, split.va, false, 'validação', prog(off, split.va.length)) : null;
+      off += split.va.length;
+      D.te = split.te.length ? await extractSet(bb, split.te, false, 'teste', prog(off, split.te.length)) : null;
+    }
+
+    // Fase 2: modelo
+    model = isCNN ? buildCNN(nC) : buildHead(bb.featDim, nC);
+    model.compile({optimizer: makeOpt(), loss: 'categoricalCrossentropy', metrics: ['accuracy']});
+    const trainable = model.trainableWeights.reduce((s, w) => s + w.shape.reduce((a, b) => a * b, 1), 0);
+    log(`Fase 2/2: treinando ${isCNN ? 'a CNN completa' : 'a cabeça de classificação'} (${fmtParams(trainable)} parâmetros treináveis), ${S.hp.epochs} épocas, lote ${S.hp.batch}, ${S.hp.opt}, lr ${S.hp.lr}.`, 'info');
+    const Ytr = tf.tidy(() => tf.oneHot(tf.tensor1d(D.tr.y, 'int32'), nC).toFloat());
+    const Yva = D.va ? tf.tidy(() => tf.oneHot(tf.tensor1d(D.va.y, 'int32'), nC).toFloat()) : null;
+    const nBatches = Math.ceil(D.tr.y.length / S.hp.batch);
+    const pat = S.hp.patience;
+    const monitor = Yva ? 'val_loss' : 'loss';
+    let best = Infinity, bestEp = -1, wait = 0, bestW = null, epochsRun = 0, curEpoch = 0;
+    const hist = {loss: [], acc: [], val_loss: [], val_acc: []};
+    const t1 = performance.now();
+    await model.fit(D.tr.X, Ytr, {
+      epochs: S.hp.epochs, batchSize: S.hp.batch, shuffle: true,
+      validationData: Yva ? [D.va.X, Yva] : undefined,
+      classWeight: S.hp.classWeight ? classWeights(D.tr.y, nC) : undefined,
+      callbacks: {
+        onEpochBegin: async (ep) => { curEpoch = ep; },
+        onBatchEnd: async (b) => {
+          setProgress((curEpoch + (b + 1) / nBatches) / S.hp.epochs, `Fase 2/2 · época ${curEpoch + 1}/${S.hp.epochs} · lote ${b + 1}/${nBatches}`);
+          if (S.stopReq) model.stopTraining = true;
+        },
+        onEpochEnd: async (ep, logs) => {
+          epochsRun = ep + 1;
+          const acc = logs.acc != null ? logs.acc : logs.accuracy;
+          const vacc = logs.val_acc != null ? logs.val_acc : logs.val_accuracy;
+          hist.loss.push(logs.loss); hist.acc.push(acc);
+          if (Yva){ hist.val_loss.push(logs.val_loss); hist.val_acc.push(vacc); }
+          chLoss.data.labels.push(ep + 1); chAcc.data.labels.push(ep + 1);
+          chLoss.data.datasets[0].data.push(logs.loss); chAcc.data.datasets[0].data.push(acc);
+          if (Yva){ chLoss.data.datasets[1].data.push(logs.val_loss); chAcc.data.datasets[1].data.push(vacc); }
+          chLoss.update(); chAcc.update();
+          $('#epochLine').innerHTML = `época <b>${ep + 1}</b> · perda <b>${nf(logs.loss, 4)}</b> · acurácia <b>${pct(acc)}</b>` +
+            (Yva ? ` · perda val. <b>${nf(logs.val_loss, 4)}</b> · acurácia val. <b>${pct(vacc)}</b>` : '');
+          const m = logs[monitor];
+          if (m < best - 1e-4){
+            best = m; bestEp = ep; wait = 0;
+            if (S.hp.restore){ if (bestW) bestW.forEach(w => w.dispose()); bestW = model.getWeights().map(w => w.clone()); }
+          } else {
+            wait++;
+            if (pat > 0 && wait >= pat){ model.stopTraining = true; log(`Early stopping na época ${ep + 1}: ${monitor} não melhora há ${pat} épocas (melhor na época ${bestEp + 1}).`, 'warn'); }
+          }
+          if (S.stopReq) model.stopTraining = true;
+          await tf.nextFrame();
+        },
+      },
+    });
+    if (S.hp.restore && bestW && bestEp >= 0 && bestEp < epochsRun - 1){
+      model.setWeights(bestW);
+      log(`Pesos restaurados da época ${bestEp + 1} (melhor ${monitor} = ${nf(best, 4)}).`, 'info');
+    }
+    if (bestW) bestW.forEach(w => w.dispose());
+    Ytr.dispose(); if (Yva) Yva.dispose();
+    const trainSec = (performance.now() - t1) / 1000;
+    if (S.stopReq) log(`Treinamento interrompido pelo usuário na época ${epochsRun}.`, 'warn');
+
+    // troca o modelo ativo
+    const old = S.trained;
+    if (old && old.model && old.model !== model) old.model.dispose();
+    if (S.cacheD && S.cacheD !== D) disposeD(S.cacheD);
+    S.cacheD = D;
+    S.trained = {
+      kind, alpha: isCNN ? null : alpha, bb, model, isCNN, name: isCNN ? 'CNN do zero' : bb.name,
+      input: bb.input, norm: bb.norm, prepMode: S.prep.mode, classNames, colors, nC,
+      dsVersion: S.dsVersion, D, hist, epochsRun, bestEp, monitor,
+      cfg: {head: {...S.head}, cnn: {...S.cnn}, hp: {...S.hp}, aug: {...S.aug}, split: {...S.split}},
+      counts: {tr: split.tr.length, va: split.va.length, te: split.te.length, trAug: D.tr.y.length},
+      trainable, frozen: isCNN ? 0 : bb.params, trainSec, totalSec: (performance.now() - t0) / 1000,
+      when: nowStamp(), runId: S.runs.length + 1,
+    };
+    S.done[3] = true;
+    setProgress(1, `Concluído: ${epochsRun} épocas em ${nf(trainSec, 1)} s.`);
+    log(`Treinamento concluído em ${nf(S.trained.totalSec, 1)} s (${epochsRun} épocas).`, 'ok');
+    renderModelSummary();
+    S.evalSet = D.te ? 'test' : (D.va ? 'val' : 'train');
+    await evaluate(S.evalSet, true);
+    recordRun();
+    updateAll();
+    toast('Modelo treinado. Veja a avaliação na Etapa 4.');
+    $('#btnGoEval').disabled = false;
+  } catch (e){
+    if (model && (!S.trained || S.trained.model !== model)) model.dispose();
+    if (newD && D && D !== S.cacheD) disposeD(D);
+    if (e && e.message === CANCEL){ log('Preparação cancelada pelo usuário.', 'warn'); setProgress(0, 'Cancelado.'); }
+    else {
+      console.error(e);
+      const msg = (e && e.message) || String(e);
+      log('Erro no treinamento: ' + msg, 'error');
+      toast('Erro no treinamento: ' + msg, 'error');
+      setProgress(0, 'Erro: ' + msg);
+    }
+  } finally {
+    S.training = false; S.stopReq = false;
+    setTrainUI(false);
+    updateSys();
+  }
+}
+function setTrainUI(on){
+  $('#btnTrain').disabled = on;
+  $('#btnStop').disabled = !on;
+  $('#btnTrain').textContent = on ? '⏳ Treinando...' : (S.trained ? '↻ Retreinar modelo' : '▶ Treinar modelo');
+  $$('#view3 .bb, #view3 input, #view3 select').forEach(el => { el.disabled = on; });
+  $('#btnStop').disabled = !on;
+}
+
+/* ------------------------------ AVALIAÇÃO ------------------------------ */
+function computeMetrics(yT, yP, nC){
+  const cm = Array.from({length: nC}, () => Array(nC).fill(0));
+  yT.forEach((t, i) => cm[t][yP[i]]++);
+  const per = [];
+  let correct = 0;
+  for (let c = 0; c < nC; c++){
+    const tp = cm[c][c];
+    const fn = cm[c].reduce((a, b) => a + b, 0) - tp;
+    const fp = cm.reduce((a, r) => a + r[c], 0) - tp;
+    const p = tp + fp ? tp / (tp + fp) : 0, r = tp + fn ? tp / (tp + fn) : 0;
+    per.push({p, r, f1: p + r ? 2 * p * r / (p + r) : 0, support: tp + fn});
+    correct += tp;
+  }
+  const withSup = per.filter(x => x.support > 0);
+  const mac = k => withSup.length ? withSup.reduce((a, x) => a + x[k], 0) / withSup.length : 0;
+  return {cm, per, acc: yT.length ? correct / yT.length : 0, n: yT.length, macroP: mac('p'), macroR: mac('r'), macroF1: mac('f1')};
+}
+async function evaluate(which, silent){
+  const T = S.trained; if (!T) return;
+  const D = T.D;
+  let set = which === 'test' ? D.te : which === 'val' ? D.va : D.tr;
+  if (!set || !set.X){
+    which = D.te ? 'test' : D.va ? 'val' : 'train';
+    set = which === 'test' ? D.te : which === 'val' ? D.va : D.tr;
+  }
+  S.evalSet = which;
+  let X = set.X, refs = set.refs, y = set.y, gathered = null;
+  if (which === 'train'){
+    const idx = refs.map((r, i) => r.aug ? -1 : i).filter(i => i >= 0);
+    gathered = tf.tidy(() => tf.gather(set.X, tf.tensor1d(idx, 'int32')));
+    X = gathered; refs = idx.map(i => set.refs[i]); y = idx.map(i => set.y[i]);
+  }
+  const probsT = tf.tidy(() => T.model.predict(X, {batchSize: 64}));
+  const P = await probsT.array();
+  probsT.dispose(); if (gathered) gathered.dispose();
+  const yP = P.map(row => row.indexOf(Math.max(...row)));
+  const M = computeMetrics(y, yP, T.nC);
+  const errors = [];
+  refs.forEach((r, i) => { if (yP[i] !== y[i]) errors.push({ref: r, t: y[i], p: yP[i], conf: P[i][yP[i]]}); });
+  errors.sort((a, b) => b.conf - a.conf);
+  const lat = await measureLatency();
+  S.lastEval = {which, M, errors, lat, when: nowStamp()};
+  if (silent) T.mainEval = S.lastEval;
+  if (!silent) log(`Avaliação (${setLabel(which)}): acurácia ${pct(M.acc)}, F1 macro ${pct(M.macroF1)}, latência ${nf(lat, 1)} ms.`, 'ok');
+  else log(`Avaliação automática (${setLabel(which)}): acurácia ${pct(M.acc)}, F1 macro ${pct(M.macroF1)}.`, 'ok');
+  renderEval();
+}
+function setLabel(w){ return w === 'test' ? 'teste' : w === 'val' ? 'validação' : 'treino'; }
+async function measureLatency(){
+  const T = S.trained; if (!T) return 0;
+  const cls = S.classes.find(c => c.samples.length);
+  let src;
+  if (cls){ src = await getBitmap(cls.samples[0]); }
+  else { src = document.createElement('canvas'); src.width = src.height = 256; }
+  await predictDrawable(src); await predictDrawable(src);
+  const n = 8, t0 = performance.now();
+  for (let i = 0; i < n; i++) await predictDrawable(src);
+  const ms = (performance.now() - t0) / n;
+  closeBmp(src);
+  return ms;
+}
+function recordRun(){
+  const T = S.trained, E = S.lastEval; if (!T || !E) return;
+  const h = T.hist;
+  const run = {
+    n: S.runs.length + 1, when: T.when, backbone: T.name, kind: T.kind, alpha: T.alpha, input: T.input,
+    units: T.cfg.head.units, dropout: T.cfg.head.dropout, epochs: T.cfg.hp.epochs, epochsRun: T.epochsRun,
+    batch: T.cfg.hp.batch, lr: T.cfg.hp.lr, opt: T.cfg.hp.opt, l2: T.cfg.hp.l2, copies: T.cfg.aug.copies,
+    nTrain: T.counts.tr, nVal: T.counts.va, nTest: T.counts.te,
+    trainAcc: h.acc[h.acc.length - 1], valAcc: h.val_acc.length ? Math.max(...h.val_acc) : null,
+    evalSet: E.which, evalAcc: E.M.acc, f1: E.M.macroF1, lat: E.lat, sec: T.totalSec,
+    trainable: T.trainable, frozen: T.frozen,
+    cnn: T.isCNN ? `${T.cfg.cnn.blocks}b/${T.cfg.cnn.filters}f/${T.cfg.cnn.kernel}k/${T.cfg.cnn.pool}${T.cfg.cnn.bn ? '/bn' : ''}` : '',
+  };
+  S.runs.push(run);
+  T.runId = run.n;
+  renderRuns();
+}
+
+/* ------------------------------ PREDIÇÃO ------------------------------ */
+const _pcv = document.createElement('canvas');
+async function predictDrawable(src){
+  const T = S.trained;
+  drawToCanvas(src, T.input, T.prepMode, null, _pcv);
+  const out = tf.tidy(() => {
+    const x = canvasToInput(_pcv, T.norm, 1).expandDims(0);
+    return T.isCNN ? T.model.predict(x) : T.model.predict(T.bb.infer(x));
+  });
+  const d = await out.data();
+  out.dispose();
+  return Array.from(d);
+}
+
+/* ------------------------------ WEBCAM ------------------------------ */
+const Cam = {
+  stream: null, devices: [], idx: -1, users: new Set(),
+  async open(video, who){
+    this.users.add(who);
+    if (!this.stream){
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('este navegador não oferece acesso à câmera (use HTTPS)');
+      const v = {width: {ideal: 640}, height: {ideal: 480}};
+      if (this.idx >= 0 && this.devices[this.idx]) v.deviceId = {exact: this.devices[this.idx].deviceId}; else v.facingMode = 'user';
+      this.stream = await navigator.mediaDevices.getUserMedia({video: v, audio: false});
+      try { this.devices = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'videoinput'); } catch (e) {}
+      if (this.idx < 0){
+        const id = this.stream.getVideoTracks()[0]?.getSettings?.().deviceId;
+        this.idx = Math.max(0, this.devices.findIndex(d => d.deviceId === id));
+      }
+    }
+    video.srcObject = this.stream;
+    await video.play().catch(() => {});
+  },
+  close(video, who){
+    this.users.delete(who);
+    if (video) { video.pause(); video.srcObject = null; }
+    if (!this.users.size && this.stream){ this.stream.getTracks().forEach(t => t.stop()); this.stream = null; }
+  },
+  async switchCam(){
+    if (this.devices.length < 2){ toast('Apenas uma câmera disponível.', 'warn'); return false; }
+    this.idx = (this.idx + 1) % this.devices.length;
+    if (this.stream){ this.stream.getTracks().forEach(t => t.stop()); this.stream = null; }
+    return true;
+  },
+};
+function grabFrame(video, size = 256){
+  const vw = video.videoWidth, vh = video.videoHeight; const s = Math.min(vw, vh);
+  const cv = document.createElement('canvas'); cv.width = cv.height = size;
+  cv.getContext('2d').drawImage(video, (vw - s) / 2, (vh - s) / 2, s, s, 0, 0, size, size);
+  return cv;
+}
+
+// Modal de captura por classe
+const CamUI = {cls: null, timer: null, recording: false};
+async function openCamModal(clsId){
+  const cls = S.classes.find(c => c.id === clsId); if (!cls) return;
+  CamUI.cls = cls;
+  $('#camClassName').textContent = cls.name;
+  $('#camDot').style.background = cls.color; $('#camDot').style.color = cls.color;
+  $('#camModal').hidden = false;
+  $('#camOff').hidden = false; $('#camOff').textContent = 'Solicitando acesso à câmera...';
+  updateCamCount();
+  try {
+    await Cam.open($('#camVideo'), 'modal');
+    $('#camOff').hidden = true;
+  } catch (e){
+    $('#camOff').textContent = 'Não foi possível abrir a câmera: ' + e.message;
+    log('Câmera indisponível: ' + e.message, 'error');
+  }
+}
+function closeCamModal(){
+  stopRec();
+  Cam.close($('#camVideo'), 'modal');
+  $('#camModal').hidden = true;
+  CamUI.cls = null;
+  renderAllClasses();
+}
+let _pendingEnc = 0;
+function captureOne(){
+  // captura o quadro na hora e codifica em JPEG em paralelo (sem bloquear as próximas capturas)
+  const v = $('#camVideo'), cls = CamUI.cls;
+  if (!cls || !v.videoWidth || _pendingEnc > 12) return;
+  const cv = grabFrame(v);
+  _pendingEnc++;
+  canvasToBlob(cv, 0.9).then(blob => {
+    _pendingEnc--;
+    if (!blob || !S.classes.includes(cls)) return;
+    addSample(cls, blob, 'webcam');
+    if (CamUI.cls === cls) updateCamCount();
+    scheduleDataRender();
+  }).catch(() => { _pendingEnc--; });
+}
+function startRec(){
+  if (CamUI.recording) return;
+  CamUI.recording = true;
+  $('#recDot').classList.add('on'); $('#btnHold').classList.add('rec'); $('#btnHold').textContent = '● Gravando...';
+  const fps = +$('#camFps').value;
+  captureOne();
+  CamUI.timer = setInterval(captureOne, 1000 / fps);
+}
+function stopRec(){
+  if (!CamUI.recording) return;
+  CamUI.recording = false;
+  clearInterval(CamUI.timer); CamUI.timer = null;
+  $('#recDot').classList.remove('on'); $('#btnHold').classList.remove('rec'); $('#btnHold').textContent = '● Segure para gravar';
+  renderAllClasses();
+}
+async function timedRec(){
+  if (CamUI.recording) return;
+  const delay = +$('#camDelay').value, dur = +$('#camDur').value;
+  const cd = $('#countdown');
+  for (let i = delay; i > 0; i--){ cd.textContent = i; await sleep(1000); if ($('#camModal').hidden) { cd.textContent = ''; return; } }
+  cd.textContent = '';
+  startRec();
+  await sleep(dur * 1000);
+  stopRec();
+}
+function updateCamCount(){
+  const c = CamUI.cls; if (!c) return;
+  $('#camCount').textContent = c.samples.length;
+  const strip = $('#camStrip');
+  const last = c.samples.slice(-12);
+  strip.innerHTML = last.map(s => `<img src="${s.url}" alt="">`).join('');
+}
+
+// Webcam na etapa de predição
+const PredCam = {on: false, loopOn: false, fps: 0, lastT: 0};
+async function startPredCam(){
+  if (!S.trained){ toast('Treine um modelo primeiro.', 'warn'); return; }
+  try {
+    await Cam.open($('#predVideo'), 'pred');
+    PredCam.on = true;
+    $('#predCamOff').hidden = true; $('#predHud').hidden = false;
+    $('#btnPredCam').textContent = 'Desligar webcam';
+    S.done[5] = true; updatePipeline();
+    if (!PredCam.loopOn){ PredCam.loopOn = true; predLoop(); }
+  } catch (e){
+    $('#predCamOff').textContent = 'Não foi possível abrir a câmera: ' + e.message;
+    log('Câmera indisponível: ' + e.message, 'error');
+  }
+}
+function stopPredCam(){
+  if (!PredCam.on) return;
+  PredCam.on = false;
+  Cam.close($('#predVideo'), 'pred');
+  $('#predCamOff').hidden = false; $('#predCamOff').textContent = 'Câmera desligada'; $('#predHud').hidden = true;
+  $('#btnPredCam').textContent = 'Ligar webcam';
+}
+async function predLoop(){
+  if (!PredCam.on){ PredCam.loopOn = false; return; }
+  const v = $('#predVideo');
+  if (S.trained && !S.training && v.readyState >= 2 && v.videoWidth){
+    const t0 = performance.now();
+    try {
+      const p = await predictDrawable(v);
+      const dt = performance.now() - t0;
+      renderLiveBars(p);
+      const now = performance.now();
+      if (PredCam.lastT){ const inst = 1000 / (now - PredCam.lastT); PredCam.fps = PredCam.fps ? PredCam.fps * 0.85 + inst * 0.15 : inst; }
+      PredCam.lastT = now;
+      $('#predHud').textContent = `${nf(PredCam.fps, 1)} qps · ${nf(dt, 0)} ms`;
+    } catch (e){ console.error(e); }
+  }
+  setTimeout(() => requestAnimationFrame(predLoop), 40);
+}
+
+/* ------------------------------ RENDER ------------------------------ */
+function setStage(n){
+  n = clamp(n | 0, 1, 6);
+  if (S.stage === 5 && n !== 5) stopPredCam();
+  S.stage = n;
+  $$('.view').forEach(v => v.classList.toggle('active', v.id === 'view' + n));
+  if (n === 4 && S.lastEval) S.done[4] = true;
+  updateAll();
+  if (n === 3){ chLoss.resize(); chAcc.resize(); }
+  if (n === 2) chBal.resize();
+  if (n === 4 && chRuns) chRuns.resize();
+  window.scrollTo({top: Math.min(window.scrollY, $('.pipeline-wrap').offsetTop), behavior: 'smooth'});
+}
+function updatePipeline(){
+  S.done[1] = reqOk();
+  S.done[2] = validateData().ok;
+  for (let i = 1; i <= 6; i++){
+    const g = $('#stg' + i);
+    g.classList.toggle('active', S.stage === i);
+    g.classList.toggle('done', !!S.done[i] && S.stage !== i);
+  }
+}
+function reqOk(){
+  const names = S.classes.map(c => c.name.trim().toLowerCase());
+  return S.classes.length >= 2 && names.every(Boolean) && new Set(names).size === names.length;
+}
+function updateAll(){
+  updatePipeline();
+  renderReq();
+  renderRail();
+  renderPredState();
+  renderExport();
+  updateSys();
+}
+
+/* ---- Etapa 1 ---- */
+function recommendation(){
+  const p = S.project;
+  if (p.device === 'celular' || p.priority === 'leveza') return {kind: 'mnv2', alpha: 0.35, why: p.device === 'celular' ? 'roda bem em celulares (~1,7 MB e inferência rápida)' : 'é a opção mais leve com boa qualidade (~1,7 MB)'};
+  if (p.priority === 'precisao') return {kind: 'effb2', alpha: null, why: 'oferece as melhores características entre as opções, ao custo de ~37 MB e maior latência'};
+  return {kind: 'effb0', alpha: null, why: 'equilibra precisão e custo (~21 MB) para uso em computador'};
+}
+function renderReq(){
+  const list = $('#reqClassList');
+  const focused = document.activeElement && document.activeElement.closest && document.activeElement.closest('#reqClassList');
+  if (!focused){
+    list.innerHTML = S.classes.map((c, i) => `
+      <div class="req-class" data-id="${c.id}">
+        <span class="dot" style="background:${c.color};color:${c.color}"></span>
+        <input type="text" value="${esc(c.name)}" data-act="rename" maxlength="40" aria-label="Nome da classe ${i + 1}">
+        <span class="muted mono" style="font-size:11px;white-space:nowrap">${c.samples.length} img</span>
+        <button class="btn xs danger" data-act="del" title="Remover classe">✕</button>
+      </div>`).join('') || '<div class="muted" style="font-size:12.5px">Nenhuma classe ainda.</div>';
+  }
+  $('#reqClassCount').textContent = `${S.classes.length} classe${S.classes.length === 1 ? '' : 's'}`;
+  const r = recommendation();
+  $('#recBox').innerHTML = `💡 Modelo base recomendado: <b>${esc(bbName(r.kind, r.alpha))}</b>, porque ${r.why}. <button class="btn xs" id="btnUseRec" style="margin-left:6px">usar este</button>`;
+  renderReqChecklistOnly();
+}
+
+/* ---- Etapa 2 ---- */
+function classCardHtml(c){
+  const thumbs = c.samples.length
+    ? c.samples.map(s => `<div class="thumb" data-sid="${s.id}" title="Clique para remover"><img src="${s.url}" loading="lazy" alt=""></div>`).join('')
+    : '<div class="empty">Sem imagens. Use a webcam, envie arquivos ou arraste imagens aqui.</div>';
+  const nCam = c.samples.filter(s => s.src === 'webcam').length;
+  return `
+  <div class="class-card" data-id="${c.id}">
+    <div class="cc-head">
+      <span class="dot" style="background:${c.color};color:${c.color}"></span>
+      <input class="cc-name" type="text" value="${esc(c.name)}" data-act="rename" maxlength="40" aria-label="Nome da classe">
+      <span class="cc-count">${c.samples.length} img</span>
+    </div>
+    <div class="cc-actions">
+      <button class="btn sm" data-act="cam">🎥 Webcam</button>
+      <label class="btn sm">⬆ Arquivos<input type="file" accept="image/*" multiple data-act="files"></label>
+    </div>
+    <div class="thumbs">${thumbs}</div>
+    <div class="cc-foot"><span>${nCam} webcam · ${c.samples.length - nCam} arquivo</span><span><button class="btn xs" data-act="clear">limpar</button> <button class="btn xs danger" data-act="del">remover</button></span></div>
+  </div>`;
+}
+function renderClassGrid(){
+  const grid = $('#classGrid');
+  const focusedId = document.activeElement && document.activeElement.closest && document.activeElement.closest('.class-card')?.dataset.id;
+  if (focusedId && document.activeElement.matches('.cc-name')){
+    // não recria o cartão em edição; atualiza só os demais
+    S.classes.forEach(c => {
+      const el = grid.querySelector(`.class-card[data-id="${c.id}"]`);
+      if (String(c.id) === focusedId || !el) return;
+      el.outerHTML = classCardHtml(c);
+    });
+    return;
+  }
+  grid.innerHTML = S.classes.map(classCardHtml).join('') + '<button class="add-class-card" id="btnAddClassCard">+ Adicionar classe</button>';
+}
+function renderDataSide(){
+  // atualiza contagens rápidas sem recriar todas as miniaturas
+  S.classes.forEach(c => {
+    const el = $(`#classGrid .class-card[data-id="${c.id}"]`);
+    if (!el) return;
+    el.querySelector('.cc-count').textContent = `${c.samples.length} img`;
+    const th = el.querySelector('.thumbs');
+    const have = new Set([...th.querySelectorAll('.thumb')].map(t => +t.dataset.sid));
+    const empty = th.querySelector('.empty'); if (empty && c.samples.length) empty.remove();
+    c.samples.forEach(s => { if (!have.has(s.id)) th.insertAdjacentHTML('beforeend', `<div class="thumb" data-sid="${s.id}" title="Clique para remover"><img src="${s.url}" alt=""></div>`); });
+  });
+  renderSplit();
+  renderDiag();
+  updatePipeline();
+  renderRail();
+}
+function renderAllClasses(){
+  renderClassGrid();
+  renderSplit();
+  renderDiag();
+  updateAll();
+}
+function renderSplit(){
+  const {per} = splitCounts();
+  const tot = per.reduce((a, p) => ({tr: a.tr + p.tr, va: a.va + p.va, te: a.te + p.te}), {tr: 0, va: 0, te: 0});
+  $('#splitTable').innerHTML = S.classes.length ? `
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>Classe</th><th class="num">Treino</th><th class="num">Validação</th><th class="num">Teste</th><th class="num">Total</th></tr></thead>
+      <tbody>${S.classes.map((c, i) => `<tr><td><span class="dot" style="display:inline-block;background:${c.color};color:${c.color};margin-right:6px"></span>${esc(c.name)}</td><td class="num">${per[i].tr}</td><td class="num">${per[i].va}</td><td class="num">${per[i].te}</td><td class="num">${c.samples.length}</td></tr>`).join('')}</tbody>
+      <tfoot><tr><td>Total</td><td class="num">${tot.tr}</td><td class="num">${tot.va}</td><td class="num">${tot.te}</td><td class="num">${tot.tr + tot.va + tot.te}</td></tr></tfoot>
+    </table></div>` : '';
+  if (chBal){
+    chBal.data.labels = S.classes.map(c => c.name);
+    chBal.data.datasets[0].data = per.map(p => p.tr);
+    chBal.data.datasets[1].data = per.map(p => p.va);
+    chBal.data.datasets[2].data = per.map(p => p.te);
+    chBal.update();
+  }
+  const trN = tot.tr;
+  $('#augHint').textContent = trN ? `${trN} de treino → ${trN * (1 + S.aug.copies)} exemplos com aumento` : '';
+}
+function renderDiag(){
+  const v = validateData();
+  const ic = {ok: '✔', warn: '⚠', err: '✖'};
+  $('#dsWarnings').innerHTML = v.issues.map(i => `<div class="wl ${i.lvl}"><span>${ic[i.lvl]}</span><span>${esc(i.msg)}</span></div>`).join('');
+}
+async function augPreview(){
+  const pool = S.classes.flatMap(c => c.samples);
+  if (!pool.length){ toast('Adicione imagens primeiro.', 'warn'); return; }
+  const s = pool[Math.floor(Math.random() * pool.length)];
+  const bmp = await getBitmap(s);
+  const size = bbInput(S.bb.kind);
+  const box = $('#augPreview'); box.innerHTML = '';
+  for (let i = 0; i < 8; i++){
+    const a = i === 0 ? null : randAug(S.aug);
+    const cv = document.createElement('canvas');
+    drawToCanvas(bmp, Math.min(size, 160), S.prep.mode, a, cv);
+    if (a && a.bright !== 1) cv.style.filter = `brightness(${a.bright.toFixed(2)})`;
+    const w = document.createElement('div');
+    w.appendChild(cv);
+    w.insertAdjacentHTML('beforeend', `<div class="lbl">${i === 0 ? 'original' : 'aumento ' + i}</div>`);
+    box.appendChild(w);
+  }
+  closeBmp(bmp);
+}
+
+/* ---- Etapa 3 ---- */
+function renderBackbones(){
+  const r = recommendation();
+  $('#bbGrid').innerHTML = BB_ORDER.map(k => {
+    const d = BB[k];
+    const meta = k === 'cnn' ? `entrada ${S.cnn.size}×${S.cnn.size} · treina tudo` : `entrada ${d.input} · ~${nf(bbMB(k, d.family === 'mobilenet' ? (S.bb.kind === k ? S.bb.alpha : d.alphas[0]) : null), 1)} MB`;
+    const isRec = r.kind === k;
+    const cached = Object.keys(bbCache).some(key => key === k || key.startsWith(k + '_'));
+    return `<button class="bb ${S.bb.kind === k ? 'sel' : ''}" data-kind="${k}">
+      <span class="bb-tag ${isRec ? 'rec' : ''}">${isRec ? 'recomendado' : (cached ? 'em cache' : d.tag)}</span>
+      <div class="bb-ico">${d.icon}</div><div class="bb-name">${d.label}</div><div class="bb-meta">${meta}</div></button>`;
+  }).join('');
+  const d = BB[S.bb.kind];
+  const isMN = d.family === 'mobilenet';
+  $('#alphaWrap').hidden = !isMN;
+  if (isMN){
+    if (!d.alphas.includes(S.bb.alpha)) S.bb.alpha = d.alphas[0];
+    $('#chAlpha').innerHTML = d.alphas.map(a => `<label class="${a === S.bb.alpha ? 'on' : ''}"><input type="radio" name="alpha" value="${a}" ${a === S.bb.alpha ? 'checked' : ''}>α ${nf(a, 2)}</label>`).join('');
+  }
+  $('#cnnOpts').hidden = S.bb.kind !== 'cnn';
+  const k = S.bb.kind, al = S.bb.alpha;
+  const loaded = bbCache[bbKey(k, al)];
+  let kv;
+  if (k === 'cnn'){
+    const sh = cnnShapes();
+    const featDim = S.cnn.pool === 'gap' ? sh.last.f : sh.last.s * sh.last.s * sh.last.f;
+    kv = [['Entrada', `${S.cnn.size}×${S.cnn.size}×3`], ['Normalização', '[0, 1]'], ['Download', 'nenhum'], ['Características', `${featDim}`], ['Pesos treináveis', 'todos'], ['Referência', d.ref]];
+  } else {
+    kv = [['Entrada', `${d.input}×${d.input}×3`], ['Normalização', d.norm === 'pm1' ? '[-1, 1]' : '[0, 1]'], ['Download', `~${nf(bbMB(k, al), 1)} MB`],
+          ['Características', `${loaded ? loaded.featDim : bbFeat(k, al)}`], ['Parâmetros congelados', loaded ? fmtParams(loaded.params) : 'ao carregar'], ['Referência', d.ref]];
+  }
+  $('#bbDetail').innerHTML = `<b>${esc(bbName(k, al))}</b>: ${esc(d.desc)}<div class="kv">${kv.map(([a, b]) => `<div><span>${a}</span><strong>${esc(b)}</strong></div>`).join('')}</div>`;
+  renderArch();
+  $('#trainHint').textContent = k === 'cnn' ? 'Treina todos os pesos da CNN no seu conjunto.' : (loaded ? 'Modelo base já carregado.' : `O modelo base (~${nf(bbMB(k, al), 1)} MB) será baixado no primeiro treino.`);
+}
+function renderArch(){
+  const nC = Math.max(S.classes.length, 2);
+  const k = S.bb.kind;
+  const blk = (cls, t, s) => `<div class="blk ${cls}">${t}${s ? `<small>${s}</small>` : ''}</div>`;
+  const arr = '<span class="arr">→</span>';
+  const parts = [];
+  if (k === 'cnn'){
+    const c = S.cnn, sh = cnnShapes();
+    parts.push(blk('io', 'Imagem', `${c.size}×${c.size}×3`));
+    sh.blocks.forEach((b, i) => parts.push(blk('train', `Conv ${c.kernel}×${c.kernel} · ${b.f}${c.bn ? ' + BN' : ''} + ReLU`, `MaxPool → ${Math.floor(b.s / 2)}×${Math.floor(b.s / 2)}×${b.f}`)));
+    const fd = c.pool === 'gap' ? sh.last.f : sh.last.s * sh.last.s * sh.last.f;
+    parts.push(blk('train', c.pool === 'gap' ? 'GAP' : 'Flatten', `${fd}`));
+  } else {
+    const d = BB[k];
+    parts.push(blk('io', 'Imagem', `${d.input}×${d.input}×3`));
+    parts.push(blk('frozen', bbName(k, S.bb.alpha), 'congelado · ImageNet'));
+    parts.push(blk('frozen', 'GAP', `${bbFeat(k, S.bb.alpha)}`));
+  }
+  if (S.head.units > 0) parts.push(blk('train', `Densa ${S.head.units}`, 'ReLU'));
+  if (S.head.dropout > 0) parts.push(blk('train', 'Dropout', nf(S.head.dropout, 2)));
+  parts.push(blk('train', `Densa ${nC}`, 'softmax'));
+  $('#archDiagram').innerHTML = parts.join(arr);
+}
+function renderModelSummary(){
+  const T = S.trained; if (!T) return;
+  const rows = [];
+  if (!T.isCNN) rows.push({name: T.bb.name, type: T.bb.type === 'graph' ? 'GraphModel (congelado)' : 'Functional (congelado)', shape: `[null, ${T.bb.featDim}]`, params: T.bb.params, frozen: true});
+  T.model.layers.forEach(l => {
+    let shp = l.outputShape; shp = JSON.stringify(shp).replace(/null/g, 'null').replace(/,/g, ', ');
+    rows.push({name: l.name, type: l.getClassName(), shape: shp, params: l.countParams(), frozen: false});
+  });
+  $('#modelSummary').innerHTML = `
+    <div class="tiles" style="margin-bottom:12px">
+      <div class="tile"><span>Treináveis</span><strong>${fmtParams(T.trainable)}</strong><em>parâmetros ajustados</em></div>
+      <div class="tile"><span>Congelados</span><strong>${fmtParams(T.frozen)}</strong><em>${T.isCNN ? 'nenhum' : 'aprendidos no ImageNet'}</em></div>
+      <div class="tile"><span>Épocas</span><strong>${T.epochsRun}</strong><em>de ${T.cfg.hp.epochs} planejadas</em></div>
+      <div class="tile"><span>Tempo</span><strong>${nf(T.totalSec, 1)} s</strong><em>${nf(T.trainSec, 1)} s de ajuste</em></div>
+    </div>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Camada</th><th>Tipo</th><th>Saída</th><th class="num">Parâmetros</th></tr></thead>
+    <tbody>${rows.map(r => `<tr><td>${r.frozen ? '❄ ' : ''}${esc(r.name)}</td><td>${esc(r.type)}</td><td class="mono">${esc(r.shape)}</td><td class="num">${r.params.toLocaleString('pt-BR')}</td></tr>`).join('')}</tbody></table></div>`;
+}
+
+/* ---- Etapa 4 ---- */
+function renderEval(){
+  const T = S.trained, E = S.lastEval;
+  $('#evalEmpty').hidden = !!E; $('#evalBody').hidden = !E;
+  if (!T || !E) return;
+  const M = E.M;
+  $$('#segEval button').forEach(b => {
+    const set = b.dataset.set;
+    const has = set === 'test' ? !!T.D.te : set === 'val' ? !!T.D.va : true;
+    b.disabled = !has; b.classList.toggle('on', set === E.which);
+  });
+  $('#evalNote').textContent = `${M.n} imagens · modelo do experimento #${T.runId}${T.dsVersion !== S.dsVersion ? ' · conjunto alterado após o treino' : ''}`;
+  const tgt = S.project.targetAcc, mxl = S.project.maxLat;
+  const accOk = M.acc >= tgt, latOk = E.lat <= mxl;
+  $('#evalTiles').innerHTML = [
+    ['Acurácia', pct(M.acc), `${setLabel(E.which)}`, accOk ? 'good' : 'bad'],
+    ['F1 macro', pct(M.macroF1), 'média entre classes', ''],
+    ['Precisão macro', pct(M.macroP), '', ''],
+    ['Revocação macro', pct(M.macroR), '', ''],
+    ['Latência', nf(E.lat, 1) + ' ms', 'por imagem, ponta a ponta', latOk ? 'good' : 'bad'],
+    ['Erros', String(E.errors.length), `de ${M.n} imagens`, ''],
+  ].map(([a, b, c, cl]) => `<div class="tile ${cl}"><span>${a}</span><strong>${b}</strong><em>${c}</em></div>`).join('');
+  $('#criteriaBox').innerHTML = `
+    <div class="crit ${accOk ? 'ok' : 'no'}"><span class="ci">${accOk ? '✅' : '⚠️'}</span><div><b>Acurácia ${pct(M.acc)}</b> ${accOk ? 'atinge' : 'não atinge'} a meta de ${pct(tgt, 0)} definida nos requisitos${E.which !== 'test' ? ' (avaliado fora do teste)' : ''}.</div></div>
+    <div class="crit ${latOk ? 'ok' : 'no'}"><span class="ci">${latOk ? '✅' : '⚠️'}</span><div><b>Latência ${nf(E.lat, 1)} ms</b> ${latOk ? 'dentro' : 'acima'} do limite de ${mxl} ms neste dispositivo.</div></div>`;
+  // matriz de confusão
+  const names = T.classNames;
+  const mx = Math.max(1, ...M.cm.flat());
+  let h = `<table class="cm"><tr><th class="axis">real \\ previsto</th>${names.map(n => `<th title="${esc(n)}">${esc(n)}</th>`).join('')}</tr>`;
+  M.cm.forEach((row, i) => {
+    h += `<tr><th style="text-align:right" title="${esc(names[i])}">${esc(names[i])}</th>`;
+    row.forEach((v, j) => {
+      const a = v / mx;
+      const bg = i === j ? `rgba(63,154,75,${0.12 + a * 0.75})` : (v ? `rgba(226,92,92,${0.15 + a * 0.6})` : 'var(--bg-0)');
+      h += `<td style="background:${bg};color:${v ? '#fff' : 'var(--text-2)'}">${v}</td>`;
+    });
+    h += '</tr>';
+  });
+  $('#cmBox').innerHTML = h + '</table>';
+  $('#reportBox').innerHTML = `<table class="tbl"><thead><tr><th>Classe</th><th class="num">Precisão</th><th class="num">Revocação</th><th class="num">F1</th><th class="num">Suporte</th></tr></thead><tbody>` +
+    M.per.map((p, i) => `<tr><td><span class="dot" style="display:inline-block;background:${T.colors[i]};color:${T.colors[i]};margin-right:6px"></span>${esc(names[i])}</td><td class="num">${pct(p.p)}</td><td class="num">${pct(p.r)}</td><td class="num">${pct(p.f1)}</td><td class="num">${p.support}</td></tr>`).join('') +
+    `</tbody><tfoot><tr><td>Média macro</td><td class="num">${pct(M.macroP)}</td><td class="num">${pct(M.macroR)}</td><td class="num">${pct(M.macroF1)}</td><td class="num">${M.n}</td></tr></tfoot></table>`;
+  $('#errCount').textContent = E.errors.length ? `${E.errors.length} erro(s), ordenados pela confiança` : '';
+  $('#errGallery').innerHTML = E.errors.length ? E.errors.slice(0, 48).map(e => `
+    <div class="err"><img src="${e.ref.s.url}" alt=""><div><div class="t">real: ${esc(names[e.t])}</div><div class="p">previsto: ${esc(names[e.p])} (${pct(e.conf, 0)})</div></div></div>`).join('')
+    : '<div class="muted" style="font-size:12.5px;grid-column:1/-1">Nenhum erro neste conjunto. 🎉 Se o conjunto é pequeno, desconfie: teste com imagens novas na Etapa 5.</div>';
+}
+function renderRuns(){
+  if (!S.runs.length){ $('#runsTable').innerHTML = '<div class="muted" style="padding:10px;font-size:12.5px">Nenhum experimento ainda.</div>'; return; }
+  const bestAcc = Math.max(...S.runs.map(r => r.evalAcc));
+  $('#runsTable').innerHTML = `<table class="tbl"><thead><tr><th>#</th><th>Modelo base</th><th>Cabeça</th><th class="num">Épocas</th><th class="num">Lote</th><th class="num">LR</th><th>Otim.</th><th class="num">Aum.</th><th class="num">Acur. val.</th><th class="num">Acur. aval.</th><th class="num">F1</th><th class="num">ms</th><th class="num">Tempo</th></tr></thead><tbody>` +
+    S.runs.map(r => `<tr class="${r.evalAcc === bestAcc ? 'best' : ''}"><td>${r.n}</td><td>${esc(r.backbone)}${r.cnn ? ` <span class="muted">(${esc(r.cnn)})</span>` : ''}</td><td>${r.units ? 'D' + r.units : '-'}${r.dropout ? ' · do ' + nf(r.dropout, 2) : ''}</td><td class="num">${r.epochsRun}/${r.epochs}</td><td class="num">${r.batch}</td><td class="num">${r.lr}</td><td>${r.opt}</td><td class="num">×${1 + r.copies}</td><td class="num">${pct(r.valAcc)}</td><td class="num">${pct(r.evalAcc)} <span class="muted">${r.evalSet === 'test' ? 'T' : r.evalSet === 'val' ? 'V' : 'Tr'}</span></td><td class="num">${pct(r.f1)}</td><td class="num">${nf(r.lat, 0)}</td><td class="num">${nf(r.sec, 1)} s</td></tr>`).join('') +
+    '</tbody></table>';
+  chRuns.data.labels = S.runs.map(r => '#' + r.n + ' ' + (r.kind === 'cnn' ? 'CNN' : r.backbone.replace('MobileNet ', 'MN').replace('EfficientNet ', 'EN-')));
+  chRuns.data.datasets[0].data = S.runs.map(r => r.evalAcc);
+  chRuns.data.datasets[1].data = S.runs.map(r => r.f1);
+  chRuns.update();
+}
+
+/* ---- Etapa 5 ---- */
+function renderPredState(){
+  const T = S.trained;
+  $('#predEmpty').hidden = !!T;
+  const stale = T && T.dsVersion !== S.dsVersion;
+  $('#predStale').hidden = !stale;
+  if (stale) $('#predStale').textContent = '⚠ O conjunto de dados mudou depois do último treino. As predições usam o modelo anterior; retreine na Etapa 3 para incorporar as mudanças.';
+  if (T && !$('#liveBars').dataset.ready){ renderLiveBars(null); }
+}
+function renderLiveBars(p){
+  const T = S.trained; if (!T) { $('#liveBars').innerHTML = ''; return; }
+  const box = $('#liveBars');
+  if (box.dataset.sig !== T.classNames.join('|') + T.runId){
+    box.innerHTML = T.classNames.map((n, i) => `<div class="bar-row"><span class="bn" title="${esc(n)}">${esc(n)}</span><div class="bt"><div class="bf" style="background:${T.colors[i]}"></div></div><span class="bv">0%</span></div>`).join('');
+    box.dataset.sig = T.classNames.join('|') + T.runId; box.dataset.ready = '1';
+  }
+  if (!p) return;
+  const rows = box.querySelectorAll('.bar-row');
+  p.forEach((v, i) => { if (!rows[i]) return; rows[i].querySelector('.bf').style.width = (v * 100).toFixed(1) + '%'; rows[i].querySelector('.bv').textContent = pct(v, 0); });
+  const i = p.indexOf(Math.max(...p));
+  const unsure = p[i] < S.predThr;
+  $('#topPred').innerHTML = `<div class="tp-l">Predição</div><div class="tp-n" style="color:${unsure ? 'var(--warn)' : T.colors[i]}">${unsure ? 'Incerto' : esc(T.classNames[i])}</div><div class="tp-c">${unsure ? `maior probabilidade: ${esc(T.classNames[i])} com ${pct(p[i])}` : `confiança ${pct(p[i])}`}</div>`;
+}
+async function predictFiles(files){
+  const T = S.trained;
+  if (!T){ toast('Treine um modelo primeiro.', 'warn'); return; }
+  const list = [...files].filter(f => f.type.startsWith('image/') || IMG_EXT.test(f.name));
+  for (const f of list){
+    try {
+      const blob = await fileToBlob(f, 512);
+      const bmp = await createImageBitmap(blob);
+      const p = await predictDrawable(bmp);
+      closeBmp(bmp);
+      const url = URL.createObjectURL(blob);
+      const order = p.map((v, i) => [v, i]).sort((a, b) => b[0] - a[0]).slice(0, 3);
+      const top = order[0];
+      const unsure = top[0] < S.predThr;
+      const el = document.createElement('div');
+      el.className = 'pcard';
+      el.innerHTML = `<img src="${url}" alt=""><div class="pc-body"><div class="pc-top" style="color:${unsure ? 'var(--warn)' : T.colors[top[1]]}">${unsure ? 'Incerto' : esc(T.classNames[top[1]])} <span class="muted mono" style="font-weight:400;font-size:11px">${pct(top[0], 0)}</span></div><div class="muted" style="font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(f.name || 'imagem colada')}</div>
+        <div class="mini">${order.map(([v, i]) => `<span class="mn">${esc(T.classNames[i])}</span><span class="mt"><i style="width:${(v * 100).toFixed(1)}%;background:${T.colors[i]}"></i></span><span class="ml">${pct(v, 0)}</span>`).join('')}</div></div>`;
+      $('#predResults').prepend(el);
+      renderLiveBars(p);
+    } catch (e){ log('Falha ao ler ' + (f.name || 'imagem') + ': ' + e.message, 'error'); }
+  }
+  if (list.length){ S.done[5] = true; updatePipeline(); log(`${list.length} imagem(ns) classificada(s).`, 'info'); }
+}
+
+/* ---- Rail / sistema ---- */
+function renderRail(){
+  const tot = S.classes.reduce((a, c) => a + c.samples.length, 0);
+  const T = S.trained;
+  $('#railProject').innerHTML = `<div class="rp-name">${esc(S.project.name || 'Sem nome')}</div>` +
+    (S.classes.map(c => `<div class="rp-cls"><span class="dot" style="background:${c.color};color:${c.color}"></span><span class="n">${esc(c.name)}</span><span class="c">${c.samples.length}</span></div>`).join('') || '<div class="muted" style="font-size:12px">Sem classes.</div>') +
+    `<div class="rp-status">Imagens: <b>${tot}</b><br>Modelo: ${T ? `<b>${esc(T.name)}</b>, exp. #${T.runId}${S.lastEval ? `, acurácia ${pct(S.lastEval.M.acc)} (${setLabel(S.lastEval.which)})` : ''}` : '<b>não treinado</b>'}</div>`;
+}
+function updateSys(){
+  if (typeof tf === 'undefined') return;
+  const m = tf.memory();
+  const loaded = Object.values(bbCache).map(b => b.name.replace('MobileNet ', 'MN').replace('EfficientNet ', 'EN-')).join(', ') || 'nenhum';
+  $('#sysGrid').innerHTML = [
+    ['backend', tf.getBackend()], ['TF.js', tf.version.tfjs],
+    ['tensores', m.numTensors], ['memória', nf(m.numBytes / 1048576, 1) + ' MB'],
+    ['experimentos', S.runs.length], ['bases', loaded],
+  ].map(([a, b]) => `<div><span>${a}</span><strong>${esc(b)}</strong></div>`).join('');
+}
+
+/* ------------------------------ EXPORTAÇÃO ------------------------------ */
+async function getArtifacts(model){
+  let art = null;
+  await model.save(tf.io.withSaveHandler(async a => { art = a; return {modelArtifactsInfo: {dateSaved: new Date(), modelTopologyType: 'JSON'}}; }));
+  return art;
+}
+function joinBuffers(wd){
+  if (wd instanceof ArrayBuffer) return wd;
+  if (Array.isArray(wd)){
+    const total = wd.reduce((a, b) => a + b.byteLength, 0);
+    const out = new Uint8Array(total); let off = 0;
+    wd.forEach(b => { out.set(new Uint8Array(b), off); off += b.byteLength; });
+    return out.buffer;
+  }
+  return wd;
+}
+function exportPlan(){
+  const T = S.trained; if (!T) return null;
+  if (T.isCNN) return {mode: 'full', desc: 'CNN completa: recebe a imagem e devolve as probabilidades.'};
+  if (T.bb.type === 'layers') return {mode: 'full', desc: `Modelo único ponta a ponta: ${T.bb.name} (corte em ${T.bb.cutLayer}) + GAP + cabeça treinada. Recebe a imagem e devolve as probabilidades.`};
+  return {mode: 'head', desc: `Cabeça treinada sobre as características do ${T.bb.name}. O backbone em formato GraphModel é carregado do mesmo endereço público usado aqui (o metadata.json traz a URL e o nó de saída).`};
+}
+async function buildExportModel(){
+  const T = S.trained, plan = exportPlan();
+  if (plan.mode === 'full' && !T.isCNN){
+    let y = T.bb.base.outputs[0];
+    for (const L of T.model.layers) y = L.apply(y);
+    return tf.model({inputs: T.bb.base.inputs, outputs: y, name: 'cnn_machine'});
+  }
+  return T.model;
+}
+function buildMetadata(){
+  const T = S.trained, E = T.mainEval || S.lastEval, plan = exportPlan();
+  return {
+    tool: 'CNN.machine', toolVersion: VERSION, tfjsVersion: tf.version.tfjs, created: new Date().toISOString(),
+    project: {name: S.project.name, goal: S.project.goal, users: S.project.users},
+    labels: T.classNames, colors: T.colors,
+    modelType: plan.mode === 'full' ? 'end-to-end' : 'head-on-backbone',
+    inputSize: T.input,
+    preprocessing: {resize: T.prepMode, channelOrder: 'RGB', normalization: T.norm === 'pm1' ? 'x/127.5 - 1' : 'x/255', range: T.norm === 'pm1' ? [-1, 1] : [0, 1]},
+    backbone: T.isCNN ? null : {name: T.bb.name, kind: T.kind, alpha: T.alpha, format: T.bb.type === 'graph' ? 'graph-model' : 'layers-model', url: T.bb.url, cut: T.bb.cutLayer, featureDim: T.bb.featDim, includedInModelJson: plan.mode === 'full'},
+    architecture: T.isCNN ? {cnn: T.cfg.cnn, head: T.cfg.head} : {head: T.cfg.head},
+    training: {hyperparameters: T.cfg.hp, augmentation: T.cfg.aug, split: T.cfg.split, counts: T.counts, epochsRun: T.epochsRun, seconds: +T.totalSec.toFixed(1)},
+    evaluation: E ? {set: E.which, accuracy: +E.M.acc.toFixed(4), macroF1: +E.M.macroF1.toFixed(4), latencyMs: +E.lat.toFixed(1),
+      perClass: T.classNames.map((n, i) => ({label: n, precision: +E.M.per[i].p.toFixed(4), recall: +E.M.per[i].r.toFixed(4), f1: +E.M.per[i].f1.toFixed(4), support: E.M.per[i].support})),
+      confusionMatrix: E.M.cm} : null,
+    successCriteria: {targetAccuracy: S.project.targetAcc, maxLatencyMs: S.project.maxLat},
+  };
+}
+function abToBase64(buf){
+  return new Promise(res => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.readAsDataURL(new Blob([buf])); });
+}
+function buildDemoHtml(modelJson, b64, meta){
+  const title = esc(meta.project.name || 'Modelo');
+  const scriptOpen = '<scr' + 'ipt';
+  const scriptClose = '</scr' + 'ipt>';
+  return `<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${title} · demo</title>
+${scriptOpen} src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/${meta.tfjsVersion}/tf.min.js">${scriptClose}
+<style>
+body{background:#0b0f14;color:#e6edf3;font-family:Inter,Segoe UI,system-ui,sans-serif;margin:0;padding:24px;max-width:760px;margin:auto}
+h1{font-size:22px;margin:0 0 4px}h1 span{color:#3F9A4B}p{color:#9aa6b2;font-size:13px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+button,label.b{background:#1c2631;border:1px solid #243140;color:#e6edf3;padding:9px 14px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px}
+button:hover,label.b:hover{border-color:#3F9A4B}
+.stage{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:640px){.stage{grid-template-columns:1fr}}
+.view{background:#000;border-radius:10px;aspect-ratio:1;overflow:hidden;position:relative;border:1px solid #243140}
+.view video,.view img{width:100%;height:100%;object-fit:cover;display:block}.view video{transform:scaleX(-1)}
+.bar{display:grid;grid-template-columns:110px 1fr 46px;gap:8px;align-items:center;font-size:13px;margin:7px 0}
+.t{height:20px;background:#10161d;border-radius:5px;overflow:hidden}.f{height:100%;width:0;transition:width .15s}
+.v{text-align:right;font-family:monospace}#top{font-size:24px;font-weight:800;margin-top:12px}#st{font-size:12px;color:#6b7785}
+</style></head><body>
+<h1>${title} <span>· demo</span></h1>
+<p>Modelo gerado com CNN.machine (${esc(meta.backbone ? meta.backbone.name : 'CNN do zero')}). Classes: ${meta.labels.map(esc).join(', ')}.</p>
+<div class="row"><button id="cam">Ligar webcam</button><label class="b">Abrir imagem<input type="file" id="file" accept="image/*" hidden></label></div>
+<div class="stage"><div class="view"><video id="v" playsinline muted hidden></video><img id="img" hidden alt=""></div>
+<div><div id="bars"></div><div id="top"></div><div id="st">carregando modelo...</div></div></div>
+${scriptOpen}>
+const META = ${JSON.stringify(meta).replace(/</g, '\\u003c')};
+const MODEL_JSON = ${modelJson};
+const WEIGHTS_B64 = "${b64}";
+let model, backbone, featNode, cv = document.createElement('canvas'), camOn = false;
+const bars = document.getElementById('bars');
+bars.innerHTML = META.labels.map((n, i) => '<div class="bar"><span>' + n.replace(/</g, '&lt;') + '</span><div class="t"><div class="f" style="background:' + META.colors[i] + '"></div></div><span class="v">0%</span></div>').join('');
+async function load(){
+  const w = await (await fetch('data:application/octet-stream;base64,' + WEIGHTS_B64)).arrayBuffer();
+  model = await tf.loadLayersModel(tf.io.fromMemory({modelTopology: MODEL_JSON.modelTopology, weightSpecs: MODEL_JSON.weightsManifest[0].weights, weightData: w}));
+  if (META.modelType === 'head-on-backbone'){
+    document.getElementById('st').textContent = 'baixando ' + META.backbone.name + '...';
+    backbone = await tf.loadGraphModel(META.backbone.url); featNode = META.backbone.cut;
+  }
+  document.getElementById('st').textContent = 'modelo pronto · ' + tf.getBackend();
+}
+function draw(src){
+  const s = META.inputSize, sw = src.videoWidth || src.naturalWidth || src.width, sh = src.videoHeight || src.naturalHeight || src.height;
+  cv.width = cv.height = s; const c = cv.getContext('2d'); c.fillStyle = '#000'; c.fillRect(0, 0, s, s);
+  const m = META.preprocessing.resize;
+  if (m === 'crop'){ const q = Math.min(sw, sh); c.drawImage(src, (sw - q) / 2, (sh - q) / 2, q, q, 0, 0, s, s); }
+  else if (m === 'pad'){ const r = Math.min(s / sw, s / sh); c.drawImage(src, 0, 0, sw, sh, (s - sw * r) / 2, (s - sh * r) / 2, sw * r, sh * r); }
+  else c.drawImage(src, 0, 0, sw, sh, 0, 0, s, s);
+}
+async function predict(src){
+  if (!model) return;
+  draw(src);
+  const out = tf.tidy(() => {
+    let x = tf.browser.fromPixels(cv).toFloat();
+    x = META.preprocessing.range[0] < 0 ? x.div(127.5).sub(1) : x.div(255);
+    x = x.expandDims(0);
+    return backbone ? model.predict(backbone.execute(x, featNode)) : model.predict(x);
+  });
+  const p = await out.data(); out.dispose();
+  const rows = bars.children; let bi = 0;
+  p.forEach((v, i) => { rows[i].querySelector('.f').style.width = (v * 100).toFixed(1) + '%'; rows[i].querySelector('.v').textContent = Math.round(v * 100) + '%'; if (v > p[bi]) bi = i; });
+  const top = document.getElementById('top'); top.textContent = META.labels[bi] + ' · ' + Math.round(p[bi] * 100) + '%'; top.style.color = META.colors[bi];
+}
+document.getElementById('cam').onclick = async () => {
+  const v = document.getElementById('v');
+  if (camOn){ v.srcObject.getTracks().forEach(t => t.stop()); v.hidden = true; camOn = false; document.getElementById('cam').textContent = 'Ligar webcam'; return; }
+  v.srcObject = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'user'}, audio: false});
+  await v.play(); v.hidden = false; document.getElementById('img').hidden = true; camOn = true; document.getElementById('cam').textContent = 'Desligar webcam';
+  (async function loop(){ if (!camOn) return; if (v.videoWidth) await predict(v); setTimeout(() => requestAnimationFrame(loop), 50); })();
+};
+document.getElementById('file').onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  const img = document.getElementById('img'); img.onload = () => predict(img); img.src = URL.createObjectURL(f); img.hidden = false;
+};
+load().catch(e => { document.getElementById('st').textContent = 'erro: ' + e.message; });
+${scriptClose}
+</body></html>`;
+}
+function buildModelCard(){
+  const T = S.trained, E = T.mainEval || S.lastEval, P = S.project, M = E ? E.M : null;
+  const L = [];
+  L.push(`# Ficha do modelo: ${P.name || 'Modelo'}`, '');
+  L.push(`Gerado com CNN.machine v${VERSION} em ${nowStamp()}. Experimento #${T.runId}.`, '');
+  L.push('## 1. Uso pretendido', '');
+  L.push(`- **Objetivo:** ${P.goal || '(não informado)'}`);
+  L.push(`- **Usuários e contexto:** ${P.users || '(não informado)'}`);
+  L.push(`- **Fonte das imagens:** ${P.source}; **dispositivo alvo:** ${P.device === 'pc' ? 'computador' : 'celular'}; **prioridade:** ${P.priority}`, '');
+  L.push('## 2. Classes e dados', '');
+  L.push('| Classe | Treino | Validação | Teste |', '|---|---:|---:|---:|');
+  const per = T.classNames.map(() => ({tr: 0, va: 0, te: 0}));
+  (T.D.tr ? T.D.tr.refs : []).forEach(r => { if (!r.aug) per[r.ci].tr++; });
+  (T.D.va ? T.D.va.refs : []).forEach(r => per[r.ci].va++);
+  (T.D.te ? T.D.te.refs : []).forEach(r => per[r.ci].te++);
+  T.classNames.forEach((n, i) => L.push(`| ${n} | ${per[i].tr} | ${per[i].va} | ${per[i].te} |`));
+  L.push('', `Divisão estratificada com semente ${T.cfg.split.seed}. Aumento de dados no treino: ${T.cfg.aug.copies} cópia(s) por imagem, espelhamento ${T.cfg.aug.flip ? 'sim' : 'não'}, rotação ±${T.cfg.aug.rot}°, zoom até ${T.cfg.aug.zoom}%, deslocamento até ${T.cfg.aug.shift}%, brilho ±${T.cfg.aug.bright}%. Ajuste ao tamanho: ${T.prepMode}.`, '');
+  L.push('## 3. Modelo', '');
+  L.push(`- **Base:** ${T.isCNN ? 'CNN treinada do zero' : T.bb.name + ' pré-treinado no ImageNet, congelado (' + fmtParams(T.frozen) + ' parâmetros)'}`);
+  if (T.isCNN) L.push(`- **CNN:** ${T.cfg.cnn.blocks} bloco(s), ${T.cfg.cnn.filters} filtros iniciais, kernel ${T.cfg.cnn.kernel}×${T.cfg.cnn.kernel}, ${T.cfg.cnn.pool === 'gap' ? 'Global Average Pooling' : 'Flatten'}, BatchNorm ${T.cfg.cnn.bn ? 'sim' : 'não'}, entrada ${T.cfg.cnn.size}×${T.cfg.cnn.size}`);
+  L.push(`- **Cabeça:** ${T.cfg.head.units ? 'densa ' + T.cfg.head.units + ' ReLU, ' : ''}dropout ${T.cfg.head.dropout}, saída softmax com ${T.nC} classes (${fmtParams(T.trainable)} parâmetros treináveis)`);
+  L.push(`- **Treino:** ${T.epochsRun}/${T.cfg.hp.epochs} épocas, lote ${T.cfg.hp.batch}, otimizador ${T.cfg.hp.opt}, taxa de aprendizado ${T.cfg.hp.lr}, L2 ${T.cfg.hp.l2}, paciência ${T.cfg.hp.patience}, pesos de classe ${T.cfg.hp.classWeight ? 'balanceados' : 'iguais'}`, '');
+  if (M){
+    L.push(`## 4. Desempenho (conjunto de ${setLabel(E.which)}, ${M.n} imagens)`, '');
+    L.push(`- **Acurácia:** ${pct(M.acc)} (meta: ${pct(P.targetAcc, 0)}, ${M.acc >= P.targetAcc ? 'atingida' : 'não atingida'})`);
+    L.push(`- **F1 macro:** ${pct(M.macroF1)}`);
+    L.push(`- **Latência:** ${nf(E.lat, 1)} ms por imagem neste navegador (limite: ${P.maxLat} ms, ${E.lat <= P.maxLat ? 'dentro' : 'acima'})`, '');
+    L.push('| Classe | Precisão | Revocação | F1 | Suporte |', '|---|---:|---:|---:|---:|');
+    T.classNames.forEach((n, i) => L.push(`| ${n} | ${pct(M.per[i].p)} | ${pct(M.per[i].r)} | ${pct(M.per[i].f1)} | ${M.per[i].support} |`));
+    L.push('', '**Matriz de confusão** (linhas = real, colunas = previsto):', '');
+    L.push('| real \\ previsto | ' + T.classNames.join(' | ') + ' |', '|---|' + T.classNames.map(() => '---:').join('|') + '|');
+    M.cm.forEach((r, i) => L.push(`| ${T.classNames[i]} | ${r.join(' | ')} |`));
+    L.push('');
+  }
+  L.push('## 5. Limitações e cuidados', '');
+  L.push('- O modelo só conhece as classes acima: diante de algo novo, ainda escolherá uma delas. Use o limiar de confiança e, se possível, uma classe "fundo".');
+  L.push('- O desempenho vale para condições parecidas com as dos dados coletados (câmera, iluminação, fundo, enquadramento). Mudanças nessas condições podem reduzir a acurácia.');
+  L.push('- Conjuntos pequenos produzem métricas com alta incerteza; valide com novas imagens antes de usar em decisões reais.');
+  L.push('- Verifique se os dados representam de forma justa todas as pessoas, objetos e situações em que o modelo será usado.', '');
+  L.push('## 6. Referências', '');
+  L.push('- Martins, R. M. et al. (2024). Processo de desenvolvimento de ML centrado no ser humano.');
+  L.push('- Mitchell, M. et al. (2019). Model Cards for Model Reporting. FAT* 2019.');
+  if (!T.isCNN) L.push(`- ${BB[T.kind].ref}.`);
+  return L.join('\n');
+}
+function runsCsv(){
+  const cols = ['n', 'when', 'backbone', 'cnn', 'input', 'units', 'dropout', 'epochs', 'epochsRun', 'batch', 'lr', 'opt', 'l2', 'copies', 'nTrain', 'nVal', 'nTest', 'trainAcc', 'valAcc', 'evalSet', 'evalAcc', 'f1', 'lat', 'sec', 'trainable', 'frozen'];
+  const q = v => { if (v == null) return ''; const s = typeof v === 'number' ? String(+v.toFixed(5)) : String(v); return /[",;\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  return [cols.join(','), ...S.runs.map(r => cols.map(c => q(r[c])).join(','))].join('\n');
+}
+function readmeTxt(meta, plan){
+  return [
+    `${meta.project.name || 'Modelo'} · pacote exportado pelo CNN.machine v${VERSION}`,
+    '',
+    'Arquivos:',
+    '  model.json + weights.bin  modelo TensorFlow.js (layers-model)',
+    '  metadata.json             classes, pré-processamento, backbone e métricas',
+    '  demo.html                 página pronta: abra no navegador (precisa de internet para baixar o TF.js)',
+    '  FICHA_DO_MODELO.md        documentação do modelo (model card)',
+    '  historico_experimentos.csv',
+    '',
+    `Tipo: ${plan.desc}`,
+    `Entrada: imagem RGB ${meta.inputSize}x${meta.inputSize}, ajuste "${meta.preprocessing.resize}", normalização ${meta.preprocessing.normalization}.`,
+    '',
+    'Para carregar model.json a partir de outra página, sirva os arquivos por HTTP (GitHub Pages ou "python -m http.server").',
+  ].join('\n');
+}
+async function exportZip(){
+  const T = S.trained; if (!T){ toast('Treine um modelo primeiro.', 'warn'); return; }
+  const btn = $('#btnExportZip'); btn.disabled = true; btn.textContent = '⏳ Gerando pacote...';
+  try {
+    const plan = exportPlan();
+    const em = await buildExportModel();
+    const art = await getArtifacts(em);
+    const bin = joinBuffers(art.weightData);
+    const mj = {format: art.format, generatedBy: art.generatedBy, convertedBy: art.convertedBy || null, modelTopology: art.modelTopology, weightsManifest: [{paths: ['weights.bin'], weights: art.weightSpecs}]};
+    const meta = buildMetadata();
+    const modelJson = JSON.stringify(mj);
+    const b64 = await abToBase64(bin);
+    const zip = new JSZip();
+    zip.file('model.json', modelJson);
+    zip.file('weights.bin', bin);
+    zip.file('metadata.json', JSON.stringify(meta, null, 2));
+    zip.file('demo.html', buildDemoHtml(modelJson, b64, meta));
+    zip.file('FICHA_DO_MODELO.md', buildModelCard());
+    zip.file('historico_experimentos.csv', runsCsv());
+    zip.file('LEIA-ME.txt', readmeTxt(meta, plan));
+    const blob = await zip.generateAsync({type: 'blob', compression: 'DEFLATE', compressionOptions: {level: 6}});
+    download(blob, (slugify(S.project.name) || 'modelo') + '_cnn-machine.zip');
+    log(`Pacote exportado (${nf(blob.size / 1048576, 2)} MB, pesos ${nf(bin.byteLength / 1048576, 2)} MB).`, 'ok');
+    S.done[6] = true; updatePipeline();
+  } catch (e){
+    console.error(e); log('Erro ao exportar: ' + e.message, 'error'); toast('Erro ao exportar: ' + e.message, 'error');
+  } finally { btn.disabled = !S.trained; btn.textContent = '⬇ Baixar pacote completo (.zip)'; }
+}
+function codeSnippet(tab){
+  const T = S.trained;
+  const size = T ? T.input : 224;
+  const norm = T ? T.norm : 'pm1';
+  const head = T && exportPlan().mode === 'head';
+  const labels = T ? JSON.stringify(T.classNames) : '["classe A", "classe B"]';
+  const mode = T ? T.prepMode : 'crop';
+  const jsDraw = mode === 'stretch'
+    ? `  cv.getContext('2d').drawImage(imagem, 0, 0, sw, sh, 0, 0, s, s);   // esticar\n`
+    : mode === 'pad'
+    ? `  const ctx = cv.getContext('2d'), r = Math.min(s / sw, s / sh);      // preencher bordas\n  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, s, s);\n  ctx.drawImage(imagem, 0, 0, sw, sh, (s - sw * r) / 2, (s - sh * r) / 2, sw * r, sh * r);\n`
+    : `  const q = Math.min(sw, sh);              // corte central quadrado\n  cv.getContext('2d').drawImage(imagem, (sw - q) / 2, (sh - q) / 2, q, q, 0, 0, s, s);\n`;
+  const pyDraw = mode === 'stretch'
+    ? `    img = img.resize((s, s))                       # esticar\n`
+    : mode === 'pad'
+    ? `    w, h = img.size                                # preencher bordas\n    r = min(s / w, s / h)\n    nw, nh = round(w * r), round(h * r)\n    fundo = Image.new('RGB', (s, s))\n    fundo.paste(img.resize((nw, nh)), ((s - nw) // 2, (s - nh) // 2))\n    img = fundo\n`
+    : `    w, h = img.size\n    q = min(w, h)                                  # corte central quadrado\n    img = img.crop(((w - q) // 2, (h - q) // 2, (w + q) // 2, (h + q) // 2)).resize((s, s))\n`;
+  if (tab === 'js'){
+    return `// 1) Sirva model.json, weights.bin e metadata.json pelo mesmo site (ex.: GitHub Pages)
+// 2) Inclua o TF.js: <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/${tf.version.tfjs}/tf.min.js"><\/script>
+
+const meta = await (await fetch('metadata.json')).json();
+const model = await tf.loadLayersModel('model.json');
+${head ? `// Este modelo é uma cabeça sobre o ${T.bb.name}: carregue também o backbone
+const backbone = await tf.loadGraphModel(meta.backbone.url);
+` : ''}
+function preprocessar(imagem) {            // <img>, <video> ou <canvas>
+  const s = meta.inputSize;                // ${size}
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = s;
+  const sw = imagem.videoWidth || imagem.naturalWidth || imagem.width;
+  const sh = imagem.videoHeight || imagem.naturalHeight || imagem.height;
+${jsDraw}  return tf.tidy(() => {
+    const x = tf.browser.fromPixels(cv).toFloat();
+    return ${norm === 'pm1' ? 'x.div(127.5).sub(1)' : 'x.div(255)'}.expandDims(0);   // ${norm === 'pm1' ? 'faixa [-1, 1]' : 'faixa [0, 1]'}
+  });
+}
+
+async function classificar(imagem) {
+  const x = preprocessar(imagem);
+  const probs = tf.tidy(() => ${head ? 'model.predict(backbone.execute(x, meta.backbone.cut))' : 'model.predict(x)'});
+  const p = await probs.data();
+  x.dispose(); probs.dispose();
+  const i = p.indexOf(Math.max(...p));
+  return { classe: meta.labels[i], confianca: p[i], todas: Array.from(p) };
+}
+
+// exemplo: console.log(await classificar(document.querySelector('img')));`;
+  }
+  return `# Converter o modelo TF.js para Keras (.h5) e usar em Python
+# pip install tensorflowjs pillow numpy
+#   tensorflowjs_converter --input_format=tfjs_layers_model \\
+#       --output_format=keras model.json modelo.h5
+
+import json
+import numpy as np
+import tensorflow as tf
+from PIL import Image
+
+meta = json.load(open('metadata.json', encoding='utf-8'))
+model = tf.keras.models.load_model('modelo.h5', compile=False)
+${head ? `
+# Este modelo é uma cabeça sobre o ${T.bb.name} (vetor de ${T.bb.featDim} características).
+# Em Python, use o mesmo backbone do TF Hub / Kaggle Models com entrada em [0, 1]:
+import tensorflow_hub as hub   # pip install tensorflow-hub
+backbone = hub.KerasLayer('https://tfhub.dev/tensorflow/efficientnet/b${BB[T.kind].b}/feature-vector/1')
+` : ''}
+def preprocessar(caminho, s=meta['inputSize']):   # ${size}
+    img = Image.open(caminho).convert('RGB')
+${pyDraw}    x = np.asarray(img, dtype='float32')[None]
+    return ${norm === 'pm1' ? 'x / 127.5 - 1.0                 # faixa [-1, 1]' : 'x / 255.0                       # faixa [0, 1]'}
+
+x = preprocessar('foto.jpg')
+probs = model.predict(${head ? 'backbone(x)' : 'x'})[0]
+i = int(np.argmax(probs))
+labels = meta['labels']   # ${labels}
+print(f'{labels[i]}: {probs[i]:.1%}')`;
+}
+function renderExport(){
+  const T = S.trained;
+  $('#expEmpty').hidden = !!T;
+  ['#btnExportZip', '#btnModelCard', '#btnReportJson', '#btnRunsCsv'].forEach(id => { $(id).disabled = !T; });
+  if (T){
+    const plan = exportPlan();
+    $('#exportInfo').innerHTML = `${esc(plan.desc)}<br>Classes: <b style="color:var(--text-0)">${T.classNames.map(esc).join(', ')}</b> · entrada ${T.input}×${T.input} · experimento #${T.runId}`;
+    $('#zipList').innerHTML = [
+      ['model.json', 'topologia do modelo (layers-model)'],
+      ['weights.bin', 'pesos ' + (plan.mode === 'full' && !T.isCNN ? 'do backbone + cabeça' : T.isCNN ? 'da CNN' : 'da cabeça')],
+      ['metadata.json', 'classes, pré-processamento e métricas'],
+      ['demo.html', 'página pronta com webcam e upload'],
+      ['FICHA_DO_MODELO.md', 'model card'],
+      ['historico_experimentos.csv', `${S.runs.length} experimento(s)`],
+    ].map(([a, b]) => `<li><code>${a}</code><span>${b}</span></li>`).join('');
+  } else { $('#exportInfo').textContent = ''; $('#zipList').innerHTML = ''; }
+  $$('#segCode button').forEach(b => b.classList.toggle('on', b.dataset.code === S.codeTab));
+  $('#codeBox').textContent = codeSnippet(S.codeTab);
+}
+
+/* ------------------------------ IMPORTAÇÃO ------------------------------ */
+async function addFilesToClass(cls, files){
+  const list = [...files].filter(f => (f.type && f.type.startsWith('image/')) || IMG_EXT.test(f.name || ''));
+  if (!list.length){ toast('Nenhuma imagem encontrada.', 'warn'); return 0; }
+  let n = 0;
+  for (const f of list){
+    try { const b = await fileToBlob(f); addSample(cls, b, 'arquivo'); n++; if (n % 10 === 0) scheduleDataRender(); }
+    catch (e){ log('Não foi possível ler ' + f.name, 'warn'); }
+  }
+  renderAllClasses();
+  log(`${n} imagem(ns) adicionada(s) à classe "${cls.name}".`, 'ok');
+  return n;
+}
+async function importGrouped(entries, origin){
+  // entries: [{className, getBlob: async () => Blob, name}]
+  if (!entries.length){ toast('Nenhuma imagem encontrada em ' + origin + '.', 'warn'); return; }
+  const groups = new Map();
+  entries.forEach(e => { if (!groups.has(e.className)) groups.set(e.className, []); groups.get(e.className).push(e); });
+  log(`Importando ${entries.length} imagens em ${groups.size} classe(s) de ${origin}...`, 'info');
+  let n = 0;
+  for (const [name, list] of groups){
+    const cls = findOrCreateClass(name);
+    for (const e of list){
+      try {
+        const raw = await e.getBlob();
+        const b = await fileToBlob(raw);
+        addSample(cls, b, 'arquivo'); n++;
+        if (n % 20 === 0){ renderAllClasses(); await sleep(0); }
+      } catch (err){ log('Ignorado: ' + e.name, 'warn'); }
+    }
+  }
+  renderAllClasses();
+  log(`Importação concluída: ${n} imagens.`, 'ok');
+  toast(`${n} imagens importadas em ${groups.size} classe(s).`);
+}
+function classFromPath(path){
+  const parts = path.split('/').filter(Boolean);
+  if (parts.length >= 2) return parts[parts.length - 2];
+  return 'Importadas';
+}
+async function importFolder(files){
+  const arr = [...files].filter(f => IMG_EXT.test(f.name) && !f.name.startsWith('.'));
+  const entries = arr.map(f => ({name: f.name, className: classFromPath(f.webkitRelativePath || f.name), getBlob: async () => f}));
+  await importGrouped(entries, 'pasta');
+}
+async function importZip(file){
+  const zip = await JSZip.loadAsync(file);
+  const entries = [];
+  zip.forEach((path, f) => {
+    if (f.dir || /(^|\/)(__MACOSX|\.)/.test(path) || !IMG_EXT.test(path)) return;
+    const ext = path.split('.').pop().toLowerCase();
+    const mime = ext === 'png' ? 'image/png' : ext === 'gif' ? 'image/gif' : ext === 'webp' ? 'image/webp' : ext === 'bmp' ? 'image/bmp' : ext === 'avif' ? 'image/avif' : 'image/jpeg';
+    entries.push({name: path, className: classFromPath(path), getBlob: async () => new Blob([await f.async('arraybuffer')], {type: mime})});
+  });
+  await importGrouped(entries, file.name);
+}
+async function exportDataset(){
+  const tot = S.classes.reduce((a, c) => a + c.samples.length, 0);
+  if (!tot){ toast('Não há imagens para exportar.', 'warn'); return; }
+  const zip = new JSZip();
+  const used = new Set();
+  S.classes.forEach(c => {
+    let dir = slugify(c.name) || 'classe'; while (used.has(dir)) dir += '_'; used.add(dir);
+    const folder = zip.folder(c.name.replace(/[\\/:*?"<>|]/g, '_') || dir);
+    c.samples.forEach((s, i) => folder.file(`${dir}_${String(i + 1).padStart(4, '0')}.jpg`, s.blob));
+  });
+  const blob = await zip.generateAsync({type: 'blob'});
+  download(blob, (slugify(S.project.name) || 'dataset') + '_dataset.zip');
+  log(`Dataset exportado: ${tot} imagens em ${S.classes.length} pastas.`, 'ok');
+}
+
+/* -------------------- EXEMPLO: FORMAS GEOMÉTRICAS -------------------- */
+function drawShape(ctx, kind, size){
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const hue = Math.floor(rnd(0, 360));
+  const dark = Math.random() < 0.5;
+  const g = ctx.createLinearGradient(0, 0, size, size);
+  g.addColorStop(0, `hsl(${(hue + 180) % 360} ${rnd(10, 40)}% ${dark ? rnd(8, 22) : rnd(70, 92)}%)`);
+  g.addColorStop(1, `hsl(${(hue + 150) % 360} ${rnd(10, 40)}% ${dark ? rnd(12, 28) : rnd(60, 85)}%)`);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, size, size);
+  for (let i = 0; i < 6; i++){
+    ctx.strokeStyle = `hsla(${rnd(0, 360)} 30% 50% / ${rnd(0.08, 0.25)})`; ctx.lineWidth = rnd(1, 4);
+    ctx.beginPath(); ctx.moveTo(rnd(0, size), rnd(0, size)); ctx.lineTo(rnd(0, size), rnd(0, size)); ctx.stroke();
+  }
+  const r = rnd(size * 0.16, size * 0.32);
+  const cx = rnd(r + 8, size - r - 8), cy = rnd(r + 8, size - r - 8);
+  ctx.save(); ctx.translate(cx, cy); ctx.rotate(rnd(0, Math.PI * 2));
+  ctx.fillStyle = `hsl(${hue} ${rnd(55, 90)}% ${dark ? rnd(55, 70) : rnd(30, 50)}%)`;
+  ctx.strokeStyle = `hsl(${hue} 60% ${dark ? 85 : 15}%)`; ctx.lineWidth = rnd(0, 5);
+  ctx.beginPath();
+  if (kind === 0) ctx.arc(0, 0, r, 0, Math.PI * 2);
+  else if (kind === 1) ctx.rect(-r * 0.88, -r * 0.88, r * 1.76, r * 1.76);
+  else { for (let k = 0; k < 3; k++){ const a = -Math.PI / 2 + k * 2 * Math.PI / 3; k ? ctx.lineTo(Math.cos(a) * r * 1.1, Math.sin(a) * r * 1.1) : ctx.moveTo(Math.cos(a) * r * 1.1, Math.sin(a) * r * 1.1); } ctx.closePath(); }
+  ctx.fill(); if (ctx.lineWidth > 0.5) ctx.stroke();
+  ctx.restore();
+}
+async function loadShapesExample(){
+  const tot = S.classes.reduce((a, c) => a + c.samples.length, 0);
+  if (tot && !confirm('Substituir as classes e imagens atuais pelo exemplo de formas geométricas?')) return;
+  S.classes.forEach(c => c.samples.forEach(s => URL.revokeObjectURL(s.url)));
+  S.classes = [];
+  const names = ['Círculo', 'Quadrado', 'Triângulo'];
+  names.forEach(n => addClass(n));
+  const per = 40, size = 256;
+  const cv = document.createElement('canvas'); cv.width = cv.height = size;
+  const ctx = cv.getContext('2d');
+  log(`Gerando dataset sintético: ${names.length} classes × ${per} imagens...`, 'info');
+  for (let k = 0; k < names.length; k++){
+    for (let i = 0; i < per; i++){
+      drawShape(ctx, k, size);
+      addSample(S.classes[k], await canvasToBlob(cv, 0.88), 'arquivo');
+    }
+  }
+  S.project.name = 'Formas geométricas';
+  S.project.goal = 'Reconhecer a forma geométrica principal (círculo, quadrado ou triângulo) em imagens com cores, fundos, tamanhos e rotações variados.';
+  S.project.users = 'Estudantes em aula de introdução à visão computacional, no navegador';
+  syncProjectInputs();
+  renderAllClasses();
+  log('Dataset de exemplo pronto: 120 imagens.', 'ok');
+  toast('Exemplo carregado: 3 classes, 120 imagens.');
+}
+
+/* ------------------------------ EVENTOS ------------------------------ */
+function bindRange(id, get, set, fmt, after){
+  const el = $('#' + id), out = $('#' + id + 'V');
+  el.value = get();
+  const show = () => { if (out) out.textContent = fmt(+el.value); };
+  show();
+  el.addEventListener('input', () => { set(+el.value); show(); after && after(); });
+}
+function bindChips(id, get, set, after){
+  const box = $('#' + id);
+  const sync = () => $$('input', box).forEach(i => { i.checked = String(i.value) === String(get()); });
+  sync();
+  box.addEventListener('change', e => { if (e.target.matches('input')) { set(e.target.value); after && after(); } });
+  return sync;
+}
+function syncProjectInputs(){
+  $('#projName').value = S.project.name; $('#projGoal').value = S.project.goal; $('#projUsers').value = S.project.users;
+}
+
+function bindEvents(){
+  // navegação
+  $$('.stg').forEach(g => {
+    g.addEventListener('click', () => setStage(+g.dataset.stage));
+    g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setStage(+g.dataset.stage); } });
+  });
+  document.addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (b) setStage(+b.dataset.go); });
+
+  // etapa 1
+  syncProjectInputs();
+  $('#projName').addEventListener('input', e => { S.project.name = e.target.value; renderReq(); renderRail(); updatePipeline(); });
+  $('#projGoal').addEventListener('input', e => { S.project.goal = e.target.value; renderReq(); });
+  $('#projUsers').addEventListener('input', e => { S.project.users = e.target.value; renderReq(); });
+  bindRange('tgtAcc', () => Math.round(S.project.targetAcc * 100), v => S.project.targetAcc = v / 100, v => v + '%', renderReq);
+  bindRange('tgtLat', () => S.project.maxLat, v => S.project.maxLat = v, v => v + ' ms', renderReq);
+  bindChips('chSource', () => S.project.source, v => S.project.source = v);
+  const onCtx = () => { renderReq(); renderBackbones(); };
+  bindChips('chDevice', () => S.project.device, v => S.project.device = v, onCtx);
+  bindChips('chPriority', () => S.project.priority, v => S.project.priority = v, onCtx);
+  $('#recBox').addEventListener('click', e => {
+    if (e.target.id !== 'btnUseRec') return;
+    const r = recommendation(); S.bb.kind = r.kind; if (r.alpha) S.bb.alpha = r.alpha;
+    renderBackbones(); toast(`Modelo base definido: ${bbName(r.kind, r.alpha)}.`);
+  });
+  const addReq = () => { const n = $('#newClassName').value.trim(); addClass(n); $('#newClassName').value = ''; $('#newClassName').focus(); };
+  $('#btnAddClassReq').addEventListener('click', addReq);
+  $('#newClassName').addEventListener('keydown', e => { if (e.key === 'Enter') addReq(); });
+  $('#reqClassList').addEventListener('input', e => {
+    if (e.target.dataset.act !== 'rename') return;
+    const c = S.classes.find(c => c.id === +e.target.closest('.req-class').dataset.id); if (!c) return;
+    c.name = e.target.value; renderClassGrid(); renderSplit(); renderRail(); updatePipeline(); renderArch();
+    renderReqChecklistOnly();
+  });
+  $('#reqClassList').addEventListener('focusout', () => setTimeout(renderReq, 0));
+  $('#reqClassList').addEventListener('click', e => {
+    if (e.target.dataset.act === 'del') removeClass(+e.target.closest('.req-class').dataset.id);
+  });
+  $('#btnExample1').addEventListener('click', loadShapesExample);
+
+  // etapa 2
+  $('#btnAddClass').addEventListener('click', () => addClass(''));
+  $('#btnExample2').addEventListener('click', loadShapesExample);
+  $('#btnExportDs').addEventListener('click', exportDataset);
+  $('#btnExportDs2').addEventListener('click', exportDataset);
+  $('#btnClearAll').addEventListener('click', () => {
+    const tot = S.classes.reduce((a, c) => a + c.samples.length, 0);
+    if (!confirm(`Apagar todas as classes e ${tot} imagens?`)) return;
+    S.classes.forEach(c => c.samples.forEach(s => URL.revokeObjectURL(s.url)));
+    S.classes = []; S.dsVersion++;
+    addClass('Classe 1'); addClass('Classe 2');
+    log('Conjunto de dados apagado.', 'warn');
+  });
+  $('#inpFolder').addEventListener('change', async e => { const f = e.target.files; if (f && f.length) await importFolder(f); e.target.value = ''; });
+  $('#inpZip').addEventListener('change', async e => {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    try { await importZip(f); } catch (err){ log('Erro ao ler o .zip: ' + err.message, 'error'); toast('Não foi possível ler o .zip.', 'error'); }
+  });
+  const grid = $('#classGrid');
+  grid.addEventListener('click', e => {
+    if (e.target.id === 'btnAddClassCard'){ addClass(''); return; }
+    const card = e.target.closest('.class-card'); if (!card) return;
+    const cls = S.classes.find(c => c.id === +card.dataset.id); if (!cls) return;
+    const th = e.target.closest('.thumb');
+    if (th){ removeSample(cls, +th.dataset.sid); th.remove(); renderDataSide(); if (!cls.samples.length) renderClassGrid(); return; }
+    const act = e.target.closest('[data-act]')?.dataset.act;
+    if (act === 'cam') openCamModal(cls.id);
+    else if (act === 'clear') clearClass(cls.id);
+    else if (act === 'del') removeClass(cls.id);
+  });
+  grid.addEventListener('change', async e => {
+    if (e.target.dataset.act !== 'files') return;
+    const cls = S.classes.find(c => c.id === +e.target.closest('.class-card').dataset.id);
+    const files = e.target.files; e.target.value = '';
+    if (cls && files.length) await addFilesToClass(cls, files);
+  });
+  grid.addEventListener('input', e => {
+    if (e.target.dataset.act !== 'rename') return;
+    const cls = S.classes.find(c => c.id === +e.target.closest('.class-card').dataset.id); if (!cls) return;
+    cls.name = e.target.value; renderReq(); renderSplit(); renderRail(); renderDiag(); updatePipeline();
+  });
+  grid.addEventListener('focusout', e => { if (e.target.matches('.cc-name')) setTimeout(() => { if (!document.activeElement?.matches?.('.cc-name')) renderClassGrid(); }, 0); });
+  grid.addEventListener('dragover', e => { const card = e.target.closest('.class-card'); if (!card) return; e.preventDefault(); card.classList.add('drag'); });
+  grid.addEventListener('dragleave', e => { const card = e.target.closest('.class-card'); if (card && !card.contains(e.relatedTarget)) card.classList.remove('drag'); });
+  grid.addEventListener('drop', async e => {
+    const card = e.target.closest('.class-card'); if (!card) return;
+    e.preventDefault(); card.classList.remove('drag');
+    const cls = S.classes.find(c => c.id === +card.dataset.id);
+    if (cls && e.dataTransfer.files.length) await addFilesToClass(cls, e.dataTransfer.files);
+  });
+  const afterSplit = () => { renderSplit(); renderDiag(); updatePipeline(); };
+  bindRange('spVal', () => Math.round(S.split.val * 100), v => S.split.val = v / 100, v => v + '%', afterSplit);
+  bindRange('spTest', () => Math.round(S.split.test * 100), v => S.split.test = v / 100, v => v + '%', afterSplit);
+  $('#spSeed').value = S.split.seed;
+  $('#spSeed').addEventListener('input', e => { S.split.seed = Math.max(0, parseInt(e.target.value || '0', 10)); afterSplit(); });
+  bindChips('chMode', () => S.prep.mode, v => S.prep.mode = v);
+  $('#augFlip').checked = S.aug.flip;
+  $('#augFlip').addEventListener('change', e => S.aug.flip = e.target.checked);
+  bindRange('augRot', () => S.aug.rot, v => S.aug.rot = v, v => '±' + v + '°');
+  bindRange('augZoom', () => S.aug.zoom, v => S.aug.zoom = v, v => v + '%');
+  bindRange('augShift', () => S.aug.shift, v => S.aug.shift = v, v => v + '%');
+  bindRange('augBright', () => S.aug.bright, v => S.aug.bright = v, v => '±' + v + '%');
+  bindRange('augCopies', () => S.aug.copies, v => S.aug.copies = v, v => v ? '×' + (v + 1) : 'off', renderSplit);
+  $('#btnAugPreview').addEventListener('click', augPreview);
+
+  // etapa 3
+  $('#bbGrid').addEventListener('click', e => {
+    const b = e.target.closest('.bb'); if (!b || S.training) return;
+    S.bb.kind = b.dataset.kind;
+    const d = BB[S.bb.kind];
+    if (d.family === 'mobilenet' && !d.alphas.includes(S.bb.alpha)) S.bb.alpha = d.alphas[0];
+    renderBackbones();
+  });
+  $('#chAlpha').addEventListener('change', e => { if (e.target.name === 'alpha'){ S.bb.alpha = +e.target.value; renderBackbones(); } });
+  bindChips('chCnnSize', () => S.cnn.size, v => S.cnn.size = +v, renderBackbones);
+  bindRange('cnnBlocks', () => S.cnn.blocks, v => S.cnn.blocks = v, v => String(v), renderBackbones);
+  bindChips('chCnnFilters', () => S.cnn.filters, v => S.cnn.filters = +v, renderBackbones);
+  bindChips('chCnnKernel', () => S.cnn.kernel, v => S.cnn.kernel = +v, renderBackbones);
+  bindChips('chCnnPool', () => S.cnn.pool, v => S.cnn.pool = v, renderBackbones);
+  $('#cnnBn').checked = S.cnn.bn;
+  $('#cnnBn').addEventListener('change', e => { S.cnn.bn = e.target.checked; renderArch(); });
+  bindChips('chUnits', () => S.head.units, v => S.head.units = +v, renderArch);
+  bindRange('hDrop', () => S.head.dropout, v => S.head.dropout = v, v => nf(v, 2), renderArch);
+  bindRange('hpEpochs', () => S.hp.epochs, v => S.hp.epochs = v, v => String(v));
+  bindChips('chBatch', () => S.hp.batch, v => S.hp.batch = +v);
+  $('#hpLr').value = String(S.hp.lr); $('#hpLr').addEventListener('change', e => S.hp.lr = +e.target.value);
+  $('#hpOpt').value = S.hp.opt; $('#hpOpt').addEventListener('change', e => S.hp.opt = e.target.value);
+  $('#hpL2').value = String(S.hp.l2); $('#hpL2').addEventListener('change', e => S.hp.l2 = +e.target.value);
+  bindRange('hpPat', () => S.hp.patience, v => S.hp.patience = v, v => v ? v + ' ép.' : 'off');
+  $('#hpRestore').checked = S.hp.restore; $('#hpRestore').addEventListener('change', e => S.hp.restore = e.target.checked);
+  $('#hpCw').checked = S.hp.classWeight; $('#hpCw').addEventListener('change', e => S.hp.classWeight = e.target.checked);
+  $('#btnTrain').addEventListener('click', train);
+  $('#btnStop').addEventListener('click', () => { S.stopReq = true; log('Parada solicitada...', 'warn'); });
+
+  // etapa 4
+  $('#segEval').addEventListener('click', async e => {
+    const b = e.target.closest('button[data-set]'); if (!b || b.disabled || S.training) return;
+    await evaluate(b.dataset.set);
+  });
+
+  // etapa 5
+  $('#btnPredCam').addEventListener('click', () => PredCam.on ? stopPredCam() : startPredCam());
+  $('#btnPredSwitch').addEventListener('click', async () => { if (await Cam.switchCam() && PredCam.on){ PredCam.on = false; Cam.users.delete('pred'); await startPredCam(); } });
+  bindRange('predThr', () => S.predThr, v => S.predThr = v, v => pct(v, 0));
+  const drop = $('#predDrop');
+  $('#inpPred').addEventListener('change', async e => { const f = [...e.target.files]; e.target.value = ''; await predictFiles(f); });
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+  drop.addEventListener('drop', async e => { e.preventDefault(); drop.classList.remove('drag'); await predictFiles(e.dataTransfer.files); });
+  $('#btnPredClear').addEventListener('click', () => { $$('#predResults img').forEach(i => URL.revokeObjectURL(i.src)); $('#predResults').innerHTML = ''; });
+  document.addEventListener('paste', async e => {
+    if (S.stage !== 5) return;
+    const files = [...(e.clipboardData?.items || [])].filter(i => i.type.startsWith('image/')).map(i => i.getAsFile()).filter(Boolean);
+    if (files.length){ e.preventDefault(); await predictFiles(files); }
+  });
+
+  // etapa 6
+  $('#btnExportZip').addEventListener('click', exportZip);
+  $('#btnModelCard').addEventListener('click', () => {
+    if (!S.trained) return;
+    download(new Blob([buildModelCard()], {type: 'text/markdown;charset=utf-8'}), (slugify(S.project.name) || 'modelo') + '_ficha_do_modelo.md');
+    S.done[6] = true; updatePipeline();
+  });
+  $('#btnReportJson').addEventListener('click', () => {
+    if (!S.trained) return;
+    download(new Blob([JSON.stringify(buildMetadata(), null, 2)], {type: 'application/json'}), (slugify(S.project.name) || 'modelo') + '_relatorio.json');
+  });
+  $('#btnRunsCsv').addEventListener('click', () => download(new Blob(['﻿' + runsCsv()], {type: 'text/csv;charset=utf-8'}), (slugify(S.project.name) || 'modelo') + '_experimentos.csv'));
+  $('#segCode').addEventListener('click', e => { const b = e.target.closest('button[data-code]'); if (!b) return; S.codeTab = b.dataset.code; renderExport(); });
+  $('#btnCopyCode').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText($('#codeBox').textContent); toast('Código copiado.'); }
+    catch (e){ toast('Não foi possível copiar.', 'warn'); }
+  });
+
+  // webcam modal
+  $('#btnCamClose').addEventListener('click', closeCamModal);
+  $('#camModal').addEventListener('click', e => { if (e.target.id === 'camModal') closeCamModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#camModal').hidden) closeCamModal(); });
+  const hold = $('#btnHold');
+  hold.addEventListener('pointerdown', e => { e.preventDefault(); hold.setPointerCapture?.(e.pointerId); startRec(); });
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => hold.addEventListener(ev, stopRec));
+  hold.addEventListener('contextmenu', e => e.preventDefault());
+  $('#btnSnap').addEventListener('click', captureOne);
+  $('#btnTimed').addEventListener('click', timedRec);
+  $('#btnCamSwitch').addEventListener('click', async () => { if (await Cam.switchCam()){ Cam.users.delete('modal'); await Cam.open($('#camVideo'), 'modal'); if (PredCam.on) $('#predVideo').srcObject = Cam.stream; } });
+  $('#camFps').addEventListener('input', e => { $('#camFpsV').textContent = e.target.value; if (CamUI.recording){ stopRec(); startRec(); } });
+  $('#camDelay').addEventListener('input', e => $('#camDelayV').textContent = e.target.value + ' s');
+  $('#camDur').addEventListener('input', e => $('#camDurV').textContent = e.target.value + ' s');
+
+  $('#btnClearLog').addEventListener('click', () => $('#console').innerHTML = '');
+  window.addEventListener('beforeunload', e => {
+    const tot = S.classes.reduce((a, c) => a + c.samples.length, 0);
+    if (tot > 0 || S.trained){ e.preventDefault(); e.returnValue = ''; }
+  });
+}
+function renderReqChecklistOnly(){
+  const P = S.project;
+  const items = [
+    [P.name.trim().length > 0, 'Projeto com nome definido'],
+    [P.goal.trim().length >= 10, 'Objetivo descrito (qual decisão o modelo apoia)'],
+    [P.users.trim().length >= 3, 'Usuários e contexto de uso identificados'],
+    [reqOk(), 'Pelo menos 2 classes com nomes únicos'],
+    [true, `Critérios: acurácia ≥ ${pct(P.targetAcc, 0)} e latência ≤ ${P.maxLat} ms`],
+  ];
+  $('#reqChecklist').innerHTML = items.map(([ok, t]) => `<li class="${ok ? 'ok' : 'no'}"><span class="ck">${ok ? '✔' : '○'}</span>${esc(t)}</li>`).join('');
+}
+
+/* ------------------------------ INÍCIO ------------------------------ */
+async function init(){
+  $('#verFoot').textContent = VERSION;
+  initCharts();
+  addClass('Classe 1'); addClass('Classe 2');
+  bindEvents();
+  renderBackbones();
+  renderRuns();
+  setStage(1);
+  log(`CNN.machine v${VERSION} iniciado.`, 'ok');
+  try {
+    await tf.ready();
+    if (tf.getBackend() === 'cpu' && tf.findBackendFactory('webgl')){
+      // sem GPU utilizável: tenta WebGL por software, quase sempre mais rápido que a CPU pura
+      try {
+        tf.env().set('SOFTWARE_WEBGL_ENABLED', true);
+        if (await tf.setBackend('webgl')) log('GPU não detectada: usando WebGL por software.', 'warn');
+      } catch (e) {}
+      if (tf.getBackend() !== 'webgl') await tf.setBackend('cpu');
+    }
+    const be = tf.getBackend();
+    $('#pillBackend').textContent = 'backend: ' + be;
+    $('#tfStatus').className = 'pill'; $('#tfStatus').textContent = 'TF.js ' + tf.version.tfjs + ' pronto';
+    log(`TensorFlow.js ${tf.version.tfjs} pronto (backend ${be}).`, 'ok');
+    if (be !== 'webgl' && be !== 'webgpu') log('Sem aceleração por GPU: o treino será mais lento. Prefira modelos leves.', 'warn');
+  } catch (e){
+    $('#tfStatus').className = 'pill err'; $('#tfStatus').textContent = 'TF.js indisponível';
+    log('Falha ao iniciar o TensorFlow.js: ' + e.message, 'error');
+  }
+  setInterval(updateSys, 1500);
+  updateSys();
+}
+if (typeof tf === 'undefined' || typeof Chart === 'undefined' || typeof JSZip === 'undefined'){
+  document.addEventListener('DOMContentLoaded', () => {
+    $('#tfStatus').className = 'pill err'; $('#tfStatus').textContent = 'bibliotecas não carregadas';
+    log('Não foi possível carregar TensorFlow.js, Chart.js ou JSZip. Verifique a conexão com a internet.', 'error');
+  });
+} else {
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+}
+
+})();
+</script>
+</body>
+</html>
