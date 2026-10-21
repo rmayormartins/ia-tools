@@ -2122,6 +2122,11 @@ function joinBuffers(wd){
   }
   return wd;
 }
+function zipOk(){
+  if (typeof JSZip !== 'undefined') return true;
+  toast('JSZip não carregou: recarregue a página para usar arquivos .zip.', 'warn');
+  return false;
+}
 function exportPlan(){
   const T = S.trained; if (!T) return null;
   if (T.isCNN) return {mode: 'full', desc: 'CNN completa: recebe a imagem e devolve as probabilidades.'};
@@ -2306,6 +2311,7 @@ function readmeTxt(meta, plan){
 }
 async function exportZip(){
   const T = S.trained; if (!T){ toast('Treine um modelo primeiro.', 'warn'); return; }
+  if (!zipOk()) return;
   const btn = $('#btnExportZip'); btn.disabled = true; btn.textContent = '⏳ Gerando pacote...';
   try {
     const plan = exportPlan();
@@ -2476,6 +2482,7 @@ async function importFolder(files){
   await importGrouped(entries, 'pasta');
 }
 async function importZip(file){
+  if (!zipOk()) return;
   const zip = await JSZip.loadAsync(file);
   const entries = [];
   zip.forEach((path, f) => {
@@ -2487,6 +2494,7 @@ async function importZip(file){
   await importGrouped(entries, file.name);
 }
 async function exportDataset(){
+  if (!zipOk()) return;
   const tot = S.classes.reduce((a, c) => a + c.samples.length, 0);
   if (!tot){ toast('Não há imagens para exportar.', 'warn'); return; }
   const zip = new JSZip();
@@ -2809,14 +2817,52 @@ async function init(){
   setInterval(updateSys, 1500);
   updateSys();
 }
-if (typeof tf === 'undefined' || typeof Chart === 'undefined' || typeof JSZip === 'undefined'){
-  document.addEventListener('DOMContentLoaded', () => {
-    $('#tfStatus').className = 'pill err'; $('#tfStatus').textContent = 'bibliotecas não carregadas';
-    log('Não foi possível carregar TensorFlow.js, Chart.js ou JSZip. Verifique a conexão com a internet.', 'error');
+/* ------------- CARREGAMENTO DAS BIBLIOTECAS (com CDNs reserva) ------------- */
+const LIBS = [
+  {name: 'TensorFlow.js', ok: () => typeof tf !== 'undefined' && !!tf.version, required: true,
+   urls: ['https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js', 'https://unpkg.com/@tensorflow/tfjs@4.22.0/dist/tf.min.js']},
+  {name: 'Chart.js', ok: () => typeof Chart !== 'undefined', required: true,
+   urls: ['https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.js', 'https://unpkg.com/chart.js@4.4.4/dist/chart.umd.js']},
+  {name: 'JSZip', ok: () => typeof JSZip !== 'undefined', required: false,
+   urls: ['https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js', 'https://unpkg.com/jszip@3.10.1/dist/jszip.min.js']},
+];
+function loadScript(src, ms = 45000){
+  return new Promise((res, rej) => {
+    const el = document.createElement('script');
+    const t = setTimeout(() => { el.remove(); rej(new Error('tempo esgotado')); }, ms);
+    el.src = src; el.async = false;
+    el.onload = () => { clearTimeout(t); res(); };
+    el.onerror = () => { clearTimeout(t); el.remove(); rej(new Error('download falhou')); };
+    document.head.appendChild(el);
   });
-} else {
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 }
+async function ensureLibs(){
+  const missing = [];
+  for (const L of LIBS){
+    if (L.ok()) continue;
+    log(`${L.name} não carregou do cdnjs; tentando um CDN reserva...`, 'warn');
+    for (const u of L.urls){
+      try { await loadScript(u); } catch (e) { log(`  ${new URL(u).host}: ${e.message}`, 'warn'); }
+      if (L.ok()){ log(`${L.name} carregado de ${new URL(u).host}.`, 'ok'); break; }
+    }
+    if (!L.ok()) missing.push(L);
+  }
+  return missing;
+}
+async function boot(){
+  const missing = await ensureLibs();
+  const fatal = missing.filter(l => l.required);
+  if (fatal.length){
+    const names = fatal.map(l => l.name).join(' e ');
+    $('#tfStatus').className = 'pill err'; $('#tfStatus').textContent = 'falha: ' + names;
+    log(`Não foi possível carregar ${names} de nenhum CDN (cdnjs, jsDelivr, unpkg). Verifique a conexão, extensões bloqueadoras de anúncios ou filtros da rede e recarregue com Ctrl+F5.`, 'error');
+    toast(`Não foi possível carregar ${names}. Veja o console à direita.`, 'error');
+    return;
+  }
+  if (missing.length) log('JSZip indisponível: importar/exportar .zip ficará desativado; o restante funciona normalmente.', 'warn');
+  init();
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 
 })();
 </script>
