@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CNN.machine · IA Tools · IFSC</title>
-<meta name="description" content="CNN.machine: crie o seu próprio classificador de imagens no navegador, no estilo Teachable Machine, com MobileNet, EfficientNet ou uma CNN do zero, seguindo as etapas do ML centrado no ser humano.">
+<title>Image.sys 2 · IA Tools · IFSC</title>
+<meta name="description" content="Image.sys 2: crie o seu próprio classificador de imagens no navegador, no estilo Teachable Machine, com MobileNet, EfficientNet ou uma CNN do zero, seguindo as etapas do ML centrado no ser humano.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📸</text></svg>">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/4.22.0/tf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
@@ -415,7 +415,7 @@
   <div class="brand">
     <div class="brand-icon">📸</div>
     <div>
-      <h1>CNN<span>.machine</span></h1>
+      <h1>Image<span>.sys 2</span></h1>
       <div class="sub">Crie o seu próprio classificador de imagens no navegador · transferência de aprendizado com CNNs</div>
       <div class="sig">Author <a href="https://rmayormartins.github.io" target="_blank" rel="noopener">Ramon Mayor Martins, Ph.D.</a> // <a href="https://github.com/rmayormartins" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>@rmayormartins</a> // IFSC SJ - Área de Telecomunicações</div>
     </div>
@@ -862,7 +862,7 @@
 </main>
 
 <footer>
-  CNN.machine · v<span id="verFoot">1.0</span> · 2026 · <a href="mailto:ramon.mayor@ifsc.edu.br">ramon.mayor@ifsc.edu.br</a> · <a href="https://rmayormartins.github.io" target="_blank" rel="noopener">Prof. Ramon Mayor Martins</a> · Construído com TensorFlow.js · AMCH: Martins et al. (2024)
+  Image.sys 2 · v<span id="verFoot">1.0</span> · 2026 · <a href="mailto:ramon.mayor@ifsc.edu.br">ramon.mayor@ifsc.edu.br</a> · <a href="https://rmayormartins.github.io" target="_blank" rel="noopener">Prof. Ramon Mayor Martins</a> · Construído com TensorFlow.js · AMCH: Martins et al. (2024)
 </footer>
 
 <!-- ==================== MODAL WEBCAM ==================== -->
@@ -902,7 +902,7 @@
 'use strict';
 
 /* =====================================================================
-   CNN.machine · laboratório de classificação de imagens no navegador
+   Image.sys 2 · laboratório de classificação de imagens no navegador
    Transferência de aprendizado (MobileNet V1/V2, EfficientNet B0-B2)
    ou CNN treinada do zero, com TensorFlow.js.
    ===================================================================== */
@@ -2138,14 +2138,14 @@ async function buildExportModel(){
   if (plan.mode === 'full' && !T.isCNN){
     let y = T.bb.base.outputs[0];
     for (const L of T.model.layers) y = L.apply(y);
-    return tf.model({inputs: T.bb.base.inputs, outputs: y, name: 'cnn_machine'});
+    return tf.model({inputs: T.bb.base.inputs, outputs: y, name: 'image_sys_2'});
   }
   return T.model;
 }
 function buildMetadata(){
   const T = S.trained, E = T.mainEval || S.lastEval, plan = exportPlan();
   return {
-    tool: 'CNN.machine', toolVersion: VERSION, tfjsVersion: tf.version.tfjs, created: new Date().toISOString(),
+    tool: 'Image.sys 2', toolVersion: VERSION, tfjsVersion: tf.version.tfjs, created: new Date().toISOString(),
     project: {name: S.project.name, goal: S.project.goal, users: S.project.users},
     labels: T.classNames, colors: T.colors,
     modelType: plan.mode === 'full' ? 'end-to-end' : 'head-on-backbone',
@@ -2185,7 +2185,7 @@ button:hover,label.b:hover{border-color:#3F9A4B}
 .v{text-align:right;font-family:monospace}#top{font-size:24px;font-weight:800;margin-top:12px}#st{font-size:12px;color:#6b7785}
 </style></head><body>
 <h1>${title} <span>· demo</span></h1>
-<p>Modelo gerado com CNN.machine (${esc(meta.backbone ? meta.backbone.name : 'CNN do zero')}). Classes: ${meta.labels.map(esc).join(', ')}.</p>
+<p>Modelo gerado com Image.sys 2 (${esc(meta.backbone ? meta.backbone.name : 'CNN do zero')}). Classes: ${meta.labels.map(esc).join(', ')}.</p>
 <div class="row"><button id="cam">Ligar webcam</button><label class="b">Abrir imagem<input type="file" id="file" accept="image/*" hidden></label></div>
 <div class="stage"><div class="view"><video id="v" playsinline muted hidden></video><img id="img" hidden alt=""></div>
 <div><div id="bars"></div><div id="top"></div><div id="st">carregando modelo...</div></div></div>
@@ -2246,7 +2246,7 @@ function buildModelCard(){
   const T = S.trained, E = T.mainEval || S.lastEval, P = S.project, M = E ? E.M : null;
   const L = [];
   L.push(`# Ficha do modelo: ${P.name || 'Modelo'}`, '');
-  L.push(`Gerado com CNN.machine v${VERSION} em ${nowStamp()}. Experimento #${T.runId}.`, '');
+  L.push(`Gerado com Image.sys 2 v${VERSION} em ${nowStamp()}. Experimento #${T.runId}.`, '');
   L.push('## 1. Uso pretendido', '');
   L.push(`- **Objetivo:** ${P.goal || '(não informado)'}`);
   L.push(`- **Usuários e contexto:** ${P.users || '(não informado)'}`);
@@ -2294,7 +2294,7 @@ function runsCsv(){
 }
 function readmeTxt(meta, plan){
   return [
-    `${meta.project.name || 'Modelo'} · pacote exportado pelo CNN.machine v${VERSION}`,
+    `${meta.project.name || 'Modelo'} · pacote exportado pelo Image.sys 2 v${VERSION}`,
     '',
     'Arquivos:',
     '  model.json + weights.bin  modelo TensorFlow.js (layers-model)',
@@ -2331,7 +2331,7 @@ async function exportZip(){
     zip.file('historico_experimentos.csv', runsCsv());
     zip.file('LEIA-ME.txt', readmeTxt(meta, plan));
     const blob = await zip.generateAsync({type: 'blob', compression: 'DEFLATE', compressionOptions: {level: 6}});
-    download(blob, (slugify(S.project.name) || 'modelo') + '_cnn-machine.zip');
+    download(blob, (slugify(S.project.name) || 'modelo') + '_image-sys-2.zip');
     log(`Pacote exportado (${nf(blob.size / 1048576, 2)} MB, pesos ${nf(bin.byteLength / 1048576, 2)} MB).`, 'ok');
     S.done[6] = true; updatePipeline();
   } catch (e){
@@ -2794,7 +2794,7 @@ async function init(){
   renderBackbones();
   renderRuns();
   setStage(1);
-  log(`CNN.machine v${VERSION} iniciado.`, 'ok');
+  log(`Image.sys 2 v${VERSION} iniciado.`, 'ok');
   try {
     await tf.ready();
     if (tf.getBackend() === 'cpu' && tf.findBackendFactory('webgl')){
